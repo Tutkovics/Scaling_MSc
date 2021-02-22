@@ -1,0 +1,61 @@
+###Cloud resource management: A survey on forecasting and profiling models
+###Rafael Weingärtner, Gabriel Beims Bräscher, Carlos Becker Westphall
+
+- Összefoglaló cikk. (rengeteg korábbi munkára hivatkozik)
+- Def: Application profiling is a technique used to describe the use of computing resources by an application and its expected behaviors.
+Profilozás szükséges
+1: Application management
+2: resources management
+3: cost management
+(ábra: karakterisztikai miből tevődik össze, kihívások profilozásnál)
+
+- szétválasztja a QoS & QoE. QoS szükséges a quality of experience
+- legtöbb kutatás: test in single box --> nem törődik az állandóan változó felhővel (új deploy/régiek törlése)
+- MAPE-K autonomic loop (Monitor, Analyze, Plan, Execute, Knowledge)
+- 2002 cikket idéz, ahol ovebooking megjelenik (pl: repülőtársaságoknál)
+
+CPU, memory, network, I/O disk latency,  SLA (response time, throughput), end-to-end latency
+
+Figyelembe kell venni, hogy melyik podok kommunikálnak (és mennyit) --> multinode szituban
+Modellezés / döntéshozásnak is van overheadjeű
+
+### CloudScale: Elastic Resource Scaling for Multi-Tenant Cloud Systems
+
+CloudScale - prediction-driven elastic resource scaling system for multi-tenant cloud computing
+
+VM-ek erőforrását kezeli
+Bonyolúltnak tűnik a matek (fast Fourier transform és MArkov láncok is)
+Saját esetei: kicsit több (de van hogy kevesebb) erőforrás foglalás, kevesebb conflict
+
+### Modelling and Managing Deployment Costs of
+Microservice-Based Cloud Applications
+
+- Saját modell: CostHat (+python implementáció)
+- based on a network model, and allows for what-if and cost sensitivity analysis.
+- már fejlesztés közben --> IDE-be építhető
+- gráf modellt épít (milyen servicek vannak, és milyen arányban melyik servicehez mennek tovább)
+
+saját ötlet: ezalapján már rögtön ha megnő pl "ingress-GW" forgalma --> rögtön skálázhatjuk a "mögöttes" serviceket is.
+
+- Skálázással nem foglalkozik
+- inkább a micsoservicek közös "árát" számolja 
+ár= átvitt és rendes értelemben is
+
+### Predicting the End-to-End Tail Latency of Containerized Microservices in the Cloud
+- az üzemeltető nem láthatja, mit csinál a felhszanáló alkalmazása (csak azt, hogy mennyit)
+- Szintán gráfként kezeli a rendszert (DAG)
+1: traditional analytical modeling approaches (queue-
+ing theory)
+2: Hybrid (queueing theory & ML)
+nehézség: sok a mozgó alkatrész.
+
+"Wisp, a resource management frame-
+work that applies a combination of techniques, including
+estimating local workload models based on measurements
+of immediate neighborhoods, distributed rate control and
+metadata propagation to achieve end-to-end throughput and
+latency objectives in Service-Oriented architectures."
+
+Leginkább gépitanulásos modellt használnak
+
+### Resource Overbooking and Application Profiling in Shared Hosting Platforms
