@@ -59,3 +59,32 @@ latency objectives in Service-Oriented architectures."
 Leginkább gépitanulásos modellt használnak
 
 ### Resource Overbooking and Application Profiling in Shared Hosting Platforms
+- régi cikknek (~2000) tűnik
+"Different applications
+have different tolerance to such overbooking (e.g., the la-
+tency requirements of a game server make it less toler-
+ant to violations of performance guarantees than a web
+server), an overbooking mechanism should take into ac-
+count diverse application needs."
+
+- kihívás: Mennyi erőforrást foglaljunk az alkalmazásokhoz
+
+- Application: Apache webserver, Media streaming, (Quake) Game server (played by bots. - 'terminator'), Database
+
+- Hasonló kiszolgálási ábrák jöttek ki, mint nekünk 
+
+### Towards an Adaptive, Fully Automated Performance Modeling Methodology for Cloud Applications
+
+- “white-box” and “black-box” approaches
+- analitikusan     Gépi tanulásos módszerekkel
+
+- tudunk úgy QoS megkötéseket tenni, hogy nem látunk a rendszerbe? --> pl: válaszidőkre? 
+- Kellene sidecar?
+--> ez egy mérleg, egyik oldalán a pontosabb algoritmusok másikon a privacy
+
+dimensions (parameters) can fall under three categories: 
+(a) resource-related dimensions (e.g.,number of nodes of a cluster, number of cores, amount of RAM, etc.), 
+(b) workload-related dimensions (e.g., dataset size, request throughput, etc.),
+(c) application-level dimensions (e.g., amount of cache of a DBMS, replication of HDFS, etc.).
+
+- adaptively “zoom-in” --> ahol a modell bizonyytalan, több mérést kell végezni
