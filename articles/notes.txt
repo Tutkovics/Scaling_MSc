@@ -1,5 +1,5 @@
-###Cloud resource management: A survey on forecasting and profiling models
-###Rafael Weingärtner, Gabriel Beims Bräscher, Carlos Becker Westphall
+### Cloud resource management: A survey on forecasting and profiling models
+### Rafael Weingärtner, Gabriel Beims Bräscher, Carlos Becker Westphall
 
 - Összefoglaló cikk. (rengeteg korábbi munkára hivatkozik)
 - Def: Application profiling is a technique used to describe the use of computing resources by an application and its expected behaviors.
@@ -17,7 +17,7 @@ Profilozás szükséges
 CPU, memory, network, I/O disk latency,  SLA (response time, throughput), end-to-end latency
 
 Figyelembe kell venni, hogy melyik podok kommunikálnak (és mennyit) --> multinode szituban
-Modellezés / döntéshozásnak is van overheadjeű
+Modellezés / döntéshozásnak is van overheadje
 
 ### CloudScale: Elastic Resource Scaling for Multi-Tenant Cloud Systems
 
