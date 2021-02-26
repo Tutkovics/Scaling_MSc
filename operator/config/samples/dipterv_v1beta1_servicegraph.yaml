@@ -1,0 +1,7 @@
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+  name: servicegraph-sample
+spec:
+  # Add fields here
+  foo: bar
