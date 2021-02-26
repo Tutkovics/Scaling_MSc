@@ -28,14 +28,16 @@ type ServicegraphSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Servicegraph. Edit servicegraph_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// +kubebuilder:validation:Required
+	// Nodes contain the configs to service
+	Nodes []*Node `json:"nodes,omitempty"`
 }
 
 // ServicegraphStatus defines the observed state of Servicegraph
 type ServicegraphStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Nodes []string `json:"nodes"`
 }
 
 //+kubebuilder:object:root=true
@@ -61,4 +63,87 @@ type ServicegraphList struct {
 
 func init() {
 	SchemeBuilder.Register(&Servicegraph{}, &ServicegraphList{})
+}
+
+// Here come my structures
+
+// Node struct. Contains specification of a node
+type Node struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Pattern="[a-z-]*"
+	// Name of the node
+	Name string `json:"name"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// Number of replica to run
+	Replicas uint `json:"replicas"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// Container port to open and listen
+	ContainerPort uint `json:"port"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=0
+	// If the service will listen on node port
+	NodePort uint `json:"nodePort"`
+
+	// +kubebuilder:validation:Required
+	// Resource to consume
+	Resources Resource `json:"resources"`
+
+	// +kubebuilder:validation:Required
+	// Setup and configure endpoints to node
+	Endpoints []Endpoint `json:"endpoints"`
+}
+
+// Resource structure
+type Resource struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// Memory to use (kB)
+	Memory uint `json:"memory"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// CPU to use (mCPU)
+	CPU uint `json:"cpu"`
+}
+
+// Endpoint structure and behavior
+type Endpoint struct {
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Type=string
+	// Regex for pattern eg: /index
+	// +kubebuilder:validation:Pattern="/[a-z]*"
+	// Path to listen and answer
+	Path string `json:"path"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Minimum=0
+	// CPU usage until request
+	CPULoad uint `json:"cpuLoad"`
+
+	//TODO: Memory load
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// Delay / process time to "serve" request (ms)
+	Delay uint `json:"delay"`
+
+	// +kubebuilder:validation:Optional
+	// Ask further services
+	CallOuts []CallOut `json:"callouts,omitempty"`
+}
+
+// CallOut structure contains additional information to each call out
+type CallOut struct {
+	// Regex for pattern eg: db-user:890/read?from=table#site
+	// +kubebuilder:validation:Pattern="[a-z-]*:[0-9]*/[a-z?=#]*"
+	// +kubebuilder:validation:Required
+	// Url to request
+	URL string `json:"url,omitempty"`
 }

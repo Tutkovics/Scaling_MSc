@@ -1,0 +1,143 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: servicegraphs.dipterv.my.domain
+spec:
+  group: dipterv.my.domain
+  names:
+    kind: Servicegraph
+    listKind: ServicegraphList
+    plural: servicegraphs
+    singular: servicegraph
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: Servicegraph is the Schema for the servicegraphs API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ServicegraphSpec defines the desired state of Servicegraph
+            properties:
+              nodes:
+                description: Nodes contain the configs to service
+                items:
+                  description: Node struct. Contains specification of a node
+                  properties:
+                    endpoints:
+                      description: Setup and configure endpoints to node
+                      items:
+                        description: Endpoint structure and behavior
+                        properties:
+                          callouts:
+                            description: Ask further services
+                            items:
+                              description: CallOut structure contains additional information
+                                to each call out
+                              properties:
+                                url:
+                                  description: 'Regex for pattern eg: db-user:890/read?from=table#site
+                                    Url to request'
+                                  pattern: '[a-z-]*:[0-9]*/[a-z?=#]*'
+                                  type: string
+                              type: object
+                            type: array
+                          cpuLoad:
+                            description: CPU usage until request
+                            minimum: 0
+                            type: integer
+                          delay:
+                            description: Delay / process time to "serve" request (ms)
+                            minimum: 0
+                            type: integer
+                          path:
+                            description: 'Regex for pattern eg: /index Path to listen
+                              and answer'
+                            pattern: /[a-z]*
+                            type: string
+                        required:
+                        - delay
+                        - path
+                        type: object
+                      type: array
+                    name:
+                      description: Name of the node
+                      pattern: '[a-z-]*'
+                      type: string
+                    nodePort:
+                      description: If the service will listen on node port
+                      minimum: 0
+                      type: integer
+                    port:
+                      description: Container port to open and listen
+                      minimum: 0
+                      type: integer
+                    replicas:
+                      description: Number of replica to run
+                      minimum: 0
+                      type: integer
+                    resources:
+                      description: Resource to consume
+                      properties:
+                        cpu:
+                          description: CPU to use (mCPU)
+                          minimum: 0
+                          type: integer
+                        memory:
+                          description: Memory to use (kB)
+                          minimum: 0
+                          type: integer
+                      required:
+                      - cpu
+                      - memory
+                      type: object
+                  required:
+                  - endpoints
+                  - name
+                  - port
+                  - replicas
+                  - resources
+                  type: object
+                type: array
+            type: object
+          status:
+            description: ServicegraphStatus defines the observed state of Servicegraph
+            properties:
+              nodes:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                items:
+                  type: string
+                type: array
+            required:
+            - nodes
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
