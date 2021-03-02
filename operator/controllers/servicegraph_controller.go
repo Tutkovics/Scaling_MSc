@@ -19,6 +19,8 @@ package controllers
 import (
 	"context"
 
+	"fmt"
+
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -48,9 +50,16 @@ type ServicegraphReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *ServicegraphReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	_ = context.Background()
+	//log := r.Log.WithValues("servicegraph", req.NamespacedName)
 	_ = r.Log.WithValues("servicegraph", req.NamespacedName)
 
-	// your logic here
+	servicegraph := &diptervv1beta1.Servicegraph{}
+	_ = r.Get(ctx, req.NamespacedName, servicegraph)
+	fmt.Println("Service Graph: ")
+	for _, node := range servicegraph.Spec.Nodes {
+		fmt.Println("node: ", node.Name)
+	}
 
 	return ctrl.Result{}, nil
 }
