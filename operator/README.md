@@ -6,6 +6,9 @@ The following commands will generate your operator. You only need to set the var
 go mod init example.com/m/v2
 operator-sdk init --owner "Tutkovics András" --project-version 3 --project-name service-mesh-operator
 operator-sdk create api --group dipterv --version v1beta1 --kind Servicegraph
+# Edit servicegraph_types.go
+make generate 
+make manifests --> create CRD yaml
 ```
 
 The code under comes from operator-sdk help screen. Contains: how to create an API and where to edit Scheme & Controller.
