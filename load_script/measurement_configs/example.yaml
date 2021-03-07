@@ -1,0 +1,15 @@
+Name: Develop-measurement
+Servicegraphs:
+  - ../../yaml/example.yaml
+  - ../../yaml/example2.yaml
+Result_location: ../results
+Cluster:
+  Name: Minikube
+  IP: 192.168.49.2
+QPS:
+  From: 0
+  To: 100
+  Granularity: 50
+Prometheus:
+  IP: 192.168.49.2
+  Port: 123455

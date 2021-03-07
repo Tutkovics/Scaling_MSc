@@ -1,0 +1,65 @@
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+  name: servicegraph
+  namespace: default
+spec:
+  nodes:
+    - name: front-end
+      replicas: 2
+      port: 80
+      nodePort: 30000
+      hpa:
+        utilization: 10
+        min_replicas: 2
+        max_replicas: 5
+      resources:
+        memory: 100
+        cpu: 100
+      endpoints:
+        - path: /instant
+          cpuLoad: 100
+          delay: 10
+        - path: /chain
+          cpuLoad: 200
+          delay: 20
+          callouts:
+            - url: back-end:80/profile
+        - path: /iterate
+          cpuLoad: 300
+          delay: 30
+          callouts:
+            - url: back-end:80/profile
+            - url: monitor:80/index
+
+    - name: back-end
+      replicas: 3
+      port: 80
+      resources:
+        memory: 200
+        cpu: 200
+      endpoints:
+        - path: /profile
+          cpuLoad: 100
+          delay: 10
+          callouts:
+            - url: db:80/get
+        - path: /create
+          cpuLoad: 200
+          delay: 20
+          callouts:
+            - url: db:80/set
+
+    - name: db
+      replicas: 1
+      port: 36
+      resources:
+        memory: 300
+        cpu: 300
+      endpoints:
+        - path: /get
+          cpuLoad: 100
+          delay: 10
+        - path: /set
+          cpuLoad: 200
+          delay: 20

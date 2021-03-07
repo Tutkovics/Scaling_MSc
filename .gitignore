@@ -1,2 +1,6 @@
 # IDE directory
 .idea/
+
+# PYthon virtualenv directory
+load_script/src/.venv/
+load_script/src/__pycache__/
