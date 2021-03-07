@@ -25,6 +25,9 @@ def read_config_file(file_name):
         config_values["qps_to"] = config["QPS"]["To"]
         config_values["qps_granularity"] = config["QPS"]["Granularity"]
 
+        config_values["load_preheat"] = config["Load"]["Preheat"]
+        config_values["load_time"] = config["Load"]["Time"]
+
         config_values["prometheus_ip"] = config["Prometheus"]["IP"]
         config_values["prometheus_port"] = config["Prometheus"]["Port"]
         

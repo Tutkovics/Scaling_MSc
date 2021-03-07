@@ -1,6 +1,8 @@
 import readline, glob, sys
+import logging
 #from yaml import full_load, load, FullLoader
 from helper import read_config_file
+from load import orchestrate_measure
 
 def main(config_file):
     """Main function.
@@ -8,22 +10,25 @@ def main(config_file):
     """
 
     # read the given config file and store values
+    logging.info("Read config file: %s", config_file)
     config = read_config_file(config_file)
-    print(config)
+    logging.info("Config values: %s", config)
     
-    #config = load(config_file, Loader=FullLoader) #full_load(config_file)
-    #print(config)
-    #k8s = Cluster(config["cluster_name"], config)
     
-    #print("Cluster: ", str(k8s))
+    orchestrate_measure(config)
+    
 
-    #lo = Loader(k8s, config)
 
 
 if __name__ == '__main__':
     try:
+        # Setup Logging parameters
+        logging.basicConfig(format='%(asctime)s - %(levelname)s : %(message)s', level=logging.INFO)
+        logging.info("Logger setup finished")
+
         # check if all ready to launch
         if len(sys.argv) != 2:
+            logging.info("Wrong number of argument was given")
             # if config file is not given
             print("Please give (one and only one) configuration yaml file")
 
@@ -38,9 +43,7 @@ if __name__ == '__main__':
             config_file = input("Config file: ")
 
             main(config_file)
-        elif(False):
-            pass
         else:
             main(str(sys.argv[1]))
     finally:
-        print("Program exited")
+        logging.info("Script exited")

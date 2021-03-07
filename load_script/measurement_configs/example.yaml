@@ -1,15 +1,18 @@
-Name: Develop-measurement
+Name: Develop-measurement       # Name of the measurement
 Servicegraphs:
-  - ../../yaml/example.yaml
+  - ../../yaml/example.yaml     # Measured services config file
   - ../../yaml/example2.yaml
-Result_location: ../results
-Cluster:
+Result_location: ../results     # Where to write results
+Cluster:                        # Not yet used
   Name: Minikube
   IP: 192.168.49.2
 QPS:
-  From: 0
-  To: 100
-  Granularity: 50
+  From: 0                       # QPS lower bound
+  To: 100                       # QPS upper bound
+  Granularity: 50               # QPS increment by this number
+Load:
+  Preheat: 1                    # in minute
+  Time: 2                       # in minute
 Prometheus:
-  IP: 192.168.49.2
-  Port: 123455
+  IP: 192.168.49.2              # Prometheus IP address
+  Port: 123455                  # Prometheus port number
