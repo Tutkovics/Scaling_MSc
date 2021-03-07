@@ -20,9 +20,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // ServicegraphSpec defines the desired state of Servicegraph
 type ServicegraphSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
@@ -97,6 +94,28 @@ type Node struct {
 	// +kubebuilder:validation:Required
 	// Setup and configure endpoints to node
 	Endpoints []Endpoint `json:"endpoints"`
+
+	// +kubebuilder:validation:Optional
+	// HPA scaling configs
+	HPA HPA `json:"hpa"`
+}
+
+// Contain HPA related configs
+type HPA struct {
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// CPU target utilization
+	Utilization uint `json:"utilization"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// Minimum replicas to run
+	MinReplicas uint `json:"min_replicas"`
+
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Minimum=0
+	// Maximum replicas to run
+	MaxReplicas uint `json:"max_replicas"`
 }
 
 // Resource structure

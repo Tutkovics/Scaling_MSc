@@ -6,11 +6,15 @@ metadata:
 spec:
   nodes:
     - name: front-end
-      replicas: 1
+      replicas: 2
       port: 80
       nodePort: 30000
+      hpa:
+        utilization: 10
+        min_replicas: 2
+        max_replicas: 5
       resources:
-        memory: 1000
+        memory: 100
         cpu: 100
       endpoints:
         - path: /instant
@@ -32,7 +36,7 @@ spec:
       replicas: 3
       port: 80
       resources:
-        memory: 2000
+        memory: 200
         cpu: 200
       endpoints:
         - path: /profile
@@ -50,7 +54,7 @@ spec:
       replicas: 1
       port: 36
       resources:
-        memory: 3000
+        memory: 300
         cpu: 300
       endpoints:
         - path: /get

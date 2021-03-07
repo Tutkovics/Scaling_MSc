@@ -77,6 +77,26 @@ spec:
                         - path
                         type: object
                       type: array
+                    hpa:
+                      description: HPA scaling configs
+                      properties:
+                        max_replicas:
+                          description: Maximum replicas to run
+                          minimum: 0
+                          type: integer
+                        min_replicas:
+                          description: Minimum replicas to run
+                          minimum: 0
+                          type: integer
+                        utilization:
+                          description: CPU target utilization
+                          minimum: 0
+                          type: integer
+                      required:
+                      - max_replicas
+                      - min_replicas
+                      - utilization
+                      type: object
                     name:
                       description: Name of the node
                       pattern: '[a-z-]*'
