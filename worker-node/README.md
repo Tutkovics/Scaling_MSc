@@ -22,3 +22,24 @@ Successfully tagged tuti/service-graph-simulator:latest
 
 $ docker push tuti/service-graph-simulator 
 ```
+
+```
+Example init  config: 
+-name=front-end \
+-port=80  \
+-cpu=100  \
+-memory=100  \
+-endpoint-url=/instant  \
+-endpoint-delay=10  \
+-endpoint-call=''  \
+-endpoint-cpu=100  \
+-endpoint-url=/chain  \
+-endpoint-delay=20  \
+-endpoint-call='db:36/set'  \
+-endpoint-cpu=200  \
+-endpoint-url=/iterate  \
+-endpoint-delay=30  \
+-endpoint-call='back-end:80/profile'  \
+-endpoint-cpu=300
+
+```

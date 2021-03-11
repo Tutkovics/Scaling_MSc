@@ -1,6 +1,9 @@
 # IDE directory
 .idea/
 
-# PYthon virtualenv directory
+# Python virtualenv directory
 load_script/src/.venv/
 load_script/src/__pycache__/
+
+# Temp files:
+2021-03-11-*

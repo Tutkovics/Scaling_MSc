@@ -80,11 +80,6 @@ func (r *ServicegraphReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, err
 	}
 
-	//fmt.Println("Service Graph: ")
-	//for _, node := range servicegraph.Spec.Nodes {
-	//	fmt.Println("node: ", node.Name)
-	//}
-
 	for _, node := range servicegraph.Spec.Nodes {
 		// Check if the deployment for the node already exists, if not create a new one
 		found := &appsv1.Deployment{}
@@ -162,8 +157,6 @@ func (r *ServicegraphReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 
-		// ? // return ctrl.Result{Requeue: true}, nil
-
 	}
 
 	return ctrl.Result{}, nil
@@ -173,6 +166,9 @@ func (r *ServicegraphReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *ServicegraphReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&diptervv1beta1.Servicegraph{}).
+		Owns(&appsv1.Deployment{}).
+		Owns(&corev1.Service{}).
+		Owns(&autoscalev1.HorizontalPodAutoscaler{}).
 		Complete(r)
 }
 
@@ -197,7 +193,7 @@ func (r *ServicegraphReconciler) deploymentForNode(node *diptervv1beta1.Node, sg
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:   "tuti/service-graph-simulator:v4",
+						Image:   "tuti/service-graph-simulator:latest",
 						Name:    "servicenode",
 						Command: args,
 						Ports: []corev1.ContainerPort{{
@@ -328,11 +324,11 @@ func (r *ServicegraphReconciler) createCommandForNode(node *diptervv1beta1.Node)
 		for _, ca := range ep.CallOuts {
 			tmpArray = append(tmpArray, string(ca.URL))
 		}
-		_ = strings.Join(tmpArray, "__")
+		callOutParsed := strings.Join(tmpArray, "__")
 
 		cmd = append(cmd, fmt.Sprintf("-endpoint-url=%s", ep.Path))
 		cmd = append(cmd, fmt.Sprintf("-endpoint-delay=%d", ep.Delay))
-		cmd = append(cmd, fmt.Sprintf("-endpoint-call='%s'", "pass")) //callOutParsed))
+		cmd = append(cmd, fmt.Sprintf("-endpoint-call='%s'", callOutParsed))
 		cmd = append(cmd, fmt.Sprintf("-endpoint-cpu=%d", ep.CPULoad))
 	}
 

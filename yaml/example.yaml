@@ -24,15 +24,15 @@ spec:
           cpuLoad: 200
           delay: 20
           callouts:
-            # - url: back-end:80/profile
-            - url: db:36/set
+            - url: back-end:80/profile
+            # - url: db:36/set
         - path: /iterate
           cpuLoad: 300
           delay: 30
           callouts:
             - url: back-end:80/profile
-            # - url: monitor:80/index
-
+            - url: db:36/get
+            - url: db:36/set
     - name: back-end
       replicas: 3
       port: 80
@@ -50,7 +50,6 @@ spec:
           delay: 20
           callouts:
             - url: db:36/set
-
     - name: db
       replicas: 1
       port: 36
@@ -61,7 +60,6 @@ spec:
         - path: /get
           cpuLoad: 100
           delay: 10
-
         - path: /set
           cpuLoad: 200
           delay: 20

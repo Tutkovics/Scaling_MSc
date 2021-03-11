@@ -97,9 +97,16 @@ func main() {
 					fmt.Fprintf(w, "<li>Delay time: %d</li>\n", cfg.EndpointsDelay[k])
 					fmt.Fprintf(w, "<li>Call out: %s</li>\n", cfg.EndpointsCall[k])
 					//fmt.Fprintf(w, "\t(%s)\n", strings.Split(cfg.EndpointsCall[k], ";"))
-					if cfg.EndpointsCall[k] != "pass" {
+
+					// Check for empty/only whitespace string
+					call := strings.ReplaceAll(cfg.EndpointsCall[k], "'", "")
+					length := len(strings.TrimSpace(call))
+
+					if length != 0 {
+						fmt.Printf("Callout: '%s' - '%s' --> len: %d", endpoint, cfg.EndpointsCall[k], length)
 						fmt.Fprintf(w, "<ul>")
 						for i, callOut := range strings.Split(cfg.EndpointsCall[k], "__") {
+							callOut = strings.ReplaceAll(callOut, "'", "")
 							fmt.Printf("[CALL_OUT]\t#no%d --> %s\n", i, callOut)
 							url := "http://" + callOut
 							resp, err := http.Get(url)

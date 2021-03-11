@@ -1,7 +1,5 @@
 import logging
 import subprocess
-# import os
-# from spinners import Spinners
 import time
 from halo import Halo
 
@@ -48,7 +46,8 @@ def kubectl(command, arguments):
 
 def load(preheat_time, load_time):
     logging.info("Start 'load()' function")
-
+    # use Fortio to load generate
+    
     logging.info("End 'load()' function")
 
 
@@ -77,6 +76,7 @@ def wait_to_running_pods():
         time.sleep(4)
 
         # get current states by a little shell magic
+        # Todo: use kubectl wait
         cmd = "kubectl get pods | tail -n +2 | awk '!/Running/ {print}'"
         return_param = subprocess.run(cmd, shell=True, universal_newlines=True, capture_output=True)
 
