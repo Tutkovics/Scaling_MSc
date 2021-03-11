@@ -11,8 +11,12 @@ QPS:
   To: 100                       # QPS upper bound
   Granularity: 50               # QPS increment by this number
 Load:
-  Preheat: 1                    # in minute
-  Time: 2                       # in minute
+  Preheat: 0                    # warmup time in seconds
+  Time: 60                      # measurement time in seconds
+  ServiceIP: 192.168.49.2       # IP for our service
+  ServicePort: 30000            # port for our service
+  ServicePath: instant          # path to our service
+  ServiceQuery: ''              # URI's query fragment
 Prometheus:
   IP: 192.168.49.2              # Prometheus IP address
   Port: 123455                  # Prometheus port number

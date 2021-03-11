@@ -10,9 +10,9 @@ def main(config_file):
     """
 
     # read the given config file and store values
-    logging.info("Read config file: %s", config_file)
+    logging.debug("Read config file: %s", config_file)
     config = read_config_file(config_file)
-    logging.info("Config values: %s", config)
+    logging.debug("Config values: %s", config)
     
     orchestrate_measure(config)
     

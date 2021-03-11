@@ -24,7 +24,7 @@ def orchestrate_measure(config):
             kubectl("apply", arg)
 
             # Start loading
-            load(config["load_preheat"], config["load_time"])
+            load(config, qps)
 
             # Delete current service graph
             kubectl("delete", arg)
@@ -44,10 +44,46 @@ def kubectl(command, arguments):
     logging.info("End 'kubectl()' function") 
 
 
-def load(preheat_time, load_time):
-    logging.info("Start 'load()' function")
+def load(config, qps):
     # use Fortio to load generate
+    logging.info("Start 'load()' function")
+
+    # Start spinner to be fancy
+    spinner = Halo(text='Loading', spinner='dots')
+    spinner.start("Fortio measurement is running.")
+
+    if config["load_preheat"] > 0:
+        # Create command to run
+        # eg: fortio load -qps 10 -t 5s -a http://192.168.49.2:30000/instant
+        cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query} ".format(
+            qps = qps,
+            time = config["load_preheat"],
+            ip = config["load_ip"],
+            port = config["load_port"],
+            path = config["load_path"],
+            query = config["load_query"],
+            location = config["result_location"]
+        )
+        logging.debug("Fortio (preheat) full query: %s", cmd)
+        return_param = subprocess.run(cmd, shell=True, universal_newlines=True, capture_output=True)
     
+    # Actually measurement
+    cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query}".format(
+        qps = qps,
+        time = config["load_time"],
+        ip = config["load_ip"],
+        port = config["load_port"],
+        path = config["load_path"],
+        query = config["load_query"],
+        location = config["result_location"]
+    )
+    logging.debug("Fortio full query: %s", cmd)
+    start_time = time.time()
+    return_param = subprocess.run(cmd, shell=True, universal_newlines=True, capture_output=True)
+    end_time = time.time()
+
+    # stop spinner
+    spinner.stop()
     logging.info("End 'load()' function")
 
 
