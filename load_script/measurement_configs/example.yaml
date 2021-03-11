@@ -1,7 +1,7 @@
 Name: Develop-measurement       # Name of the measurement
 Servicegraphs:
-  - ../../yaml/example.yaml     # Measured services config file
-  - ../../yaml/example2.yaml
+  - /home/tutkovics/Scaling_MSc/yaml/example.yaml     # Measured services config file
+  - /home/tutkovics/Scaling_MSc/yaml/example2.yaml
 Result_location: ../results     # Where to write results
 Cluster:                        # Not yet used
   Name: Minikube

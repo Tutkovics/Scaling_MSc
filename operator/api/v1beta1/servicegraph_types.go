@@ -161,8 +161,9 @@ type Endpoint struct {
 // CallOut structure contains additional information to each call out
 type CallOut struct {
 	// Regex for pattern eg: db-user:890/read?from=table#site
-	// +kubebuilder:validation:Pattern="[a-z-]*:[0-9]*/[a-z?=#]*"
+
 	// +kubebuilder:validation:Required
 	// Url to request
 	URL string `json:"url,omitempty"`
+	// todo: +kubebuilder:validation:Pattern="[a-z-]*:[0-9]*/[a-z?=#]*"
 }

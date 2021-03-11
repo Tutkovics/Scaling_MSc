@@ -143,6 +143,27 @@ func (r *ServicegraphReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			}
 		}
 
+		foundSVC := &corev1.Service{}
+		err = r.Get(ctx, types.NamespacedName{Name: node.Name, Namespace: "default"}, foundSVC)
+
+		if err != nil && errors.IsNotFound(err) {
+			svc := r.serviceForNode(node, servicegraph)
+			log.Info("Creating a new SVC", "SVC.Namespace", svc.Namespace, "SVC.Name", svc.Name)
+
+			err = r.Create(ctx, svc)
+			if err != nil {
+				log.Error(err, "Failed to create new SVC", "SVC.Namespace", svc.Namespace, "SVC.Name", svc.Name)
+				return ctrl.Result{}, err
+			}
+			// SVC created successfully - return and requeue
+			return ctrl.Result{Requeue: true}, nil
+		} else if err != nil {
+			log.Error(err, "Failed to get Service")
+			return ctrl.Result{}, err
+		}
+
+		// ? // return ctrl.Result{Requeue: true}, nil
+
 	}
 
 	return ctrl.Result{}, nil
@@ -176,7 +197,7 @@ func (r *ServicegraphReconciler) deploymentForNode(node *diptervv1beta1.Node, sg
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:   "tuti/service-graph-simulator:latest",
+						Image:   "tuti/service-graph-simulator:v4",
 						Name:    "servicenode",
 						Command: args,
 						Ports: []corev1.ContainerPort{{
@@ -281,7 +302,7 @@ func (r *ServicegraphReconciler) serviceForNode(node *diptervv1beta1.Node, sg *d
 		},
 	}
 
-	fmt.Printf("\nSERVICE #### Nodeport: %d ######\n%+v\n", node.NodePort, service)
+	//fmt.Printf("\nSERVICE #### Nodeport: %d ######\n%+v\n", node.NodePort, service)
 
 	// Set Service instance as the owner and controller
 	ctrl.SetControllerReference(sg, service, r.Scheme)
@@ -307,11 +328,11 @@ func (r *ServicegraphReconciler) createCommandForNode(node *diptervv1beta1.Node)
 		for _, ca := range ep.CallOuts {
 			tmpArray = append(tmpArray, string(ca.URL))
 		}
-		callOutParsed := strings.Join(tmpArray, "__")
+		_ = strings.Join(tmpArray, "__")
 
 		cmd = append(cmd, fmt.Sprintf("-endpoint-url=%s", ep.Path))
 		cmd = append(cmd, fmt.Sprintf("-endpoint-delay=%d", ep.Delay))
-		cmd = append(cmd, fmt.Sprintf("-endpoint-call='%s'", callOutParsed))
+		cmd = append(cmd, fmt.Sprintf("-endpoint-call='%s'", "pass")) //callOutParsed))
 		cmd = append(cmd, fmt.Sprintf("-endpoint-cpu=%d", ep.CPULoad))
 	}
 

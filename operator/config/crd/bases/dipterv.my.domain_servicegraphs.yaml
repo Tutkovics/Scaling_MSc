@@ -53,9 +53,7 @@ spec:
                                 to each call out
                               properties:
                                 url:
-                                  description: 'Regex for pattern eg: db-user:890/read?from=table#site
-                                    Url to request'
-                                  pattern: '[a-z-]*:[0-9]*/[a-z?=#]*'
+                                  description: Url to request
                                   type: string
                               type: object
                             type: array

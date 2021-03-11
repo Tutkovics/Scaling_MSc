@@ -14,7 +14,6 @@ def main(config_file):
     config = read_config_file(config_file)
     logging.info("Config values: %s", config)
     
-    
     orchestrate_measure(config)
     
 
