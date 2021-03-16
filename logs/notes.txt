@@ -1,0 +1,27 @@
+# New Namespace
+% kubectl create ns monitor
+
+# Install helm
+$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+$ chmod 700 get_helm.sh
+$ ./get_helm.sh
+
+# Add Prometheus repo and install chart
+% helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 
+% helm search repo prometheus-community 
+% helm pull prometheus-community/kube-prometheus-stack 
+% tar xvf kube-prometheus-stack-14.0.1.tgz 
+% cd kube-prometheus-stack 
+% vim values.yaml 
+#eg: type: NodePort 
+(main)⚡ % helm install prometheus-stack . -n monitor                                                                                ~/Scaling_MSc/helm_charts/kube-prometheus-stack
+NAME: prometheus-stack
+LAST DEPLOYED: Tue Mar 16 20:20:11 2021
+NAMESPACE: monitor
+STATUS: deployed
+REVISION: 1
+NOTES:
+kube-prometheus-stack has been installed. Check its status by running:
+  kubectl --namespace monitor get pods -l "release=prometheus-stack"
+
+Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.

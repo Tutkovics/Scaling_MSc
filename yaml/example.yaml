@@ -18,17 +18,17 @@ spec:
         cpu: 100
       endpoints:
         - path: /instant
-          cpuLoad: 100
-          delay: 10
+          cpuLoad: 10
+          delay: 1
         - path: /chain
-          cpuLoad: 200
-          delay: 20
+          cpuLoad: 20
+          delay: 2
           callouts:
             - url: back-end:80/profile
             # - url: db:36/set
         - path: /iterate
-          cpuLoad: 300
-          delay: 30
+          cpuLoad: 30
+          delay: 3
           callouts:
             - url: back-end:80/profile
             - url: db:36/get
@@ -41,13 +41,13 @@ spec:
         cpu: 200
       endpoints:
         - path: /profile
-          cpuLoad: 100
-          delay: 10
+          cpuLoad: 10
+          delay: 1
           callouts:
             - url: db:36/get
         - path: /create
-          cpuLoad: 200
-          delay: 20
+          cpuLoad: 20
+          delay: 2
           callouts:
             - url: db:36/set
     - name: db
@@ -58,10 +58,10 @@ spec:
         cpu: 300
       endpoints:
         - path: /get
-          cpuLoad: 100
-          delay: 10
+          cpuLoad: 10
+          delay: 1
         - path: /set
-          cpuLoad: 200
-          delay: 20
+          cpuLoad: 20
+          delay: 2
 
 

@@ -19,12 +19,13 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"strconv"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -194,7 +195,7 @@ func (r *ServicegraphReconciler) deploymentForNode(node *diptervv1beta1.Node, sg
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
 						Image:   "tuti/service-graph-simulator:latest",
-						Name:    "servicenode",
+						Name:    node.Name, // from: "servicenode" --> so we can get container resource usage
 						Command: args,
 						Ports: []corev1.ContainerPort{{
 							ContainerPort: int32(node.ContainerPort),

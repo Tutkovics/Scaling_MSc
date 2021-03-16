@@ -1,6 +1,9 @@
 import logging
 import subprocess
 import time
+import requests
+import json
+import urllib
 from halo import Halo
 
 def orchestrate_measure(config):
@@ -84,6 +87,10 @@ def load(config, qps):
 
     # stop spinner
     spinner.stop()
+
+    # Fetch results from Prometheus
+    prometheus_results = fetch_data(start_time, end_time, config)
+    print(prometheus_results)
     logging.info("End 'load()' function")
 
 
@@ -125,11 +132,37 @@ def wait_to_running_pods():
     logging.info("End 'wait_to_running_pods()' function")
     
 
-def fetch_data(prometheus_ip, prometheus_port):
-    pass
-    # logging.info("Start 'load()' function")
+def fetch_data(start_time, end_time, config):
+    logging.info("Start 'fetch_data()' function")
+    logging.debug("Time: %s - %s", start_time, end_time)
+    results = []
 
-    # logging.info("End 'load()' function")
+    prometheus_ip = config["prometheus_ip"]
+    prometheus_port = config["prometheus_port"]
+
+    cpu_query = {"query": "sum(rate(container_cpu_usage_seconds_total{image!='', namespace=~'default|metrics', container!='POD'}[3m])) by (container)",
+                    "start": str(start_time),
+                    "end": str(end_time),
+                    "step": "1",
+                    "timeout": "1000ms"
+    }
+
+    memory_query = {"query": "sum(rate(container_memory_usage_bytes{image!='', namespace=~'default|metrics', container!='POD'}[3m])) by (container)",
+                    "start": str(start_time),
+                    "end": str(end_time),
+                    "step": "1",
+                    "timeout": "1000ms"
+    }
+
+    url = "http://" + str(prometheus_ip) + ":" + str(prometheus_port) + "/api/v1/query_range?"
+
+    cpu_res = json.loads(requests.get(url + urllib.parse.urlencode(cpu_query)).text)
+    memory_res = json.loads(requests.get(url + urllib.parse.urlencode(memory_query)).text)
+
+     
+
+    logging.info("End 'fetch_data()' function")
+    return {"cpu": cpu_res, "memory": memory_res}
 
 def write_results_file(location, results):
     pass
