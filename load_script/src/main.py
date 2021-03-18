@@ -22,7 +22,7 @@ def main(config_file):
 if __name__ == '__main__':
     try:
         # Setup Logging parameters
-        logging.basicConfig(format='%(asctime)s - %(levelname)s : %(message)s', level=logging.INFO)
+        logging.basicConfig(format='%(asctime)s - %(levelname)s : %(message)s', level=logging.DEBUG)
         logging.info("Logger setup finished")
 
         # check if all ready to launch

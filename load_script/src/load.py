@@ -5,6 +5,7 @@ import requests
 import json
 import urllib
 from halo import Halo
+from datetime import date
 
 def orchestrate_measure(config):
     logging.info("Start 'orchestrate_measure()' function")
@@ -90,7 +91,8 @@ def load(config, qps):
 
     # Fetch results from Prometheus
     prometheus_results = fetch_data(start_time, end_time, config)
-    print(prometheus_results)
+    write_results_file(config["result_location"], prometheus_results)
+    
     logging.info("End 'load()' function")
 
 
@@ -135,37 +137,72 @@ def wait_to_running_pods():
 def fetch_data(start_time, end_time, config):
     logging.info("Start 'fetch_data()' function")
     logging.debug("Time: %s - %s", start_time, end_time)
-    results = []
 
+    # Get parameters to Prometheus query
+    cpu_query = {"query": "sum(rate(container_cpu_usage_seconds_total{image!='',namespace=~'default|metrics',container!='POD'}[3m])) by (container)",
+                    "start": str(start_time),
+                    "end": str(end_time),
+                    "step": "1",
+                    "timeout": "1000ms"
+    }
+
+    memory_query = {"query": "sum(rate(container_memory_usage_bytes{image!='',namespace=~'default|metrics',container!='POD'}[3m])) by (container)",
+                    "start": str(start_time),
+                    "end": str(end_time),
+                    "step": "1",
+                    "timeout": "1000ms"
+    }
+
+    pods_query = {"query": "sum(kube_pod_container_status_running{namespace=~'default|metrics',container!='POD'}) by (container)",
+                    "start": str(start_time),
+                    "end": str(end_time),
+                    "step": "1",
+                    "timeout": "1000ms"
+    }
+
+    # Assemble prometheus base query URL
     prometheus_ip = config["prometheus_ip"]
     prometheus_port = config["prometheus_port"]
 
-    cpu_query = {"query": "sum(rate(container_cpu_usage_seconds_total{image!='', namespace=~'default|metrics', container!='POD'}[3m])) by (container)",
-                    "start": str(start_time),
-                    "end": str(end_time),
-                    "step": "1",
-                    "timeout": "1000ms"
-    }
-
-    memory_query = {"query": "sum(rate(container_memory_usage_bytes{image!='', namespace=~'default|metrics', container!='POD'}[3m])) by (container)",
-                    "start": str(start_time),
-                    "end": str(end_time),
-                    "step": "1",
-                    "timeout": "1000ms"
-    }
-
     url = "http://" + str(prometheus_ip) + ":" + str(prometheus_port) + "/api/v1/query_range?"
 
-    cpu_res = json.loads(requests.get(url + urllib.parse.urlencode(cpu_query)).text)
-    memory_res = json.loads(requests.get(url + urllib.parse.urlencode(memory_query)).text)
 
-     
+    # Get full querys for debug reason
+    cpu_full_query = url + urllib.parse.urlencode(cpu_query)
+    memory_full_query = url + urllib.parse.urlencode(memory_query)
+    pods_full_query = url + urllib.parse.urlencode(pods_query)
 
+    # Print full query
+    logging.debug("Full CPU query: %s", cpu_full_query)
+    logging.debug("Full Memory query: %s", memory_full_query)
+    logging.debug("Full Pods query: %s", pods_full_query)
+
+    # Get results from Prometheus
+    cpu_res = json.loads(requests.get(cpu_full_query).text)
+    memory_res = json.loads(requests.get(memory_full_query).text)
+    pods_res = json.loads(requests.get(pods_full_query).text)
+
+     # Log and return results
+    prometheus_results = {"cpu": cpu_res, "memory": memory_res, "pods": pods_res}
+    logging.debug("Results from Prometheus: %s", prometheus_results)
     logging.info("End 'fetch_data()' function")
-    return {"cpu": cpu_res, "memory": memory_res}
+
+    return prometheus_results
+
 
 def write_results_file(location, results):
-    pass
-    # logging.info("Start 'load()' function")
+    logging.info("Start 'write_results_file()' function")
+    logging.debug("Results file location: %s", location)
+    logging.debug("Results to write: %s", results)
 
-    # logging.info("End 'load()' function")
+    # today = date.today()strftime("%Y-%d-%b")
+    current_time = time.strftime("%Y/%b/%d-%H:%M:%S", gmtime())
+
+    filename =  str(current_time) + "-measurement.txt"
+    logging.debug("Resultfile: %s", filename)
+
+
+    with open(filename, 'w') as outfile:
+        json.dump(results, outfile)
+
+    logging.info("End 'write_results_file()' function")
