@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -34,7 +37,7 @@ func readConfigParameters() *config {
 		CPUusage:    50,
 		MemoryUsage: 64,
 		Endpoints: []string{
-			"/",
+			"/index",
 			"/health",
 		},
 		EndpointsCPU: []uint{
@@ -44,6 +47,10 @@ func readConfigParameters() *config {
 		EndpointsDelay: []uint{
 			30,
 			0,
+		},
+		EndpointsCall: []string{
+			"",
+			"asd__basf",
 		},
 	}
 
@@ -69,6 +76,22 @@ func (c *config) check() bool {
 	return false
 }
 
+type Response struct {
+	ServiceName      string    // Name of the service
+	Host             string    // Name of the host who answer
+	ConfigOK         bool      // Results of parameter check
+	CalledEnpoint    string    // Name of the called endpoint
+	CPU              int32     // CPU usage for the endpoint
+	Delay            int32     // Delay time of the endpoint
+	CalloutParameter string    // Commandline parameter given in start
+	Callouts         []string  //[]Response // Responses from callouts
+	ActualDelay      int32     // Actual delay in response
+	Time             time.Time // Current time in response
+	RequestMethod    string    // Method of request
+	RequestURL       *url.URL  // Full URL of request
+	RequestAddress   string    // Remote address from request
+}
+
 func main() {
 	var cfg = readConfigParameters()
 
@@ -88,37 +111,65 @@ func main() {
 				if endp == r.URL.Path {
 					// Sleep not relevant here
 					// time.Sleep(time.Duration(cfg.EndpointsDelay[k]) * time.Millisecond)
+					response := Response{}
+
 					fmt.Printf("[REQUEST]\t%s\n", endp)
 					fmt.Fprintf(w, "<h1>Hello from: %s!</h1><hl>\n", cfg.Name)
+					response.ServiceName = cfg.Name
 					fmt.Fprintln(w, "<h3>Config</h3><ul>")
 					fmt.Fprintf(w, "<li>Config values: %t</li>\n", cfg.check())
+					response.ConfigOK = cfg.check()
 					fmt.Fprintf(w, "<li>Endpoint: %s</li>\n", endp)
+					response.CalledEnpoint = endp
 					fmt.Fprintf(w, "<li>CPU usage: %d</li>\n", cfg.EndpointsCPU[k])
+					response.CPU = int32(cfg.EndpointsCPU[k])
 					fmt.Fprintf(w, "<li>Delay time: %d</li>\n", cfg.EndpointsDelay[k])
+					response.Delay = int32(cfg.EndpointsDelay[k])
 					fmt.Fprintf(w, "<li>Call out: %s</li>\n", cfg.EndpointsCall[k])
-					//fmt.Fprintf(w, "\t(%s)\n", strings.Split(cfg.EndpointsCall[k], ";"))
+					response.CalloutParameter = cfg.EndpointsCall[k]
 
-					// Check for empty/only whitespace string
+					// Remove ' character if get from command line
 					call := strings.ReplaceAll(cfg.EndpointsCall[k], "'", "")
+					// Check for empty/only whitespace string
 					length := len(strings.TrimSpace(call))
 
 					if length != 0 {
 						fmt.Printf("Callout: '%s' - '%s' --> len: %d", endpoint, cfg.EndpointsCall[k], length)
 						fmt.Fprintf(w, "<ul>")
-						for i, callOut := range strings.Split(cfg.EndpointsCall[k], "__") {
+
+						// Split callout parameter by separate character: '__'
+						calloutStringArray := strings.Split(cfg.EndpointsCall[k], "__")
+
+						// Create array to collect callout responses
+						calloutResponses := make([]string, len(calloutStringArray))
+
+						for i, callOut := range calloutStringArray {
 							callOut = strings.ReplaceAll(callOut, "'", "")
 							fmt.Printf("[CALL_OUT]\t#no%d --> %s\n", i, callOut)
 							url := "http://" + callOut
 							resp, err := http.Get(url)
 
 							if err != nil {
-								fmt.Fprintf(w, "<li>%d: <b>%s</b>: Oops, something went wrong</li>\n", i, callOut)
+								calloutResponses = append(calloutResponses, "Oops, calling out failed")
 							} else {
+								// Convert response body to string
+								buf := new(strings.Builder)
+								_, err := io.Copy(buf, resp.Body)
+								if err != nil {
+									// Convertion failed
+									calloutResponses = append(calloutResponses, "Oops, failed to convert response to string")
+								} else {
+									// Convertion was successfull
+									calloutResponses = append(calloutResponses, string(buf.String()))
+								}
+
 								fmt.Fprintf(w, "<li>%d: <b>%s</b>: %s</li>\n", i, callOut, resp.Status)
 							}
 
 						}
 						fmt.Fprintf(w, "</ul>")
+
+						response.Callouts = calloutResponses
 					}
 					fmt.Fprintln(w, "</ul>")
 
@@ -143,11 +194,23 @@ func main() {
 					// Give more information about request/response
 					fmt.Fprintf(w, "<h3>Info</h3>\n<ul>\n")
 					fmt.Fprintf(w, "<li>Time: %s</li>\n", time.Now())
+					response.Time = time.Now()
 					fmt.Fprintf(w, "<li>Method: %s</li>\n", r.Method)
+					response.RequestMethod = r.Method
 					fmt.Fprintf(w, "<li>URL: %s</li>\n", r.URL)
+					response.RequestURL = r.URL
 					fmt.Fprintf(w, "<li>RemoteAddr: %s</li>\n", r.RemoteAddr)
+					response.RequestAddress = r.RemoteAddr
 					fmt.Fprintf(w, "<li>Host: %s</li>\n", r.Host)
+					response.Host = r.Host
 					fmt.Fprintln(w, "</ul>")
+
+					responseJson, err := json.Marshal(response)
+
+					if err != nil {
+						fmt.Println(err)
+					}
+					fmt.Fprintf(w, "json: %s", string(responseJson))
 				}
 
 			}
@@ -168,7 +231,6 @@ func main() {
 	})
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
-
 		log.Fatal(err)
 	}
 

@@ -1,14 +1,13 @@
 # IDE directory
 .idea/
+.vscode/
 
 # Python virtualenv directory
 load_script/src/.venv/
 load_script/src/__pycache__/
 
-# Temp files:
-2021-03-11-*
-
 # Not upload test result 
 load_script/results/
+
 # Helm charts
 helm_charts/

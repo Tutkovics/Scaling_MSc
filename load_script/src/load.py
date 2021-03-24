@@ -92,7 +92,7 @@ def load(config, qps):
     # Fetch results from Prometheus
     prometheus_results = fetch_data(start_time, end_time, config)
     write_results_file(config["result_location"], prometheus_results)
-    
+
     logging.info("End 'load()' function")
 
 
@@ -196,7 +196,7 @@ def write_results_file(location, results):
     logging.debug("Results to write: %s", results)
 
     # today = date.today()strftime("%Y-%d-%b")
-    current_time = time.strftime("%Y/%b/%d-%H:%M:%S", gmtime())
+    current_time = time.strftime("%Y.%b.%d.-%H:%M:%S", time.gmtime())
 
     filename =  str(current_time) + "-measurement.txt"
     logging.debug("Resultfile: %s", filename)
