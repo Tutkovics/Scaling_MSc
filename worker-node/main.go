@@ -41,8 +41,8 @@ func readConfigParameters() *config {
 			"/health",
 		},
 		EndpointsCPU: []uint{
-			200,
-			10,
+			1, //200,
+			1,
 		},
 		EndpointsDelay: []uint{
 			30,
@@ -77,19 +77,19 @@ func (c *config) check() bool {
 }
 
 type Response struct {
-	ServiceName      string    // Name of the service
-	Host             string    // Name of the host who answer
-	ConfigOK         bool      // Results of parameter check
-	CalledEnpoint    string    // Name of the called endpoint
-	CPU              int32     // CPU usage for the endpoint
-	Delay            int32     // Delay time of the endpoint
-	CalloutParameter string    // Commandline parameter given in start
-	Callouts         []string  //[]Response // Responses from callouts
-	ActualDelay      int32     // Actual delay in response
-	Time             time.Time // Current time in response
-	RequestMethod    string    // Method of request
-	RequestURL       *url.URL  // Full URL of request
-	RequestAddress   string    // Remote address from request
+	ServiceName      string    `json:"service"`          // Name of the service
+	Host             string    `json:"host"`             // Name of the host who answer
+	ConfigOK         bool      `json:"config"`           // Results of parameter check
+	CalledEnpoint    string    `json:"endpoint"`         // Name of the called endpoint
+	CPU              int32     `json:"cpu"`              // CPU usage for the endpoint
+	Delay            int32     `json:"delay"`            // Delay time of the endpoint
+	CalloutParameter string    `json:"calloutparameter"` // Commandline parameter given in start
+	Callouts         []string  `json:"callouts"`         //[]Response // Responses from callouts
+	ActualDelay      int32     `json:"actualDelay"`      // Actual delay in response
+	Time             time.Time `json:"time"`             // Current time in response
+	RequestMethod    string    `json:"requestMethod"`    // Method of request
+	RequestURL       *url.URL  `json:"requestURL"`       // Full URL of request
+	RequestAddress   string    `json:"requestAddr"`      // Remote address from request
 }
 
 func main() {
@@ -103,6 +103,10 @@ func main() {
 	for i, endpoint := range cfg.Endpoints {
 		fmt.Printf("%d --> %s --> \n", i, endpoint)
 		http.HandleFunc(endpoint, func(w http.ResponseWriter, r *http.Request) {
+			// Set response writer to json
+			w.Header().Set("Content-Type", "application/json")
+
+			// Log request to stdout
 			fmt.Printf("[REQUEST-INCOME] %s --> %s\n", r.URL, r.URL.Path)
 			start := time.Now()
 			//foundEndpoint := false
@@ -111,112 +115,95 @@ func main() {
 				if endp == r.URL.Path {
 					// Sleep not relevant here
 					// time.Sleep(time.Duration(cfg.EndpointsDelay[k]) * time.Millisecond)
-					response := Response{}
 
-					fmt.Printf("[REQUEST]\t%s\n", endp)
-					fmt.Fprintf(w, "<h1>Hello from: %s!</h1><hl>\n", cfg.Name)
+					// Get parameters to response
+					response := Response{}
 					response.ServiceName = cfg.Name
-					fmt.Fprintln(w, "<h3>Config</h3><ul>")
-					fmt.Fprintf(w, "<li>Config values: %t</li>\n", cfg.check())
 					response.ConfigOK = cfg.check()
-					fmt.Fprintf(w, "<li>Endpoint: %s</li>\n", endp)
 					response.CalledEnpoint = endp
-					fmt.Fprintf(w, "<li>CPU usage: %d</li>\n", cfg.EndpointsCPU[k])
 					response.CPU = int32(cfg.EndpointsCPU[k])
-					fmt.Fprintf(w, "<li>Delay time: %d</li>\n", cfg.EndpointsDelay[k])
 					response.Delay = int32(cfg.EndpointsDelay[k])
-					fmt.Fprintf(w, "<li>Call out: %s</li>\n", cfg.EndpointsCall[k])
 					response.CalloutParameter = cfg.EndpointsCall[k]
 
 					// Remove ' character if get from command line
 					call := strings.ReplaceAll(cfg.EndpointsCall[k], "'", "")
 					// Check for empty/only whitespace string
-					length := len(strings.TrimSpace(call))
+					//length := len(strings.TrimSpace(call))
 
-					if length != 0 {
-						fmt.Printf("Callout: '%s' - '%s' --> len: %d", endpoint, cfg.EndpointsCall[k], length)
-						fmt.Fprintf(w, "<ul>")
+					// Split callout parameter by separate character: '__'
+					calloutStringArray := strings.Split(call, "__")
 
-						// Split callout parameter by separate character: '__'
-						calloutStringArray := strings.Split(cfg.EndpointsCall[k], "__")
+					// Create array to collect callout responses
+					calloutResponses := make([]string, len(calloutStringArray))
 
-						// Create array to collect callout responses
-						calloutResponses := make([]string, len(calloutStringArray))
+					// Make callout to async
+					var waitgroupToCallouts sync.WaitGroup
+					waitgroupToCallouts.Add(len(calloutStringArray))
 
-						for i, callOut := range calloutStringArray {
-							callOut = strings.ReplaceAll(callOut, "'", "")
-							fmt.Printf("[CALL_OUT]\t#no%d --> %s\n", i, callOut)
-							url := "http://" + callOut
-							resp, err := http.Get(url)
-
-							if err != nil {
-								calloutResponses = append(calloutResponses, "Oops, calling out failed")
-							} else {
-								// Convert response body to string
-								buf := new(strings.Builder)
-								_, err := io.Copy(buf, resp.Body)
-								if err != nil {
-									// Convertion failed
-									calloutResponses = append(calloutResponses, "Oops, failed to convert response to string")
-								} else {
-									// Convertion was successfull
-									calloutResponses = append(calloutResponses, string(buf.String()))
-								}
-
-								fmt.Fprintf(w, "<li>%d: <b>%s</b>: %s</li>\n", i, callOut, resp.Status)
-							}
-
-						}
-						fmt.Fprintf(w, "</ul>")
-
-						response.Callouts = calloutResponses
+					for i, callOut := range calloutStringArray {
+						go calloutFunction(i, callOut, calloutResponses, &waitgroupToCallouts)
 					}
-					fmt.Fprintln(w, "</ul>")
+
+					// for i, callOut := range calloutStringArray {
+					// 	callOut = strings.ReplaceAll(callOut, "'", "")
+					// 	fmt.Printf("[CALL_OUT]\t#no%d --> %s\n", i, callOut)
+					// 	url := "http://" + callOut
+					// 	resp, err := http.Get(url)
+
+					// 	if err != nil {
+					// 		calloutResponses = append(calloutResponses, "Oops, calling out failed")
+					// 	} else {
+					// 		// Convert response body to string
+					// 		buf := new(strings.Builder)
+					// 		_, err := io.Copy(buf, resp.Body)
+					// 		if err != nil {
+					// 			// Convertion failed
+					// 			calloutResponses = append(calloutResponses, "Oops, failed to convert response to string")
+					// 		} else {
+					// 			// Convertion was successfull
+					// 			calloutResponses = append(calloutResponses, string(buf.String()))
+					// 		}
+
+					// 	}
+
+					// }
 
 					// Generate CPU usage
 					// Create waitgroup to wait all calculations done
 					var waitgroup sync.WaitGroup
 					waitgroup.Add(int(cfg.EndpointsCPU[k]))
 					for i := 0; i < int(cfg.EndpointsCPU[k]); i++ {
-						go algo(600, &waitgroup)
+						go AlgorithmToUseCPU(600, &waitgroup)
 					}
 					waitgroup.Wait()
+
+					// Wait until all callout response get answer
+					waitgroupToCallouts.Wait()
+					// Then add to json
+					response.Callouts = calloutResponses
 
 					// After CPU calcualation wait if the delay time not passed
 					waitTime := (time.Duration(cfg.EndpointsDelay[k]) * time.Millisecond) - time.Now().Sub(start)
 
+					// Wait more if necessary
 					if waitTime > 0 {
 						time.Sleep(waitTime)
-					} else {
-						fmt.Fprintf(w, "<p>CPU calculation took more time than delay time (%s)</p>\n", waitTime)
 					}
 
 					// Give more information about request/response
-					fmt.Fprintf(w, "<h3>Info</h3>\n<ul>\n")
-					fmt.Fprintf(w, "<li>Time: %s</li>\n", time.Now())
 					response.Time = time.Now()
-					fmt.Fprintf(w, "<li>Method: %s</li>\n", r.Method)
 					response.RequestMethod = r.Method
-					fmt.Fprintf(w, "<li>URL: %s</li>\n", r.URL)
 					response.RequestURL = r.URL
-					fmt.Fprintf(w, "<li>RemoteAddr: %s</li>\n", r.RemoteAddr)
 					response.RequestAddress = r.RemoteAddr
-					fmt.Fprintf(w, "<li>Host: %s</li>\n", r.Host)
 					response.Host = r.Host
-					fmt.Fprintln(w, "</ul>")
 
-					responseJson, err := json.Marshal(response)
-
-					if err != nil {
-						fmt.Println(err)
-					}
-					fmt.Fprintf(w, "json: %s", string(responseJson))
+					json.NewEncoder(w).Encode(response)
 				}
 
 			}
 
 			// send response time
-			fmt.Fprintf(w, "\nResponse time: %s\n", time.Now().Sub(start))
+			//fmt.Fprintf(w, "\nResponse time: %s\n", time.Now().Sub(start))
 		})
 	}
 
@@ -237,7 +224,7 @@ func main() {
 }
 
 // Sieve of Eratosthenes
-func algo(number int, waitgroup *sync.WaitGroup) {
+func AlgorithmToUseCPU(number int, waitgroup *sync.WaitGroup) {
 	max := number
 	numbers := make([]bool, max+1)
 	// Set values to ture
@@ -263,4 +250,31 @@ func algo(number int, waitgroup *sync.WaitGroup) {
 	}
 
 	waitgroup.Done()
+}
+
+func calloutFunction(i int, callOut string, calloutResponses []string, waitgroupToCallouts *sync.WaitGroup) {
+	fmt.Printf("[calloutFunction] New async callout started: '%s' --> '%s'\n", i, callOut)
+
+	callOut = strings.ReplaceAll(callOut, "'", "")
+	fmt.Printf("[CALL_OUT]\t#no%d --> %s\n", i, callOut)
+	url := "http://" + callOut
+	resp, err := http.Get(url)
+
+	if err != nil {
+		calloutResponses = append(calloutResponses, "Oops, calling out failed")
+	} else {
+		// Convert response body to string
+		buf := new(strings.Builder)
+		_, err := io.Copy(buf, resp.Body)
+		if err != nil {
+			// Convertion failed
+			calloutResponses = append(calloutResponses, "Oops, failed to convert response to string")
+		} else {
+			// Convertion was successfull
+			calloutResponses = append(calloutResponses, string(buf.String()))
+		}
+
+	}
+
+	waitgroupToCallouts.Done()
 }
