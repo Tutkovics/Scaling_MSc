@@ -1,0 +1,41 @@
+[local machine]
+mkdir kubernetes_install 
+git clone git@github.com:kubernetes-sigs/kubespray.git
+python3 -V
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+sudo python3 get-pip.py
+pip3 -V
+pip3 install virtualenv
+virtualenv -p /usr/bin/python3 venv
+source venv/bin/activate
+
+sudo pip3 install -r requirements.txt
+cp -r inventory/sample inventory/dipterv
+declare -a IPS=(10.151.103.1 10.151.103.2 10.151.103.3)
+python3 -m pip install ruamel.yaml
+CONFIG_FILE=inventory/dipterv/hosts.yaml python3 contrib/inventory_builder/inventory.py ${IPS[@]}
+
+
+vim inventory/dipterv/group_vars/k8s-cluster/k8s-cluster.yml
+kube_network_plugin: cilium
+## Automatically renew K8S control plane certificates on first Monday of each month
+auto_renew_certificates: true
+
+
+vim inventory/dipterv/group_vars/k8s-cluster/addons.yml
+helm_enabled: true
+# Metrics Server deployment
+metrics_server_enabled: true
+metrics_server_kubelet_insecure_tls: true
+# Cert manager deployment
+cert_manager_enabled: true
+cert_manager_namespace: "cert-manager"
+
+vim inventory/dipterv/group_vars/all/all.yml
+use_localhost_as_kubeapi_loadbalancer: true
+
+vim roles/network_plugin/cilium/defaults/main.yml 
+
+[all hosts]
+# echo 1 > /proc/sys/net/ipv4/ip_forward 
+cat /proc/sys/net/ipv4/ip_forward

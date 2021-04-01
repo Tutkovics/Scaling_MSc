@@ -25,3 +25,12 @@ kube-prometheus-stack has been installed. Check its status by running:
   kubectl --namespace monitor get pods -l "release=prometheus-stack"
 
 Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
+
+
+
+### Linkek 2021.03.25. konzultációról ###
+https://redis.io/topics/cluster-tutorial
+https://en.wikipedia.org/wiki/Amdahl's_law
+https://wso2.com/blog/research/scalability-modeling-using-universal-scalability-law
+
+CNI: mindegy, de inkább Cilium

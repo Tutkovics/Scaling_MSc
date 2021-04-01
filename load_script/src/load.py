@@ -139,21 +139,25 @@ def fetch_data(start_time, end_time, config):
     logging.debug("Time: %s - %s", start_time, end_time)
 
     # Get parameters to Prometheus query
-    cpu_query = {"query": "sum(rate(container_cpu_usage_seconds_total{image!='',namespace=~'default|metrics',container!='POD'}[3m])) by (container)",
+    # New query: container_cpu_usage_seconds_total{namespace='default', container!='POD'}
+    # Old: sum(rate(container_cpu_usage_seconds_total{image!='',namespace=~'default|metrics',container!='POD'}[3m])) by (container)
+    cpu_query = {"query": "container_cpu_usage_seconds_total{image!='',namespace=~'default|metrics',container!='POD'}",
                     "start": str(start_time),
                     "end": str(end_time),
                     "step": "1",
                     "timeout": "1000ms"
     }
 
-    memory_query = {"query": "sum(rate(container_memory_usage_bytes{image!='',namespace=~'default|metrics',container!='POD'}[3m])) by (container)",
+    # Old: sum(rate(container_memory_usage_bytes{image!='',namespace=~'default|metrics',container!='POD'}[3m])) by (container)
+    memory_query = {"query": "container_memory_usage_bytes{image!='',namespace=~'default|metrics',container!='POD'}",
                     "start": str(start_time),
                     "end": str(end_time),
                     "step": "1",
                     "timeout": "1000ms"
     }
 
-    pods_query = {"query": "sum(kube_pod_container_status_running{namespace=~'default|metrics',container!='POD'}) by (container)",
+    # Old: sum(kube_pod_container_status_running{namespace=~'default|metrics',container!='POD'}) by (container)
+    pods_query = {"query": "kube_pod_container_status_running{namespace=~'default|metrics',container!='POD'}",
                     "start": str(start_time),
                     "end": str(end_time),
                     "step": "1",
@@ -198,7 +202,7 @@ def write_results_file(location, results):
     # today = date.today()strftime("%Y-%d-%b")
     current_time = time.strftime("%Y.%b.%d.-%H:%M:%S", time.gmtime())
 
-    filename =  str(current_time) + "-measurement.txt"
+    filename =  str(current_time) + "-measurement.json"
     logging.debug("Resultfile: %s", filename)
 
 

@@ -11,3 +11,6 @@ load_script/results/
 
 # Helm charts
 helm_charts/
+
+# Kubernetes install dir
+kubernetes_install/
