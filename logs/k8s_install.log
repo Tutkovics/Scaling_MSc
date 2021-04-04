@@ -20,6 +20,7 @@ vim inventory/dipterv/group_vars/k8s-cluster/k8s-cluster.yml
 kube_network_plugin: cilium
 ## Automatically renew K8S control plane certificates on first Monday of each month
 auto_renew_certificates: true
+cluster_name: dipterv.cluster.local
 
 
 vim inventory/dipterv/group_vars/k8s-cluster/addons.yml
@@ -36,6 +37,15 @@ use_localhost_as_kubeapi_loadbalancer: true
 
 vim roles/network_plugin/cilium/defaults/main.yml 
 
+vim inventory/dipterv/inventory.ini
+[bastion] 
+bastion ansible_host=152.66.211.2
+(Nem így telepítettem) 
+
 [all hosts]
 # echo 1 > /proc/sys/net/ipv4/ip_forward 
 cat /proc/sys/net/ipv4/ip_forward
+
+Végül a /inventory/dipterv és alatta lévő konfigfájlokat a dipterv1 node-on hoztam létre és futtattam az ansible playbook-ot. Ezzel a set-uppal működött rendben. 
+Jumper Server-rel sehogy nem akart összejönni, pedig már mindenhova minden kulcsot és konfigot beállítottam.
+Install time
