@@ -48,4 +48,100 @@ cat /proc/sys/net/ipv4/ip_forward
 
 Végül a /inventory/dipterv és alatta lévő konfigfájlokat a dipterv1 node-on hoztam létre és futtattam az ansible playbook-ot. Ezzel a set-uppal működött rendben. 
 Jumper Server-rel sehogy nem akart összejönni, pedig már mindenhova minden kulcsot és konfigot beállítottam.
-Install time
+```
+ansible-playbook -i inventory/dipterv/hosts.yaml  --become --become-user=root cluster.yml
+```
+Install time: 1 óra 54 perc --> sikertelene modeprobe nem ment
+
+New try after: modprobe nf_conntrack
+
+Change Cilium to Calico
+
+Try again (change kubectl_localhost, kubeconfig_localhost)
+
+Delete kubespray install
+ansible-playbook -i inventory/dipterv/hosts.yaml reset.yml --become --become-user=root
+
+## Kubeadm install ## 
+tutkovics@node1:~/Downloads$ sudo kubeadm init --config=kubeadm-config.yaml | tee kubeadm-init.out                                                                   
+W0406 21:02:38.607005    4522 common.go:77] your configuration file uses a deprecated API spec: "kubeadm.k8s.io/v1beta1". Please use 'kubeadm config migrate --old-co
+nfig old.yaml --new-config new.yaml', which will write the new, similar spec using a newer API version.                                                              
+[init] Using Kubernetes version: v1.20.5                                                                                                                             
+[preflight] Running pre-flight checks                                                                                                                                
+        [WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kube
+rnetes.io/docs/setup/cri/                                                                                                                                            
+        [WARNING SystemVerification]: this Docker version is not on the list of validated versions: 20.10.5. Latest validated version: 19.03                         
+        [WARNING SystemVerification]: missing optional cgroups: hugetlb                                                                                              
+        [WARNING Hostname]: hostname "node1" could not be reached                                                                                                    
+        [WARNING Hostname]: hostname "node1": lookup node1 on 152.66.208.1:53: no such host                                                                          
+[preflight] Pulling images required for setting up a Kubernetes cluster  
+...
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of control-plane nodes by copying certificate authorities                                                                               
+and service account keys on each node and then running the following as root:
+
+  kubeadm join apiserver.dipterv1:6443 --token l2eh71.tun5gdbbny7htf7x \
+    --discovery-token-ca-cert-hash sha256:05195e22f0f3a6925da8a0454c1b66cda0256162f7076e8890765407a83ddd13 \                                                        
+    --control-plane
+
+Then you can join any number of worker nodes by running the following on each as root:                                                                              
+
+kubeadm join apiserver.dipterv1:6443 --token l2eh71.tun5gdbbny7htf7x \
+    --discovery-token-ca-cert-hash sha256:05195e22f0f3a6925da8a0454c1b66cda0256162f7076e8890765407a83ddd13
+
+
+Rossz (külső ip) címet hirdetett a master + ki is fogyott a  memóriából
+kubeadm reset
+
+és újra az egész
+
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of control-plane nodes by copying certificate authorities
+and service account keys on each node and then running the following as root:
+
+  kubeadm join apiserver.dipterv1:6443 --token 0d9jht.08yw6uq9y1iix9d4 \
+    --discovery-token-ca-cert-hash sha256:f433e44c6c1099f43110f5    b7214af466dd85e0f7c06ea5cf901ccbab2fc6db58 \                                                                    
+    --control-plane
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join apiserver.dipterv1:6443 --token 0d9jht.08yw6uq9y1iix9d4 \
+    --discovery-token-ca-cert-hash sha256:f433e44c6c1099f43110f5b7214af466dd85e0f7c06ea5cf901ccbab2fc6db58   
+
+utkovics@node1:~/Downloads$ kubectl get nodes 
+NAME    STATUS   ROLES                  AGE     VERSION
+node1   Ready    control-plane,master   12m     v1.20.5
+node2   Ready    <none>                 6m1s    v1.20.5
+node3   Ready    <none>                 6m36s   v1.20.5
+
