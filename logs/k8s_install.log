@@ -145,3 +145,98 @@ node1   Ready    control-plane,master   12m     v1.20.5
 node2   Ready    <none>                 6m1s    v1.20.5
 node3   Ready    <none>                 6m36s   v1.20.5
 
+## 3. kubeadm install ##
+[addons] Applied essential addon: CoreDNS
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes control-plane has initialized successfully!
+
+To start using your cluster, you need to run the following as a regular user:
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/
+
+You can now join any number of control-plane nodes by copying certificate authorities
+and service account keys on each node and then running the following as root:
+
+  kubeadm join apiserver.dipterv1:6443 --token qc4fyo.f014z28sso9t8h2f \
+    --discovery-token-ca-cert-hash sha256:ec4f76a12bc3d40f0d77e3f6841a843fbbe5229272fba96ea3ca1d08e7f92d4e \                                                                                                        
+    --control-plane
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join apiserver.dipterv1:6443 --token qc4fyo.f014z28sso9t8h2f \
+    --discovery-token-ca-cert-hash sha256:ec4f76a12bc3d40f0d77e3f6841a843fbbe5229272fba96ea3ca1d08e7f92d4e 
+
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+## Number sok install ##
+
+sudo kubeadm init --config=kubeadm-config-new.yaml | tee kubeadm-init.out.4
+sudo iptables -F KUBE-FORWARD
+sudo iptables -F KUBE-SERVICES
+sudo iptables -F KUBE-EXTERNAL-SERVICES
+sudo iptables -F KUBE-PROXY-CANARY
+sudo iptables -F KUBE-KUBELET-CANARY
+sudo iptables -F KUBE-FIREWALL
+
+
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+You can now join any number of control-plane nodes by copying certificate authorities
+and service account keys on each node and then running the following as root:
+
+  kubeadm join apiserver.dipterv1:6443 --token qc4fyo.f014z28sso9t8h2f \
+    --discovery-token-ca-cert-hash sha256:d69f50815debd4188e45e1cdca40927671c54aad0b51b0238e44339fa3c8bd58 \                                                                                                        
+    --control-plane
+
+Then you can join any number of worker nodes by running the following on each as root:
+
+kubeadm join apiserver.dipterv1:6443 --token qc4fyo.f014z28sso9t8h2f \
+    --discovery-token-ca-cert-hash sha256:d69f50815debd4188e45e1cdca40927671c54aad0b51b0238e44339fa3c8bd58    
+
+NAMESPACE     NAME                            READY   STATUS    RESTARTS   AGE     IP             NODE    NOMINATED NODE   READINESS GATES
+kube-system   coredns-74ff55c5b-czjzw         1/1     Running   0          5m2s    172.16.1.2     node2   <none>           <none>
+kube-system   coredns-74ff55c5b-d7mnd         1/1     Running   0          5m2s    172.16.1.3     node2   <none>           <none>
+kube-system   etcd-node1                      1/1     Running   0          5m7s    10.151.103.1   node1   <none>           <none>
+kube-system   kube-apiserver-node1            1/1     Running   0          5m7s    10.151.103.1   node1   <none>           <none>
+kube-system   kube-controller-manager-node1   1/1     Running   0          5m7s    10.151.103.1   node1   <none>           <none>
+kube-system   kube-flannel-ds-85qll           1/1     Running   0          2m26s   10.151.103.1   node1   <none>           <none>
+kube-system   kube-flannel-ds-cjxsp           1/1     Running   0          56s     10.151.103.3   node3   <none>           <none>
+kube-system   kube-flannel-ds-vzrp4           1/1     Running   0          70s     10.151.103.2   node2   <none>           <none>
+kube-system   kube-proxy-cltr2                1/1     Running   0          56s     10.151.103.3   node3   <none>           <none>
+kube-system   kube-proxy-fkd9g                1/1     Running   0          70s     10.151.103.2   node2   <none>           <none>
+kube-system   kube-proxy-pzmlk                1/1     Running   0          5m2s    10.151.103.1   node1   <none>           <none>
+kube-system   kube-scheduler-node1            1/1     Running   0          5m7s    10.151.103.1   node1   <none>           <none>
+
+## Futó VM, reinstall előtt ##
+tutkovics@node1:~$ ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: ens192: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 00:50:56:a8:42:77 brd ff:ff:ff:ff:ff:ff
+    inet 10.151.103.1/16 brd 10.151.255.255 scope global dynamic ens192
+       valid_lft 5601sec preferred_lft 5601sec
+    inet6 fe80::250:56ff:fea8:4277/64 scope link 
+       valid_lft forever preferred_lft forever
+3: ens224: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP group default qlen 1000
+    link/ether 00:50:56:a8:2c:24 brd ff:ff:ff:ff:ff:ff
+    inet 152.66.211.2/24 brd 152.66.211.255 scope global dynamic noprefixroute ens224
+       valid_lft 6536sec preferred_lft 6536sec
+    inet6 fe80::250:56ff:fea8:2c24/64 scope link noprefixroute 
+       valid_lft forever preferred_lft forever

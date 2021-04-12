@@ -1,0 +1,138 @@
+Try to install on new VMs
+
+- setting up networks
+- disable swap: https://www.tecmint.com/disable-swap-partition-in-centos-ubuntu/
+- https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#letting-iptables-see-bridged-traffic
+- Install Docker (https://docs.docker.com/engine/install/linux-postinstall/)
+- Install kubectl/kubeadm/kubelet (https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/#installing-kubeadm-kubelet-and-kubectl)
+
+sudo kubeadm init --apiserver-advertise-address 152.66.211.2 --pod-network-cidr=10.244.0.0/16
+[init] Using Kubernetes version: v1.21.0
+[preflight] Running pre-flight checks
+        [WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
+        [WARNING SystemVerification]: missing optional cgroups: hugetlb
+[preflight] Pulling images required for setting up a Kubernetes cluster
+[preflight] This might take a minute or two, depending on the speed of your internet connection
+[preflight] You can also perform this action in beforehand using 'kubeadm config images pull'
+[certs] Using certificateDir folder "/etc/kubernetes/pki"
+[certs] Generating "ca" certificate and key
+[certs] Generating "apiserver" certificate and key
+[certs] apiserver serving cert is signed for DNS names [dipterv1 kubernetes kubernetes.default kubernetes.default.svc kubernetes.default.svc.cluster.local] and IPs [10.96.0.1 152.66.211.2]
+[certs] Generating "apiserver-kubelet-client" certificate and key
+[certs] Generating "front-proxy-ca" certificate and key
+[certs] Generating "front-proxy-client" certificate and key
+[certs] Generating "etcd/ca" certificate and key
+[certs] Generating "etcd/server" certificate and key
+[certs] etcd/server serving cert is signed for DNS names [dipterv1 localhost] and IPs [152.66.211.2 127.0.0.1 ::1]
+[certs] Generating "etcd/peer" certificate and key
+[certs] etcd/peer serving cert is signed for DNS names [dipterv1 localhost] and IPs [152.66.211.2 127.0.0.1 ::1]
+[certs] Generating "etcd/healthcheck-client" certificate and key
+[certs] Generating "apiserver-etcd-client" certificate and key
+[certs] Generating "sa" key and public key
+[kubeconfig] Using kubeconfig folder "/etc/kubernetes"
+[kubeconfig] Writing "admin.conf" kubeconfig file
+[kubeconfig] Writing "kubelet.conf" kubeconfig file
+[kubeconfig] Writing "controller-manager.conf" kubeconfig file
+[kubeconfig] Writing "scheduler.conf" kubeconfig file
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Starting the kubelet
+[control-plane] Using manifest folder "/etc/kubernetes/manifests"
+[control-plane] Creating static Pod manifest for "kube-apiserver"
+[control-plane] Creating static Pod manifest for "kube-controller-manager"
+[control-plane] Creating static Pod manifest for "kube-scheduler"
+[etcd] Creating static Pod manifest for local etcd in "/etc/kubernetes/manifests"
+[wait-control-plane] Waiting for the kubelet to boot up the control plane as static Pods from directory "/etc/kubernetes/manifests". This can take up to 4m0s
+[kubelet-check] Initial timeout of 40s passed.                                                            
+[apiclient] All control plane components are healthy after 73.508444 seconds                              
+[upload-config] Storing the configuration used in ConfigMap "kubeadm-config" in the "kube-system" Namespace
+[kubelet] Creating a ConfigMap "kubelet-config-1.21" in namespace kube-system with the configuration for the kubelets in the cluster
+[upload-certs] Skipping phase. Please see --upload-certs                                                 
+[mark-control-plane] Marking the node dipterv1 as control-plane by adding the labels: [node-role.kubernetes.io/master(deprecated) node-role.kubernetes.io/control-plane node.kubernetes.io/exclude-from-external-load-balancers]
+[mark-control-plane] Marking the node dipterv1 as control-plane by adding the taints [node-role.kubernetes.io/master:NoSchedule]
+[bootstrap-token] Using token: 1wjxog.7fgzkq5fv11jq0re                                                   
+[bootstrap-token] Configuring bootstrap tokens, cluster-info ConfigMap, RBAC Roles                       
+[bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to get nodes                      
+[bootstrap-token] configured RBAC rules to allow Node Bootstrap tokens to post CSRs in order for nodes to
+get long term certificate credentials
+[bootstrap-token] configured RBAC rules to allow the csrapprover controller automatically approve CSRs from a Node Bootstrap Token
+[bootstrap-token] configured RBAC rules to allow certificate rotation for all node client certificates in
+the cluster
+[bootstrap-token] Creating the "cluster-info" ConfigMap in the "kube-public" namespace                   
+[kubelet-finalize] Updating "/etc/kubernetes/kubelet.conf" to point to a rotatable kubelet client certificate and key
+[addons] Applied essential addon: CoreDNS
+[addons] Applied essential addon: kube-proxy
+
+Your Kubernetes control-plane has initialized successfully!                                              
+
+To start using your cluster, you need to run the following as a regular user:                            
+
+  mkdir -p $HOME/.kube
+  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config                                               
+  sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+Alternatively, if you are the root user, you can run:                                                    
+
+  export KUBECONFIG=/etc/kubernetes/admin.conf
+
+You should now deploy a pod network to the cluster.
+Run "kubectl apply -f [podnetwork].yaml" with one of the options listed at:                              
+  https://kubernetes.io/docs/concepts/cluster-administration/addons/                                     
+
+Then you can join any number of worker nodes by running the following on each as root:                   
+
+sudo kubeadm join 10.151.103.1:6443 --token c4j3tn.9et0jaianijc70s7 --discovery-token-ca-cert-hash sha256:77880dde6d874e1ab42ec0adcf495f528b0780831e24a3e82294a4c28cb49448
+
+- Setup kubectl shown above
+- Install cilium (kubectl create -f https://raw.githubusercontent.com/cilium/cilium/1.9.5/install/kubernetes/quick-install.yaml)
+- join workers: sudo <join command>
+note:
+[preflight] Running pre-flight checks
+        [WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/                     
+        [WARNING SystemVerification]: missing optional cgroups: hugetlb                                  
+[preflight] Reading configuration from the cluster...                                                    
+[preflight] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -o yaml'
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"                     
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env" 
+[kubelet-start] Starting the kubelet
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap...                                  
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.                         
+* The Kubelet was informed of the new secure connection details.                                         
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster. 
+
+
+- Check cluster
+kubectl create ns cilium-test
+kubectl apply -n cilium-test -f https://raw.githubusercontent.com/cilium/cilium/HEAD/examples/kubernetes/connectivity-check/connectivity-check.yaml
+tutkovics@dipterv1:~$ kubectl get pods -A
+NAMESPACE     NAME                                                     READY   STATUS    RESTARTS   AGE
+cilium-test   echo-a-c4cdff77c-kwqw4                                   1/1     Running   0          50s
+cilium-test   echo-b-598c78b9fc-mjwsn                                  1/1     Running   0          50s
+cilium-test   echo-b-host-5556f9488-tv8np                              1/1     Running   0          49s
+cilium-test   host-to-b-multi-node-clusterip-7f8c9699d6-mbg8f          1/1     Running   0          49s
+cilium-test   host-to-b-multi-node-headless-7df4d6fdb-kgczz            1/1     Running   0          48s
+cilium-test   pod-to-a-679f686cb-8cdwd                                 1/1     Running   0          49s
+cilium-test   pod-to-a-allowed-cnp-54755cc9c6-fwxpq                    1/1     Running   0          49s
+cilium-test   pod-to-a-denied-cnp-7bfb7d69b8-jclnw                     1/1     Running   0          49s
+cilium-test   pod-to-b-intra-node-nodeport-847957bcb4-vb57b            1/1     Running   0          48s
+cilium-test   pod-to-b-multi-node-clusterip-7984ccf8c6-mx9zf           1/1     Running   0          49s
+cilium-test   pod-to-b-multi-node-headless-7fb5f5c84b-vszhf            1/1     Running   0          49s
+cilium-test   pod-to-b-multi-node-nodeport-85f9fb6b7d-b2589            1/1     Running   0          48s
+cilium-test   pod-to-external-1111-c98db84d4-j9lzw                     1/1     Running   0          49s
+cilium-test   pod-to-external-fqdn-allow-google-cnp-5f55d8886b-gsxsj   1/1     Running   0          49s
+kube-system   cilium-2hhn2                                             1/1     Running   0          2m51s
+kube-system   cilium-6rtpr                                             1/1     Running   0          4m8s
+kube-system   cilium-operator-db89645b8-sqqw8                          1/1     Running   0          5m27s
+kube-system   cilium-v6lpl                                             1/1     Running   0          5m27s
+kube-system   coredns-558bd4d5db-h8l7z                                 1/1     Running   0          7m11s
+kube-system   coredns-558bd4d5db-zqqr6                                 1/1     Running   0          7m10s
+kube-system   etcd-dipterv1                                            1/1     Running   0          7m25s
+kube-system   kube-apiserver-dipterv1                                  1/1     Running   0          7m25s
+kube-system   kube-controller-manager-dipterv1                         1/1     Running   0          7m25s
+kube-system   kube-proxy-55bhn                                         1/1     Running   0          4m8s
+kube-system   kube-proxy-9r6mv                                         1/1     Running   0          2m51s
+kube-system   kube-proxy-qwnls                                         1/1     Running   0          7m11s
+kube-system   kube-scheduler-dipterv1                                  1/1     Running   0          7m25s
