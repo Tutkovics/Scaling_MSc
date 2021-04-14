@@ -1,0 +1,83 @@
+# Install helm
+```
+curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+sudo apt-get install apt-transport-https --yes
+echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+helm version
+version.BuildInfo{Version:"v3.5.3", GitCommit:"041ce5a2c17a58be0fcd5f5e16fb3e7e95fea622", GitTreeState:"dirty", GoVersion:"go1.15.8"}
+```
+# Install prometheus (https://www.fosstechnix.com/install-prometheus-and-grafana-on-kubernetes-using-helm/#1-install-helm-3-on-kubernetes-cluster)
+```
+kubectl create ns monitoring
+helm repo add stable https://charts.helm.sh/stable
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus-stack prometheus-community/kube-prometheus-stack -n monitoring
+W0414 17:20:30.919882   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:30.923977   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:30.927129   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:30.931088   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:30.934297   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:30.937194   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:30.939951   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:32.380206   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:33.504953   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.565333   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.702994   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.709174   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.712408   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.712883   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.713264   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.713416   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:42.715382   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:44.661140   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:45.866727   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+W0414 17:20:55.155562   32317 warnings.go:70] policy/v1beta1 PodSecurityPolicy is deprecated in v1.21+, unavailable in v1.25+                     
+NAME: prometheus-stack
+LAST DEPLOYED: Wed Apr 14 17:20:27 2021
+NAMESPACE: monitoring
+STATUS: deployed
+REVISION: 1
+NOTES:
+kube-prometheus-stack has been installed. Check its status by running:
+  kubectl --namespace monitoring get pods -l "release=prometheus-stack"
+
+Visit https://github.com/prometheus-operator/kube-prometheus for instructions on how to create & configure Alertmanager and Prometheus instances using the Operator.
+```
+# Edit Prometheus service to be nodeport 
+```
+kubectl edit svc -n monitoring prometheus-stack-kube-prom-prometheus 
+...
+  - name: web
+    port: 9090
+    protocol: TCP
+    targetPort: 9090
+    nodePort: 31090
+  selector:
+    app: prometheus
+    prometheus: prometheus-stack-kube-prom-prometheus
+  sessionAffinity: None
+  type: NodePort
+...
+kubectl edit svc -n monitoring prometheus-stack-grafana
+  - name: service
+    port: 80
+    protocol: TCP
+    targetPort: 3000
+    nodePort: 31030
+  selector:
+    app.kubernetes.io/instance: prometheus-stack
+    app.kubernetes.io/name: grafana
+  sessionAffinity: None
+  type: NodePort
+...
+curl http://152.66.211.2:310<30/90>/graph --> works from everywhere
+```
+note:
+- graphana user: admin
+- graphana passwd: prom-operator
+# Download git repo
+# Install fortio
+# install Go (https://golang.org/doc/install)
+Run measurement
