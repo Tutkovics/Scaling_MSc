@@ -81,3 +81,19 @@ note:
 # Install fortio
 # install Go (https://golang.org/doc/install)
 Run measurement
+
+
+CompletedProcess(
+  args='fortio load -qps 0 -t 60s -a -data-dir ../results/frontend-and-backend http://152.66.211.2:30000/to-backend?',
+  returncode=0,
+  stdout='', 
+  stderr='Fortio 1.14.2 running at 0 queries per second, 4->4 procs, for 1m0s: http://152.66.211.2:30000/to-backend?\n22:13:00 I httprunner.go:81> Starting http test for http://152.66.211.2:30000/to-backend? with 4 thre
+ads at -1.0 qps\nStarting at max qps with 4 thread(s) [gomax 4] for 1m0s\n22:14:01 I periodic.go:558> T001 ended after 1m0.111079555s : 112 calls. qps=1.863217244293925\n22:14:01 I periodic.go:558> T000 ended afte
+r 1m0.202526835s : 146 calls. qps=2.4251473762911866\n22:14:01 I periodic.go:558> T003 ended after 1m0.30793492s : 118 calls. qps=1.9566247817394176\n22:14:01 I periodic.go:558> T002 ended after 1m0.307988631s : 1
+26 calls. qps=2.089275448580165\nEnded after 1m0.308074793s : 502 calls. qps=8.3239\nAggregated Function Time : count 502 avg 0.47993398 +/- 0.2131 min 0.094629959 max 1.196331446 sum 240.92686\n# range, mid point
+, percentile, count\n>= 0.09463 <= 0.1 , 0.097315 , 0.20, 1\n> 0.1 <= 0.12 , 0.11 , 1.39, 6\n> 0.12 <= 0.14 , 0.13 , 1.79, 2\n> 0.16 <= 0.18 , 0.17 , 1.99, 1\n> 0.18 <= 0.2 , 0.19 , 6.97, 25\n> 0.2 <= 0.25 , 0.225
+ , 14.94, 40\n> 0.25 <= 0.3 , 0.275 , 23.71, 44\n> 0.3 <= 0.35 , 0.325 , 34.86, 56\n> 0.35 <= 0.4 , 0.375 , 41.43, 33\n> 0.4 <= 0.45 , 0.425 , 47.41, 30\n> 0.45 <= 0.5 , 0.475 , 55.18, 39\n> 0.5 <= 0.6 , 0.55 , 70
+.32, 76\n> 0.6 <= 0.7 , 0.65 , 83.86, 68\n> 0.7 <= 0.8 , 0.75 , 92.43, 43\n> 0.8 <= 0.9 , 0.85 , 97.21, 24\n> 0.9 <= 1 , 0.95 , 98.41, 6\n> 1 <= 1.19633 , 1.09817 , 100.00, 8\n# target 50% 0.466667\n# target 75% 0
+.634559\n# target 90% 0.771628\n# target 99% 1.07313\n# target 99.9% 1.18401\nSockets used: 4 (for perfect keepalive, would be 4)\nJitter: false\nCode 200 : 502 (100.0 %)\nResponse Header Sizes : count 502 avg 109
+ +/- 0 min 109 max 109 sum 54718\nResponse Body/Total Sizes : count 502 avg 544.86653 +/- 0.3841 min 543 max 545 sum 273523\nAll done 502 calls (plus 4 warmup) 479.934 ms avg, 8.3 qps\nSuccessfully wrote 3720 byte
+s of Json data to ../results/frontend-and-backend/2021-04-14-221301_152_66_211_2_30000_to_backend_dipterv1.json\n')

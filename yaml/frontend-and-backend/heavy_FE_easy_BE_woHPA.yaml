@@ -1,0 +1,38 @@
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+  name: servicegraph-heavyfe-easybe
+  namespace: default
+spec:
+  nodes:
+    - name: front-end
+      replicas: 2
+      port: 80
+      nodePort: 30000
+      resources:
+        memory: 100
+        cpu: 100
+      endpoints:
+        - path: /only-frontend
+          cpuLoad: 10
+          delay: 1
+        - path: /to-backend
+          cpuLoad: 200
+          delay: 1
+          callouts:
+            - url: back-end:80/easy
+
+    - name: back-end
+      replicas: 3
+      port: 80
+      resources:
+        memory: 200
+        cpu: 200
+      endpoints:
+        - path: /heavy
+          cpuLoad: 200
+          delay: 1
+        - path: /easy
+          cpuLoad: 20
+          delay: 1
+

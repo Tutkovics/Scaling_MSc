@@ -3,11 +3,12 @@
 .vscode/
 
 # Python virtualenv directory
-load_script/src/.venv/
-load_script/src/__pycache__/
+python_scripts/load_script/.venv/
+python_scripts/load_script/__pycache__/
 
 # Not upload test result 
-load_script/results/
+python_scripts/results/
+python_scripts/load_script/*.json
 
 # Helm charts
 helm_charts/
