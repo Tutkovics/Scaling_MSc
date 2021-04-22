@@ -14,11 +14,11 @@ spec:
         cpu: 100
       endpoints:
         - path: /only-frontend
-          cpuLoad: 10
-          delay: 1
+          cpuLoad: 1
+          delay: 0
         - path: /to-backend
-          cpuLoad: 10
-          delay: 1
+          cpuLoad: 1
+          delay: 0
           callouts:
             - url: back-end:80/heavy
 
@@ -30,5 +30,5 @@ spec:
         cpu: 200
       endpoints:
         - path: /heavy
-          cpuLoad: 200
-          delay: 1
+          cpuLoad: 40
+          delay: 0

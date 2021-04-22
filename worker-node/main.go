@@ -85,7 +85,7 @@ type Response struct {
 	Delay            int32     `json:"delay"`            // Delay time of the endpoint
 	CalloutParameter string    `json:"calloutparameter"` // Commandline parameter given in start
 	Callouts         []string  `json:"callouts"`         //[]Response // Responses from callouts
-	ActualDelay      int32     `json:"actualDelay"`      // Actual delay in response
+	ActualDelay      time.Duration `json:"actualDelay"`      // Actual delay in response
 	Time             time.Time `json:"time"`             // Current time in response
 	RequestMethod    string    `json:"requestMethod"`    // Method of request
 	RequestURL       *url.URL  `json:"requestURL"`       // Full URL of request
@@ -196,6 +196,7 @@ func main() {
 					response.RequestURL = r.URL
 					response.RequestAddress = r.RemoteAddr
 					response.Host = r.Host
+					response.ActualDelay = time.Now().Sub(start)
 
 					json.NewEncoder(w).Encode(response)
 				}
@@ -253,7 +254,7 @@ func AlgorithmToUseCPU(number int, waitgroup *sync.WaitGroup) {
 }
 
 func calloutFunction(i int, callOut string, calloutResponses []string, waitgroupToCallouts *sync.WaitGroup) {
-	fmt.Printf("[calloutFunction] New async callout started: '%s' --> '%s'\n", i, callOut)
+	fmt.Printf("\n[calloutFunction] New async callout started: '%s' --> '%s'\n", i, callOut)
 
 	callOut = strings.ReplaceAll(callOut, "'", "")
 	fmt.Printf("[CALL_OUT]\t#no%d --> %s\n", i, callOut)
@@ -271,6 +272,7 @@ func calloutFunction(i int, callOut string, calloutResponses []string, waitgroup
 			calloutResponses = append(calloutResponses, "Oops, failed to convert response to string")
 		} else {
 			// Convertion was successfull
+			fmt.Printf("\n[calloutFunction] Async callout response: '%s' --> '%s'\n", i, string(buf.String()))
 			calloutResponses = append(calloutResponses, string(buf.String()))
 		}
 

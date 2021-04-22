@@ -7,7 +7,7 @@ python_scripts/load_script/.venv/
 python_scripts/load_script/__pycache__/
 
 # Not upload test result 
-python_scripts/results/
+python_scripts/*
 python_scripts/load_script/*.json
 
 # Helm charts

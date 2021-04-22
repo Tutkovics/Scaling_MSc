@@ -63,7 +63,7 @@ def load(config, qps):
         # Create command to run
         # eg: fortio load -qps 10 -t 5s -a http://192.168.49.2:30000/instant
         # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query} ".format(
-        cmd = "fortio load -qps {qps} -t {time}s -json '{location}/warmup.json' http://{ip}:{port}/{path}?{query} ".format(
+        cmd = "fortio load -qps {qps} -t {time}s -jitter -json '{location}/warmup.json' http://{ip}:{port}/{path}?{query} ".format(
             qps = qps,
             time = config["load_preheat"],
             ip = config["load_ip"],
@@ -77,7 +77,7 @@ def load(config, qps):
     
     # Actually measurement
     # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query}".format(
-    cmd = "fortio load -qps {qps} -t {time}s -json '{location}/fortio-results.json' http://{ip}:{port}/{path}?{query}".format(
+    cmd = "fortio load -qps {qps} -t {time}s -jitter -json '{location}/fortio-results.json' http://{ip}:{port}/{path}?{query}".format(
         qps = qps,
         time = config["load_time"],
         ip = config["load_ip"],
@@ -197,7 +197,7 @@ def fetch_data(start_time, end_time, config):
     cpu_full_query = url + urllib.parse.urlencode(cpu_query)
     memory_full_query = url + urllib.parse.urlencode(memory_query)
     pods_full_query = url + urllib.parse.urlencode(pods_query)
-    number_pods_full_query = = url + urllib.parse.urlencode(number_pods_query)
+    number_pods_full_query = url + urllib.parse.urlencode(number_pods_query)
 
     # Print full query
     logging.debug("Full CPU query: %s", cpu_full_query)
@@ -256,8 +256,5 @@ def get_json_from_file(result_file):
 
 # def filter_prometheus_results(prometheus_result):
 #     filtered_results = prometheus_result
-
 #     for metric, values in prometheus_result["data"]["result"]
-
-
 #     return filtered_results
