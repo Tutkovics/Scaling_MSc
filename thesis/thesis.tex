@@ -7,7 +7,7 @@
 
 \input{include/packages}
 
-%TODO Set the main variables
+% Set the main variables
 \newcommand{\vikszerzoVezeteknev}{Tutkovics}
 \newcommand{\vikszerzoKeresztnev}{András}
 
@@ -23,12 +23,13 @@
 \newcommand{\vikkonzulensCVezeteknev}{}
 \newcommand{\vikkonzulensCKeresztnev}{}
 
-\newcommand{\vikcim}{Felhő alapú alkalmazások teljesítményének kiértékelése és modellezése} % Cím
+\newcommand{\vikcim}{Felhő alapú alkalmazások automatikus horizontális
+skálázásának vizsgálata} % Cím
 \newcommand{\viktanszek}{\bmetmit} % Tanszék
 \newcommand{\vikdoktipus}{\msc} % Dokumentum típusa (\bsc vagy \msc)
 \newcommand{\vikmunkatipusat}{diplomatervet} % a "hallgató nyilatkozat" részhez: szakdolgozatot vagy diplomatervet
 
-\input{include/tdk-variables}
+% \input{include/tdk-variables}
 \newcommand{\szerzoMeta}{\vikszerzoVezeteknev{} \vikszerzoKeresztnev} % egy szerző esetén
 %\newcommand{\szerzoMeta}{\vikszerzoVezeteknev{} \vikszerzoKeresztnev, \tdkszerzoB} % két szerző esetén
 
@@ -47,14 +48,14 @@
 
 \pagenumbering{gobble}
 
-%TODO These includes define guidelines -- remove these
+% These includes define guidelines -- remove these
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{include/guideline}
-\include{include/project}
+% \include{include/guideline}
+% \include{include/project}
 
 \selectthesislanguage
 
-%TODO Titlepage -- choose one from below
+%Titlepage -- choose one from below
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \include{include/titlepage}		   % Szakdolgozat/Diplomaterv címlap
 %\include{include/titlepage-tdk}	% TDK címlap
@@ -68,7 +69,7 @@
 
 % Declaration and Abstract
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{include/declaration} %TODO Hallgatói nyilatkozat -- TDK és OTDK esetén törlendő!
+\include{include/declaration} % Hallgatói nyilatkozat -- TDK és OTDK esetén törlendő!
 \include{content/abstract}    %TODO Összefoglaló -- TDK és OTDK esetén nem kötelező
 
 
@@ -104,5 +105,5 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \include{content/appendices}
 
-%\label{page:last}
+\label{page:last}
 \end{document}
