@@ -88,3 +88,35 @@ dimensions (parameters) can fall under three categories:
 (c) application-level dimensions (e.g., amount of cache of a DBMS, replication of HDFS, etc.).
 
 - adaptively “zoom-in” --> ahol a modell bizonyytalan, több mérést kell végezni
+
+
+# Balla / Simon
+
+Libra --> autoscaler, for Kubernetes
+  - automaticaly detects the optimal resource set for a single pod
+
+Knative --> third party extension
+  - scale by inbound request / pods
+
+Libra
+  - Alapból: mi beállítunk határértékeket --> nehéz feladat, mert monitorozni kell a szolgáltatást előtte.
+  - mix HPA & VPA
+
+  működése:
+    - (VPA) Megkeresi a még elég, de nem sok CPU limitet
+    - (HPA)
+
+# Ericsson: Predicting CPU usage for proactive autoscaling
+Szintén kritizálják, hogy kézzel kell beállítani a LIMIT-eket
+(általában a deployment előtt, a konfigurációban)
+
+- Holt-Winters exponential smoothing
+  - simply, inexpensive
+  - could limit ability to recognize comlex pattern
+- Long Short-Term Memory
+  - special NN (vissszatérő Recurrent)
+
+- results --> 
+  - VPA nem adaptálódik a dinamikus forgalomhoz.
+  - HW: szabálytalan sorozat --> rossz eredmény
+  - LSTM: jól működött a valós és a syntetikus adatokon is
