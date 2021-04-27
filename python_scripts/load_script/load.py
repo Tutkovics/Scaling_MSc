@@ -95,6 +95,8 @@ def load(config, qps):
     # stop spinner
     spinner.stop()
 
+    SpinnerSleep(30, "Wait to Prometheus get all data.")
+
     fortio_results = get_json_from_file(config["result_location"] + "/fortio-results.json")
 
     # Fetch results from Prometheus
@@ -258,3 +260,11 @@ def get_json_from_file(result_file):
 #     filtered_results = prometheus_result
 #     for metric, values in prometheus_result["data"]["result"]
 #     return filtered_results
+
+def SpinnerSleep(seconds, message = "Sleeping"):
+    spinner = Halo(text='Loading', spinner='dots')
+    spinner.start(message)
+
+    time.sleep(seconds)
+
+    spinner.stop()

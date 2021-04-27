@@ -1,0 +1,19 @@
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+  name: simple
+  namespace: default
+spec:
+  nodes:
+    - name: front-end
+      replicas: 3
+      port: 80
+      nodePort: 30000
+      resources:
+        memory: 100
+        cpu: 100
+      endpoints:
+        - path: /instant
+          cpuLoad: 10
+          delay: 0
+        
