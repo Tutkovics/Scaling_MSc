@@ -1,7 +1,7 @@
 Name: Develop-measurement       # Name of the measurement
 Servicegraphs:                  # Service graph specifications
   - /home/tutkovics/Scaling_MSc/yaml/simple-service.yaml    # Can add more graphs
-Result_location: ../results/simple2     # Where to write results
+Result_location: ../results/simple3     # Where to write results
 Cluster:                        # Not yet used
   Name: Dipterv                 # Clustername
   IP: 152.66.211.2              # CLuster / node IP address

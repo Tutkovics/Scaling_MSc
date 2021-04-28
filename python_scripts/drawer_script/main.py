@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from matplotlib import pyplot as plt
 from datetime import datetime, timezone
+import numpy as np
 # import os
 import glob
 import json
@@ -46,11 +47,21 @@ def readFileAndGetValues(fileName):
     runningPods = getRunningPodsFromJson(obj)
 
     cpu = sumCpuByRunningContainer(obj, runningPods)
+
+    # runningPodsNumber = obj["prometheus"]["number_of_pods"]["data"]["result"][0][1]
+
+    measurementDuration = obj["config"]["load_time"]
+
+    avgResponseTime = obj["fortio"]["DurationHistogram"]["Avg"]
     
     values = {"reqQPS" : obj["fortio"]["RequestedQPS"],
               "actQPS" : obj["fortio"]["ActualQPS"],
-              # "runningPods" : runningPods,
-              "cpu" : cpu,}
+              "runningPods" : len(runningPods),
+              # "runningPods": runningPodsNumber,
+              "cpu" : cpu,
+              "measurementDuration": measurementDuration,
+              "avgResponseTime": avgResponseTime,
+              }
 
     print(values)
     return values
@@ -77,18 +88,29 @@ def sumCpuByRunningContainer(obj, runningPods):
     return dict(cpus)
 
 def draw(datas, args):
-    x = []
-    y = []
+    x = []  # qps
+    y = []  # cou usage
+    y2 = [] # average response time
+
 
     last_data = None
+    
+    end = 0 # for X axis ticks
 
     for data in datas:
-        x.append(data["reqQPS"])
-        try:
-            last_data = data["cpu"]["front-end"]
-            y.append(last_data)
-        except:
-            y.append(last_data)
+        reqQps = data["reqQPS"]
+        x.append(reqQps)  # add qps to x axis
+
+        # update latest qps
+        if end < int(reqQps):
+                end = int(reqQps)
+
+        calculated_cpu = data["cpu"]["front-end"] / (data["runningPods"] * data["measurementDuration"])
+        y.append(calculated_cpu)
+
+        # add response time
+        y2.append(data["avgResponseTime"])
+
     
     fig, ax = plt.subplots()
 
@@ -96,7 +118,14 @@ def draw(datas, args):
     ax.set_xlabel(args.x)
     ax.set_ylabel(args.y)
 
-    ax.plot(x,y)
+    # Configure X axis ticks
+    ax.xaxis.set_ticks(np.arange(0, end, 5))
+
+    ax.plot(x,y, label="CPU usage")
+    ax.plot(x,y2, label="Average Response Time")
+
+
+    ax.legend() 
     plt.show()
 
     # Save the figure if command line flag was given
@@ -122,5 +151,5 @@ def main():
             print("Can't read file:", file) 
 
     draw(clean_data, args)
-    
+
 main()

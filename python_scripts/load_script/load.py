@@ -33,6 +33,8 @@ def orchestrate_measure(config):
             # Delete current service graph
             kubectl("delete", arg)
 
+            SpinnerSleep(30, "Wait pods be deleted from prometheus.")
+
     logging.info("End 'orchestrate_measure()' function")
 
 
