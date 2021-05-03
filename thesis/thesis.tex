@@ -1,7 +1,6 @@
 % !TeX spellcheck = hu_HU
 % !TeX encoding = UTF-8
 % !TeX program = xelatex
-% TODO Change language to en_GB (recommended) or en_US for English documents
 \documentclass[11pt,a4paper,oneside]{report}             % Single-side
 %\documentclass[11pt,a4paper,twoside,openright]{report}  % Duplex
 
@@ -33,7 +32,7 @@ skálázásának vizsgálata} % Cím
 \newcommand{\szerzoMeta}{\vikszerzoVezeteknev{} \vikszerzoKeresztnev} % egy szerző esetén
 %\newcommand{\szerzoMeta}{\vikszerzoVezeteknev{} \vikszerzoKeresztnev, \tdkszerzoB} % két szerző esetén
 
-%TODO Language configuration -- choose one
+% Language configuration
 % Beállítások magyar nyelvű dolgozathoz
 \input{include/thesis-hu}
 % Settings for English documents
@@ -41,25 +40,20 @@ skálázásának vizsgálata} % Cím
 
 \input{include/preamble}
 
+
 %--------------------------------------------------------------------------------------
 % Table of contents and the main text
 %--------------------------------------------------------------------------------------
 \begin{document}
 
-\pagenumbering{gobble}
+\pagenumbering{gobble} 
 
-% These includes define guidelines -- remove these
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% \include{include/guideline}
-% \include{include/project}
 
 \selectthesislanguage
 
-%Titlepage -- choose one from below
+%Titlepage
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{include/titlepage}		   % Szakdolgozat/Diplomaterv címlap
-%\include{include/titlepage-tdk}	% TDK címlap
-%\include{include/titlepage-otdk}   % OTDK címlap
+\include{include/titlepage}		    % Diplomaterv címlap
 
 
 % Table of Contents
@@ -67,27 +61,29 @@ skálázásának vizsgálata} % Cím
 \tableofcontents\vfill
 
 
-% Declaration and Abstract
+% Declaration and Abstract (Diplomatervbe bele kell rakni)
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{include/declaration} % Hallgatói nyilatkozat -- TDK és OTDK esetén törlendő!
-\include{content/abstract}    %TODO Összefoglaló -- TDK és OTDK esetén nem kötelező
+%\include{include/declaration} %TODO Hallgatói nyilatkozat
+%\include{content/abstract}    %TODO Összefoglaló
 
 
 % The main part of the thesis
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \pagenumbering{arabic}
 
-%TODO import your own content
+% Import content
 \include{content/introduction}
-\include{content/latex-tools}
-\include{content/thesis-format}
-\include{content/template-usage}
+\include{content/kubernetes}
+\include{content/publications}
+%\include{content/latex-tools}
+%\include{content/thesis-format}
+%\include{content/template-usage}
 
 
 % Acknowledgements
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 %\include{content/acknowledgement}
-
+ 
 
 % List of Figures, Tables
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,13 +93,12 @@ skálázásának vizsgálata} % Cím
 
 % Bibliography
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\addcontentsline{toc}{chapter}{\bibname}
-\bibliography{bib/mybib}
-
+\addcontentsline{toc}{chapter}{Irodalomjegyzék}
+\bibliography{bib/thesis.bib}
 
 % Appendix
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-\include{content/appendices}
+%\include{content/appendices}
 
 \label{page:last}
 \end{document}
