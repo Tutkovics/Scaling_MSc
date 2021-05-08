@@ -41,8 +41,13 @@ Belső IP & asd & 787 & 787 \\
 
 \subsection{Klaszter előkészítése}
 %----------------------------------------------------------------------------
-A virtuális gépekből klasztert kellett szervezni. Erre különböző megoldások vannak.\citep{kubernetesInstall} 
+A virtuális gépekből klasztert kellett szervezni, amire különböző megoldások léteznek.\citep{kubernetesInstall} Két különbözőt szeretnék kiemelni:
+\begin{enumerate}
+  \item \textbf{Kubespray}: \textit{Ansible} felhasználásával előre definiált lépéseket hajt végre. Mindössze egy pár soros konfigurációt kell írni hozzá és ígérete szerint minden mást elintéz.
+  \item \textbf{Kubeadm}: Az előzőhöz képest a \textit{kubeadm} jóval manuálisabb módszer. Segítségével le tudunk generálni mindenféle kulcsot a klaszterhez, csomópontokat bekötni a rendszerbe.
+\end{enumerate}
 
+Nem szándékosan de kipróbáltam mindkét megoldást. Vonzó volt ugyanis a Kubesray, hogy könnyen és autómatikusan telepít minden függőséget. Sajnos pont amiatt mert ilyen magasszinten vezeti a telepítést hiba esetén nem sok információ derült ki. Miután eredménytelenül zárult minden próbálkozás egy VM újratelepítés után áttértem
 %----------------------------------------------------------------------------
 \section{Eredmények kiértékelése}
 %----------------------------------------------------------------------------
