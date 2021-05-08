@@ -39,7 +39,7 @@ skálázásának vizsgálata} % Cím
 %\input{include/thesis-en}
 
 \input{include/preamble}
-
+\renewcommand{\lstlistingname}{kódrészlet}% Listing -> Algorithm
 
 %--------------------------------------------------------------------------------------
 % Table of contents and the main text
@@ -75,6 +75,9 @@ skálázásának vizsgálata} % Cím
 \include{content/introduction}
 \include{content/kubernetes}
 \include{content/publications}
+\include{content/system}
+\include{content/measurements}
+\include{content/summary}
 %\include{content/latex-tools}
 %\include{content/thesis-format}
 %\include{content/template-usage}
@@ -94,6 +97,7 @@ skálázásának vizsgálata} % Cím
 % Bibliography
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \addcontentsline{toc}{chapter}{Irodalomjegyzék}
+%\bibliographystyle{acm}
 \bibliography{bib/thesis.bib}
 
 % Appendix
