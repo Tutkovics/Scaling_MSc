@@ -29,12 +29,41 @@ Az elkészült rendszerhez szükséges részek forráskódjai megtalálhatóak a
 %----------------------------------------------------------------------------
 \section{Korábbi munkák}
 %----------------------------------------------------------------------------
-Hogyan állt a félév elején a feladat.
+A korábbi proejekttárgyak keretén belül már foglalkoztam hasonló kérdéskörrel, így már volt az egyes eszközök használatához tapasztalat és implementáció is, amiből tovább lehetett haladni. 
+Önálló labor tárgyban megismerkedtem a Go programozási nyelvvel, és elkészítettem egy Kubernetes operátort, ami képes egyedi erőforrás definíciók feldolgozására és ezalapján képes beépített objektumokat létrehozni.
+
+Korábban készítettem már egy Docker képfájl is, ami a jelenlegi rendszerben felhasználttal azonos céllal születet, hogy szabadon konfigurálható paraméterezés alapján szolgálja ki a beérkező kéréseket.
 
 %----------------------------------------------------------------------------
 \section{Operátor}
 %----------------------------------------------------------------------------
-Szet
+Fontos szempontnak tekintettük, hogy egyszerű konfigurációs fájl alapján létre lehessen hozni a szolgáltatáhálót, amit szeretnénk tesztelni. 
+Mivel a Kubernetes fejlesztők tudták, hogy nem tudnak minden igényt kiszolgálni gondoltak arra, hogy a rendszer könnyen kibővíthető legyen. Az operátorok pont erre valóak. Létrehozásukkal külön logikát tudunk implementálni, ami egy egyedi Kubernetes erőforrás objektumra figyel. 
+
+%TODO
+
+\subsection{Működése}
+%----------------------------------------------------------------------------
+A \ref{servicegraph_example} kódrészlet mutat egy példát a szolgáltatásháló definíciójára. Számunkra elég végiggondolni, hogy milyen szolgáltatásokat szeretnénk, hogyan kövessék egymást, milyen erőforrást biztosítsunk számukra. Miután ezek megvannak készítünk belőle egy \textit{yaml} dokumentumot.
+
+Látható, hogy a \verb+apiVersion+ és \verb+kind+ érték egyedi, így tudunk hivatkozni a saját erőforrásunkra. Szintén meg kell adni pár meta információt, mint például az objektum neve és névtere. A \verb+spec+ szekció az érdekes számunkra. Itt tudjuk felsorolni, hogy milyen szolgáltaásokat szeretnénk majd a hálózatba. Be tudjuk állítani, hogy hány replikával fusson egy-egy szolgáltatás, illetve hogy milyen portokon tudjuk majd őket elérni. Ezek az információk azért lesznek fontosak, mert ezalapján fog az operátor létrehozni Kubernetes Deploymenteket és Serviceket. Ha szeretnénk skálázást is beállítani az adott szolgáltasra akkor azt is megtehetjük, ha megadjuk a \verb+hpa+ konfigurációs paramétereket. Ezek hiányában nem kerül létrehozásra, és fix replikaszámmal fog üzemelni.
+
+Továbbá definiálni kell, hogy az adott szolgáltatás milyen végpontok hívására figyeljen. Például a \textit{front-end} szolgáltatás a \verb+/instant+ és \verb+/chain+ lekérdezésekre fog válaszolni. A válasz gyorsasága és a közben felhasznált erőforrás mennyiséget is lehetőségünk van befolyásolni. Az itt magadott paraméterek továbbításra kerülnek majd a futtatot konténerekhez így ők fogják helyileg érvényre juttatni a szabályokat. 
+
+A bemutatott kód csak részlete a teljes forrásállománynak, mert elég repetitiv ezért nem szerettem volna a helyet foglalni, de a GitHub repóban megtalálható a teljes kód. \\
+
+\lstset{caption=Saját szolgáltatásháló definiálása, label=servicegraph_example}
+\lstinputlisting{figures/servicegraph.yaml}
+
+Miután megtörtént a szolgáltatásháló leírása és fut a korábban elkésztett operátor könnyű dolgunk van. Mintha csak egy beépített erőforrást hoznánk létre a \ref{servicegraph_apply} kódrészletben mutatott módon telepíthető is. 
+Ilyenkor az történik, hogy a \verb+kubectl+ parancs a Kubernetes API-ját meghívja, és továbbítodik az operátor felé. Az operátor kiolvassa a kapott objektum értékeit és ezalapján létrehozza a kívánt erőforrásakat. 
+
+\lstset{caption=Szolgáltatásháló indítása, label=servicegraph_apply}
+\begin{lstlisting}[language=bash,morekeywords={kubectl, apply},alsoletter={-},breaklines=true]
+$ kubectl apply -f path/to/servicegraph.yaml                          
+servicegraph.dipterv.my.domain/servicegraph created 
+\end{lstlisting}
+
 
 Operetaor sdk, tavalyiról már megvolt a váza, Hibákkal működött, HPA bele rakni, kisebb változatatások. Létrehoz Deploymenteket --> podok, Servicek, 
 A konténereket is azalapján indítja, paraméterezi.go nyelven
@@ -43,11 +72,10 @@ Hogyan működik: API, CRD, CR.
 %----------------------------------------------------------------------------
 \section{Go konténer}
 %----------------------------------------------------------------------------
+A korábban látott módon lehetőségünk van tetszőleges szolgáltaásokat elindítani, azonban hogy az adott szolgáltatásoknak további paraméterek tudjunk átadni, olyan alkalmazás kell ami tudja kezelni őket. Például: milyen végpontokra figyeljenek, milyen kiszolgálási idővel dolgozzanak, mennyi erőforrást használjanak fel. Erre a feladatra létrehoztam külön egy Go alapú webalkalmazást. 
+A paraméterek átadására indításkor van lehetőség és futás közben figyelembe veszi ezeket. Beépítettként tartalmaz egy processzor intenzív algoritmust, amit magadott alkalommal lefuttat egy-egy kérés során. 
 
-
-A magasfokú rugalmasság gerincét adja, aszinkron kiszolgálás, Példalekérdezés.
-
-asd
+%TODO
 
 %----------------------------------------------------------------------------
 \section{Mérés vezénylése}
@@ -67,7 +95,7 @@ Látható, hogy meg kell adni az aktuális QPS értéket, amit szeretnénk elér
 Ezeket a paramétereket ugye a korábban ismertetett konfigurációs fájl alapján állítjuk össze. \\
 
 \lstset{caption=Példa a \textit{Fortio} indítására, label=fortio_command}
-\lstinputlisting{figures/fortio_command.sh}
+\lstinputlisting[language=Bash]{figures/fortio_command.sh}
 
 Miután megterheltük a rendszert és megkaptuk a kérések kiszolgálásával kapcsolatos statisztikákat a \verb+Fortio+-ból, szükséges még a rendszer erőforrásfelhasználását célzó metrikálkat is begyűjteni. 
 Erre a \verb+Prometheus+ rendszerén keresztül van lehetőségünk.

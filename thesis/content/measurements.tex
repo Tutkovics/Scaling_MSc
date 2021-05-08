@@ -1,15 +1,47 @@
 %----------------------------------------------------------------------------
-\chapter{Eredmények}
+\chapter{Mérések}
 \label{sec:results}
 %----------------------------------------------------------------------------
 
-asd
+A következő fejezetben szeretném bemutatni, hol és hogyan készültek a mérési eredmények, azokból mi olvasható ki. Fontos megjegyezni, hogy komolyabb mérések még a diplomamunka hátralevő részére vannak ütemezve, az alább bemutattott eredmények a rendszer működőképességét igazolják és némi előretekintést nyújtanak.
 
 %----------------------------------------------------------------------------
 \section{Mérés környezete}
 %----------------------------------------------------------------------------
+A feladat elején főként implementációval kellett foglalkozni így nem kapott jelentős szerepet a Kubernetes klaszter. Ezért  a félév első felében elég volt lokálisan futtatni, amit én Minikube (\textit{v1.17.1}) segítségével tettem meg. 
+
+Amikor a fejlesztési rész kezdett alábbhagyni kellett egy rendes környezet, a rendes mérésekhez. Ehhez több lehetőséget is számításba vettem.	
+
+\begin{itemize}
+  \item \textbf{BME Cloud}: Egyik lehetőség az egyetemi felhő volt. Itt létre lehet hozni virtuális gépeket, amiket aztán klaszterbe lehet szervezni. Hátránya viszont, hogy hosszabb távra nehezen lehet gépet igényelni, rendszeresen le is állítják ami könnyen okozhatja egy-egy mérés elvesztését, hiszen több órán keresztül is futhat.
+  \item \textbf{Klaszter a felhőben}: Kézenfekvő megoldás lehet igényelni egy teljes, egész klaszert. Erre több opció is van, csak hogy a legnagyobbakat említsem: Google, Amazon, Microsoft. Ezek a minőségi szolgáltatások azonban havidíjasok lennének, és bizonyos tekintetben kevésbé rugalmasak.
+    \item \textbf{Tanszéki infrastruktúra}: A tanszéken létezik egy előretelepített klaszter, amin lehetne méréseket készíteni, de általában foglalt.
+      \item \textbf{VM igénylés a koliban}: A Schönherz kollégiumban lévő Kollégiumi Számítsátechnikai Körtől lehet igényelni virtuális gépeket, így sikerült lebeszélni, hogy a projektfeladat végéig biztosítanak számomra három gépet. Hátrány lehet, hogy öntevékeny a kör így probléma esetén kérdéses a megoldás gyorsasága. 
+\end{itemize}		
+
+A fenti opciók közül számomra a harmadik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian operációs rendszert válaszottam, mert stabil, megbízható, széleskörben támogatott.
+
+\begin{center}
+\begin{tabular}{ c||cccc| } 
+\hline 
+Tulajdonság & VM 1 & VM 2 & VM 3 \\
+\hline \hline
+CPU & 87837 & 787 & 787 \\ 
+Memória & 87837 & 787 & 787 \\
+Tárhely & 87837 & 787 & 787 \\  
+Node neve & cell5 & cell6 & 787 \\ 
+Külső IP & 152.66.211.2 & $\varnothing$ & $\varnothing$ \\ 
+Belső IP & asd & 787 & 787 \\
+\hline
+\end{tabular}
+\end{center}
+%TODO VM adatokat kitölteni, mert csakl kolis netről vannak meg.
+
 3 db VM (kubectl get nodes) kimenet. Milyen rendszer, mennyi erőforrás, hol. Feladat: kubernetes install (felmérni az egyes eszközöket (kubeadm, kubespray), korábbi lokális infrastruktúra átköltöztetése  
 
+\subsection{Klaszter előkészítése}
+%----------------------------------------------------------------------------
+A virtuális gépekből klasztert kellett szervezni. Erre különböző megoldások vannak.\citep{kubernetesInstall} 
 
 %----------------------------------------------------------------------------
 \section{Eredmények kiértékelése}

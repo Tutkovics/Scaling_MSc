@@ -28,9 +28,12 @@ A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, am
 %----------------------------------------------------------------------------
 \section{Feladat meghatározása}
 %----------------------------------------------------------------------------
-A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. Ugye sokan választották az új megközelítést, mert igérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni. Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük. Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül. 
+A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. Ugye sokan választották az új megközelítést, mert igérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
+Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük.
+Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül. 
 Azonban a valóság ennél jóval komplexebbb. Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel.
-Látható, hogy pár paramétert bevéve az egyenletbe már nem is könnyű feladat. Különösen megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor, memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető legjobb kiszolgálást tudja biztosítani a rendszer. 
+Látható, hogy pár paramétert bevéve az egyenletbe már nem is könnyű feladat. 
+Különösen megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor, memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető legjobb kiszolgálást tudja biztosítani a rendszer. 
 
 A diplomatervezés során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. Első lépésként fontos tisztában lenni a használt platformmal, a Kubernetessel megnézni benne milyen skálázási megoldások vannak jelenleg és melyik hogyan van támogatva. Egy konkrét példán keresztül bemutatom a HPA megoldását. 
 
