@@ -19,25 +19,24 @@ Amikor a fejlesztési rész kezdett alábbhagyni kellett egy rendes környezet, 
       \item \textbf{VM igénylés a koliban}: A Schönherz kollégiumban lévő Kollégiumi Számítsátechnikai Körtől lehet igényelni virtuális gépeket, így sikerült lebeszélni, hogy a projektfeladat végéig biztosítanak számomra három gépet. Hátrány lehet, hogy öntevékeny a kör így probléma esetén kérdéses a megoldás gyorsasága. 
 \end{itemize}		
 
-A fenti opciók közül számomra a harmadik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian operációs rendszert válaszottam, mert stabil, megbízható, széleskörben támogatott.
+A fenti opciók közül számomra a harmadik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian (v10 - Buster) operációs rendszert válaszottam, mert stabil, megbízható és széleskörben támogatott. 
 
 \begin{center}
 \begin{tabular}{ c||cccc| } 
 \hline 
 Tulajdonság & VM 1 & VM 2 & VM 3 \\
 \hline \hline
-CPU & 87837 & 787 & 787 \\ 
-Memória & 87837 & 787 & 787 \\
-Tárhely & 87837 & 787 & 787 \\  
-Node neve & cell5 & cell6 & 787 \\ 
+CPU (mag) & 4 & 4 & 4 \\ 
+Memória (GB) & 4 & 4 & 4 \\
+Tárhely (GB) & 10 & 10 & 10 \\  
+Node neve & dipterv1 & dipterv2 & dipterv3 \\ 
 Külső IP & 152.66.211.2 & $\varnothing$ & $\varnothing$ \\ 
-Belső IP & asd & 787 & 787 \\
+Belső IP & 10.151.103.1 & 10.151.103.2 & 10.151.103.3 \\
+K8s szerep& control-plane,master & worker & worker \\
 \hline
 \end{tabular}
 \end{center}
-%TODO VM adatokat kitölteni, mert csakl kolis netről vannak meg.
-
-3 db VM (kubectl get nodes) kimenet. Milyen rendszer, mennyi erőforrás, hol. Feladat: kubernetes install (felmérni az egyes eszközöket (kubeadm, kubespray), korábbi lokális infrastruktúra átköltöztetése  
+%TODO VM adatokat kitölteni, mert csakl kolis netről vannak meg. 
 
 \subsection{Klaszter előkészítése}
 %----------------------------------------------------------------------------
@@ -47,12 +46,83 @@ A virtuális gépekből klasztert kellett szervezni, amire különböző megold�
   \item \textbf{Kubeadm}: Az előzőhöz képest a \textit{kubeadm} jóval manuálisabb módszer. Segítségével le tudunk generálni mindenféle kulcsot a klaszterhez, csomópontokat bekötni a rendszerbe.
 \end{enumerate}
 
-Nem szándékosan de kipróbáltam mindkét megoldást. Vonzó volt ugyanis a Kubesray, hogy könnyen és autómatikusan telepít minden függőséget. Sajnos pont amiatt mert ilyen magasszinten vezeti a telepítést hiba esetén nem sok információ derült ki. Miután eredménytelenül zárult minden próbálkozás egy VM újratelepítés után áttértem
+Nem szándékosan de kipróbáltam mindkét megoldást. Vonzó volt ugyanis a Kubesray, hogy könnyen és autómatikusan telepít minden függőséget. Sajnos pont amiatt mert ilyen magasszinten vezeti a telepítést hiba esetén nem sok információ derült ki. Miután eredménytelenül zárult minden próbálkozás egy VM újratelepítés után áttértem a Kubeadm használatára. 
+
+A telepítés menetét nem részletezném, mert a hivatalos weboldalon látható lépéseken kellett végigmenni. Az elkészült klaszter egy mester csomópontot és kettő kiszolgáló csomóponttal rendelkezik. A fő csomópont rendelkezik egyedül külső hálózatról elérhető, publikus IP címmel, a többinek csak belső címen érhetőek el. Ez némiképpen nehezítette a telepítés folyamatát, részben emiatt sem működött a Kubespray megoldása. 
+
+A klaszter elkészülte után még pár függőséget ki kellett elégíteni, hogy a lokálisan összeállított mérő keretrendszer működni tudjon. Külön telepíteni kellett egy konténer hálózati interfészt (CNI). Ez alapból nem jön a Kubernetessel így külön kell instalálni, hogy a különböző csomóponton futtatot konténerek tudjanak egymással kommunikálni. A választás a \textit{Cilium} szoftverre esett, mert szerettem volna jobban megismerni, széleskörben használható és jól dokumentált. Telepítése után lehetőségünk van teszteseteket futtatni, ami igazolja a klaszterben a csomópontok és kapszulák kommunikációját. 
+
+A \ref{sec:measure_orchestrate} szakaszban leírt módon a mérések során gyűjtött adatok jelentős részét a Prometheus rendszere gyűjti össze és tőle kérdezzük le. Emiatt az éles méréseket végző klaszterben is telepíteni kellett. Ebben a Helm, Kuberneteshez készített csomagkezelő megoldása segített. A \verb+prometheus-stack+ csomagot kellett telepíteni annyi kiegészítéssel, hogy kintről is elérhetővé tegyük a felületet és szolgáltatásait. Azt úgy érhetjük el, hogy a létrehozandó \verb+Service+  típusát \verb+NodePort+-ra állítjuk és a következetesség miatt adunk neki egy portszámot. Az így létrehozott környezet rendelkezik egy webes felhasználói felülettel is, ahol tetszleges lekérdezéseket indíthatunk. Egy ilyen lekérdezés látszik az \ref{fig:prometheus_example} ábrán is. A példán az látszik, hogy milyen eredményt kapunk, ha lekérdezzük az aktuálisan futó kapszulákat a \verb+Default+ és \verb+Metrics+ névtérben. Az eredményből leolvasható, hogy jelenleg 3 darab \textit{back-end}, 2 darab \textit{front-end} és 1 darab \textit{db} névvel allátott konténer fut. \\
+
+% Prometheus példa -------------------------------------------------------
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/prometheus_example.png}
+\caption{Telepített \textit{Prometheus} rendszere}
+\label{fig:prometheus_example}
+\end{figure}
+
+Az aktuális rendszerben az operátor még nem külön konténerként fut egy kapszulában, hanem a klaszteren kívül, lokálisan a szerveren, mint egy Go alkalmazás. Emiatt külön telepíteni kellett a Go nyelvet is, hogy el tudjon indulni a rendszer.
+
+\subsection{Verziók}
+%----------------------------------------------------------------------------
+A rendszer és mérések összeállításához sok különböző komponenset kellett integrálni. Az \ref{tab:versions} táblázat összefoglalóan tartalmazza az egyes környezetek és használt eszközök verzióit. 
+
+\begin{table}[ht]
+\centering
+  \begin{tabular}{l l}
+	  Szoftver 		& Verzió \\
+    \hline
+      Go 			& 1.16.3 \\ 
+      Kubernetes 	& 1.21.0 \\ 
+      Kubectl 		& 1.21.0 \\
+      Cilium 		& 1.9.5 \\
+      Python 		& 3.7.3 \\ 
+      Prometheus 	& 2.24.0 \\ 
+      Grafana 		& 7.5.3 \\ 
+      Operator-SDK 	& 1.4.0-32 \\ 
+      Debian 		& 10 (buster)  \\ 
+  \end{tabular}
+  
+  \caption{Használt verziók}
+\label{tab:versions}
+\end{table}
+
+
 %----------------------------------------------------------------------------
 \section{Eredmények kiértékelése}
 %----------------------------------------------------------------------------
-Kellett készíteni egy pythón kódot --> korábbi json-t dolgozza fel. Szűrje a fontos dolgokat, megjelenítse grafikonon, parancssorból hogyan lehet indítani.
+Az egyes méréseknek a kimenete egy-egy \textit{json} fájl, azonban ebből nem nagyon tudunk használható következtetéseket kiolvasni. Szükségessé vált egy külön alkalmazás implementálása, ami az általunk elkészített mérések eredményét fel tudja dolgozni. 
+
+A feladat megoldására szintén a Python nyelvet válaszottam, mert könnyen lehet benne a json objektumokat beolvasni és feldolgozni.
+Fontos szempont volt, hogy minél könnyebben használható legyen az alkalmazás, így bizonyos paramétereket akár parancssorban is meg lehet adni. Ez látható az \ref{python_drawer} kódrészleten. Indításnál megadhatjuk, hogy milyen nevet szeretnénk a grafikonnak, milyen címke legyen az $X$ és $Y$ tengelyeken, hogy le akarjuk-e menteni az ábrát, illetve a legfontosabb, hogy melyik mappában keresse a mérési eredményeket. Egy példa konfiguráció is látható a korábban hivatkozott kódrészlet alján. \\
+
+% Rajzoló program indítása --------------------------------------------------
+\lstset{caption=Eredményeket feldolgozó alkalmazás használata, label=python_drawer}
+\lstinputlisting{figures/python-drawer.sh}
+
+Az alkalmazás indításakor meg kell adni, hogy hova vannak mentve a korábbi mérések során készült kimeneti fájlok. Itt egy-egy mérés jelentése, hogy a Fortio adott darabszámú lekérdezést generál másodpercenként fix ideig. Tehát egy teszteset futtatása több ilyenértelemben vett mérést tartalmaz, hiszen egy skálán megy végig a rendszer, ahol a minimális QPS értéktől megadott lépésközzel halad a maximális QPS értékig. 
+Egyesével elkezdi beolvasni a mérési eredményeket és minden fájlból készít egy "tisztázott" eredményt. Ebben már csak az adott grafikon kirajzolásához nélkülözhetetlen értékeket tartalmazza. Például előfordul, hogy a Prometheus eredményében szerepel olyan pod is, ami nem vett részt az adott mérésben, mert még a korábbiból maradt ott. Az ilyen eseteket észlelni kell és kiszedni az értékeit, ne okozzanak anomáliákat. 
+
+A kapott eredményekből készült grafikon látható az \ref{fig:example_plot} ábrán. A mérések során a szolgáltatáshálóban két különböző feladatot ellátó szolgáltatás szerepelt. Volt egy kintről elérhető \textit{front-end} szolgáltatást szimuláló egység, ami a feltevéseink alapján nem használt sok erőforrást, és minden hozzá beérkező kérést továbbított a \textit{back-end} felé, ami viszont a szimulációban egy processzorigényes műveletet hajtott végre. 
+
+A kapott ábráról leolvasható, hogy az átlagos válaszidő a mérés során nem változott érdemben. A mérés során nem vittünk a rendszerbe mesterséges késleltetést, csak a kötelező műveletek elvégzését vártuk meg. Látható, hogy a kevésbé erőforrásigényes \textit{front-end} processzor felhasználása lassan de folyamatosan nő egészen addig, amíg a \textit{back-end} is tudja növelni a processzor felhasználását. Ez körülbelül 125 QPS-ig tart. Érdemes figyelembe venni, hogy az $X$ tengely az igényelt lekérdezések darabszámát mutatja, nem a rendszer által valóságban kiszolgált kérések mennyiségét. \\
+
+
+% Generált példa ábra -------------------------------------------------------
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/example_plot.jpg}
+\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer eredménye}
+\label{fig:example_plot}
+\end{figure}
+
 
 %----------------------------------------------------------------------------
-\section{Következtetés}
+\section{Finomhangolás}
 %----------------------------------------------------------------------------
+Az eredmények megjelenítésén még lehetne finomítani, mivel jelenleg egy grafikonon csak egy mérési sorozat kimenetét dolgozzuk fel. Ez viszont azzal jár, hogy az egyes mérések során lehetségesek eltérések. Például ilyen lehet, hogy a Prometheus még nem tudta lekérdezni az összes konténer utolsó erőforráshasználatait. A probléma orvoslására jelenleg biztonsági időket iktattunk be a mérés során, hogy minimalizáljuk ennek az esélyét. A szebb megoldás viszont az lenne, ha több mérést végeznénk azonos feltételek mellett és ezeknek az átlagát vennénk figyelembe.
+
+Illetve érdemes elgondolkodni, hogyan kellene kezelni az esetet, ha a rendszer nem tudja kiszolgálni az elvárt lekérdezéseket. Több megoldás is szóbajöhet. Egyik, hogy már a mérések végzése folyamán figyeljük és ha nem tudja teljesíteni, akkor idő előtt leállítjuk a terheléseket. Másik, hogy az $X$ tengelyen a valódi, kiszolgált QPS értéket jelenítjük meg. Ezzel annyi gond lehet, hogy elveszítjük az információt, hogy az adott mérésnél a rendszer már túlterhelt állapotban volt és emiatt vagy alapból ennyi kéréssel terheltünk. Harmadik megoldás, hogy az $X$ tengelyen lévő értékeket addig ábrázoljuk, amíg elvárt módon futottak a mérések.
+
+Másik apróság, ami segítene az eredmények vizualizációjában, ha külön címkét kapna a válaszidő az $Y$ tengelyen.  
