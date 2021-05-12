@@ -20,6 +20,22 @@ Ezzel a problémával találkozott a Google is és kezdődött egy platform fejl
 %TODO erőforrások: CPU és memoria
 \subsection{Erőforrások}
 %----------------------------------------------------------------------------
+Lehetőségünk van a konténerek erőforráshasználatához különféle megkötéseket tenni. Megadhatunk olyan
+szabályokat, amik maximalizálják a konténer számára használható erőforrásokat. Ebben az esetben
+elérhető, hogy hibás működés esetén sem veszélyezteti a klaszter többi részét. Másik eset, amikor
+olyan szabályt adunk meg, ami előre lefoglalja a kellő mennyiségű erőforrást a konténer számára. Ez
+akkor lehet segítség, ha valami kritikus alkalmazást szeretnénk erőforrással ellátni, így nem
+veszélyezteti, hogy a rendszer többi része miatt nem tudja ellátni a saját feladatát. Ezeket 
+\verb+request+  és \verb+limit+ értékeknek nevezzük. Az igényelt erőforrásnál használhat a futó
+konténer többet is, azonban ez már függ a többi konténertől is. Limitáció esetén viszon csak a
+megadott mennyiség állhat a rendelkezésére. Fontos jól megválasztani az értékét, mert például, ha
+kevés memóriahasználatot engedélyezünk az egyik konténernek, akkor lehet hogy el sem tud majd
+indulni és hibát fog jelezni.
+
+Leginkább a processzor- és memóriahasználatra szoktak ilyen megkötéseket létrehozni, de lehetőség
+van más erőforrásokat is kezelni.
+A konténerek és podok létrehozásakor a \textit{kubelet} ütemezője figyelembe fogja venni a megadott
+paramétereket és ezalapján választja ki, hogy melyik csomóponton fog futni. 
 
 \subsection{Objektumok}
 %----------------------------------------------------------------------------
@@ -37,8 +53,12 @@ Mivel \textit{kapszulák} túl kicsi részei a teljes alkalmazásnak és életü
 \paragraph{Service}
 A korábban említett objektumokkal már meg tudunk valósítani bizonyos funkciókat, viszont ezt szeretnénk a klaszteren belül és kívülre is elérhetővé tenni. Erre találták ki \textit{Servicet}. Ezen keresztül könnyen el tudjuk érni az azonos szolgáltatást nyújtó \textit{kapszulákat} és nem kell az alkalmazás logikában számontartani az ő elérhetőségeiket. Ez ugye különösen nehéz feladat lenne, hiszen a készenléti idejük is elég változó lehet, mivel folyamatosan jönnek létre és törlődnek.
 
-\paragraph{CustomResourceDefinition (CRD)}
-%TODO
+\paragraph{Custom Resources (CR)}
+A Kubernetes API lehetőséget biztosít számunkra, hogy tetszőlegesen kibővítsük. Így lehetőségünk van
+saját objektumokat is létrehozni, illetve azokat saját kontrollerrel kezelni. Ehhez előszőr egy
+saját erőfoorás leírót kell létrehozni (Custom Resource Definiton - CRD), ami tartalmazza az
+általunk kívánt erőforrás definícióját. Ezzel lehetőséget kapunk, hogy tetszőlegesen komplex
+leírásokat hozzunk létre és ezt egy logika deklaratív módon feldolgozza.
 
 %----------------------------------------------------------------------------
 \section{Skálázás}
@@ -60,7 +80,7 @@ Az algoritmus folyamatosan lekérdezi a metrikák aktuális értékét és a \re
 
 \begin{equation}
 \label{hpa_algo}
-desiredReplicas = \lceil currentReplicas * ( currentMetricValue / desiredMetricValue ) \rceil
+desiredReplicas = \left\lceil currentReplicas * \frac{currentMetricValue}{desiredMetricValue} \right\rceil
 \end{equation}
 
 A folyamat szemléletesebb, ha konkrét példán nézzük meg működését. Ehhez először létre kellett hozni egy alkalmazást, amit tudunk majd skálázni. Ehhez egy egyszerű webszervert használtam, ami minden beérkezett kérés esetén egy CPU intenzív műveletet hajt végre. Miután létrejött a szükséges \textit{Deployment} és \textit{Service} utána létre lehetett hozni az automatikus skálázót. Ennek a forráskódja látható a \ref{hpa_example} kódrészlet tetején. Be lehet állítani, hogy mi legyen a minimális és maximális replika, ami között tud skálázni. Illetve meg kell a szabályt is, hogy mire kell figyelni. A példában látható, hogy $50\%$-os CPU felhasználást szeretnénk elérni. Fontos, hogy alapvetően a metrikákat a skálázó egy úgynevezett metrika szervertől gyűjti be, amit külön el kell indítani, mert alapértelmezettként nem fut a Kubernetesben.
@@ -73,9 +93,16 @@ Ha létrehoztuk a skálázót, ki is lehet próbálni. Ehhez egy \verb+bash+ szk
 
 \subsection{Vertikális skálázás}
 %----------------------------------------------------------------------------
-A skálázási megoldások közül a másik megoldás a \refstruc{fig:scaling} bal oldalán látható. Ezt vertikális skálázásnak (másik nevén: scaling up) hívnak. Ebben az esetben a kiszolgáló egységek számát nem módosítjuk, hanem az általuk felhasználható erőforrások mennyiségét növeljük. Ilyen példa, amikor plusz memóriát rakunk a számítógépbe, vagy erősebb processzorra cseréljük a meglévőt.
-Kubernetes jelenleg még nem támogatja alapértelmezettként ezt a funkciót, de egyszerűen használatra lehet bírni. Előnye a megoldásnak, hogy a korábbi félévek munkái alatt azt figyeltük meg, hogy a vizsgált alkalmazásaink ezzel a stratégiával azonos erőforrás felhasználás mellett jobb eredményeket értek el.\citep{bscThesis} 
-%TODO le kell állítani jelenleg
+A skálázási megoldások közül a másik megoldás a \refstruc{fig:scaling} bal oldalán látható. 
+Ezt vertikális skálázásnak (másik nevén: scaling up) hívnak. 
+Ebben az esetben a kiszolgáló egységek számát nem módosítjuk, hanem az általuk felhasználható
+erőforrások mennyiségét növeljük. Ilyen példa, amikor plusz memóriát rakunk a számítógépbe, vagy
+erősebb processzorra cseréljük a meglévőt. Kubernetes jelenleg még nem támogatja alapértelmezettként
+ezt a funkciót, de egyszerűen használatra lehet bírni. Előnye a megoldásnak, hogy a korábbi félévek
+munkái alatt azt figyeltük meg, hogy a vizsgált alkalmazásaink ezzel a stratégiával azonos erőforrás
+felhasználás mellett jobb eredményeket értek el.\citep{bscThesis} Hátránya, hogy a jelenlegi
+implementáció szerint a minden skálázásnál le kell állítani a futtatott egységet, ami bizonyos
+szolgáltatás esetén nem túl előnyös, hiszen ezidő alatt kevesebb egység végzi a beérkező kérések kiszolgálását.
 
 % Skálázás módjai ábra -------------------------------------------------------
 \begin{figure}[!ht]
