@@ -13,14 +13,20 @@ Több területen használnak még ilyen rendszert, mely megbízható de továbbf
 
 Ezután következett, a realizáció, hogy nem éri meg minden ilyen szolgáltatáshoz egy külön fizikai szervert fenntartani, hiszen a kihasználtsága nem feltétlen indokolja, és a drágán megvásárolt erőforrások feleslegesen állnak.
 Ehhez plusz egy katalizátor volt a folyamatosan megjelenő virtualizációs technológiák, amik lehetővé tették, hogy a fizikai rendszert absztrahálva, különböző virtuális környezetet hozzunk létre azok felett.
-A megoldásnak köszönhetően lehetőség nyílt előre definiált lépésekkel azonos tulajdonsággal bíró rendszereket létrehozni igény szerint. Természetesen mindezt úgy, hogy a fizikailag rendelkezésre álló erőforrások kihasználtsága is javult.
+A megoldásnak köszönhetően lehetőség nyílt előre definiált lépésekkel azonos tulajdonsággal bíró rendszereket létrehozni igény szerint. 
+Természetesen mindezt úgy, hogy a fizikailag rendelkezésre álló erőforrások kihasználtsága is javult.
 
-A korábban vázolt lehetőséggel mai napig sokan élnek, azonban a fizikai életben is megjelenő rugalmasság és agilitás iránti vágy köszön vissza az informatikában is. Aki nem tud lépést tartani a gyors fejlődésben az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. Az érem másik oldala viszont az, hogy aki időben észreveszi a lehetőséget, az hirtelen nagy előnyt tud szerezni. Erre jó példa az Amazon\citep{amazon} és a Netflix\citep{netflix} is.  
+A korábban vázolt lehetőséggel mai napig sokan élnek, azonban a fizikai életben is megjelenő rugalmasság és agilitás iránti vágy köszön vissza az informatikában is. 
+Aki nem tud lépést tartani a gyors fejlődésben az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. 
+Az érem másik oldala viszont az, hogy aki időben észreveszi a lehetőséget, az hirtelen nagy előnyt tud szerezni. 
+Erre jó példa az Amazon\citep{amazon} és a Netflix\citep{netflix} is.  
 
 Egyre szélesebb körben terjednek el a konténerizációs technológiák és vele együtt az úgynevezett mikro-szolgáltatások.
 A paradigma értelmében a korábbi nagyobb kódegységeket szét lehet bontani több kisebb kódbázisra, ami így számtalan előnyt jelent az alkalmazás fejlesztéséhez.
 A kisebb egységeket könnyebb megérteni, így könnyebb új tagoknak becsatlakozni a fejlesztésbe, nem kell rögtön egyben látnia a rendszert.
-Valamint lehetőséget biztosít, hogy több nyelven, keretrendszerben legyenek megoldva az alfeladatok. Ezáltal minden lépéshez a számára legelőnyösebb környezetet lehet megválasztani. Valamint ha egy komponenst szeretnénk teljesen elölről fejleszteni, akkor az a rendszer többi részét nem érinti.
+Valamint lehetőséget biztosít, hogy több nyelven, keretrendszerben legyenek megoldva az alfeladatok. 
+Ezáltal minden lépéshez a számára legelőnyösebb környezetet lehet megválasztani. 
+Valamint ha egy komponenst szeretnénk teljesen elölről fejleszteni, akkor az a rendszer többi részét nem érinti.
 Ezek által lehetőség nyílik egy agilis rendszer kialakítására.
 
 A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, ami lehetőséget biztosít a konténerizációs technológia széles körű és egyszerű használatára.
@@ -28,19 +34,37 @@ A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, am
 %----------------------------------------------------------------------------
 \section{Feladat meghatározása}
 %----------------------------------------------------------------------------
-A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. Ugye sokan választották az új megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
+A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. 
+Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. 
+Ugye sokan választották az új megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
 Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük.
 Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül. 
 Azonban a valóság ennél jóval komplexebb. Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel.
 Látható, hogy pár paramétert bevéve az egyenletbe már nem is könnyű feladat. 
 Különösen megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor, memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető legjobb kiszolgálást tudja biztosítani a rendszer. 
 
-A diplomatervezés során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. Első lépésként fontos tisztában lenni a használt platformmal, a Kubernetessel megnézni benne milyen skálázási megoldások vannak jelenleg és melyik hogyan van támogatva. Egy konkrét példán keresztül bemutatom a HPA megoldását. 
+A diplomatervezés során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. 
+Első lépésként fontos tisztában lenni a használt platformmal, a Kubernetessel megnézni benne milyen skálázási megoldások vannak jelenleg és melyik hogyan van támogatva. 
+Egy konkrét példán keresztül bemutatom a HPA megoldását. 
 
-A beépített skálázás értékeléséhez méréseket kell végezni minél több szolgáltatáshálón, hogy látni lehessen melyik rendszer hogyan viselkedik a terhelés függvényében. Az adatok gyűjtéséhez kell egy külön rendszer, ami képes lesz tetszőleges tulajdonságokkal rendelkező szolgáltatáshálót létrehozni és azokon szimulációkat végezni.
+Egy egyedi keretrendszert kellett összeállítani, ami képes tetszőleges szolgáltatáshálót létrehozni
+Kubernetesen belül és azt lekérdezésekkel terhelni. Ezáltal lehetőségünk nyílik szabadon
+konfigurálható körülmények között vizsgálni a Kubernetes beépített skálázóját, illetve az
+irodalomban javasolt egyéb megoldásokat is. Az így nyert eredményekből következtetéseket tudunk
+levonni az egyes implementációk dinamikáját, költségeit, hatékonyságát illetően.
 
-Az így gyűjtött eredményeket ki kell értékelni, hogy jobban megértsük a rendszert és következtetéseket tudjunk levonni a skálázás minőségét illetően. Amennyiben azt találjuk, hogy bizonyos lépésekkel optimálisabb skálázás valósítható meg, akkor erre egy példát kell mutatni és bizonyítani a hipotézis igazát. 
+A feladat része a kapott mérési eredmények vizualizációja is, így könnyebben láthatóvá válnak a
+skálázási megoldások és a megoldások közötti különbségek is. 
 
+Amennyiben a mérési eredmények alapján fejleszthető lenne egy új stratégia, akkor azt implementálás
+után szintén meg lehet vizsgálni és kiértékelni a hipotézist.
+
+%A beépített skálázás értékeléséhez méréseket kell végezni minél több szolgáltatáshálón, hogy látni lehessen melyik rendszer hogyan viselkedik a terhelés függvényében. 
+%Az adatok gyűjtéséhez kell egy külön rendszer, ami képes lesz tetszőleges tulajdonságokkal rendelkező szolgáltatáshálót létrehozni és azokon szimulációkat végezni.
+
+%Az így gyűjtött eredményeket ki kell értékelni, hogy jobban megértsük a rendszert és következtetéseket tudjunk levonni a skálázás minőségét illetően. 
+%Amennyiben azt találjuk, hogy bizonyos lépésekkel optimálisabb skálázás valósítható meg, akkor erre
+%egy példát kell mutatni és bizonyítani a hipotézis igazát. 
 
 %----------------------------------------------------------------------------
 \section{A dolgozat felépítése}
