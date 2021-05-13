@@ -29,10 +29,10 @@ Az elkészült rendszerhez szükséges részek forráskódjai megtalálhatóak a
 %----------------------------------------------------------------------------
 \section{Korábbi munkák}
 %----------------------------------------------------------------------------
-A korábbi projekttárgyak keretén belül már foglalkoztam hasonló kérdéskörrel, így már volt az egyes eszközök használatához tapasztalat és implementáció is, amiből tovább lehetett haladni. 
-Önálló labor tárgyban megismerkedtem a Go programozási nyelvvel, és elkészítettem egy Kubernetes operátort, ami képes egyedi erőforrás definíciók feldolgozására és ez alapján képes beépített objektumokat létrehozni.
+A korábbi projekttárgyak keretén belül már foglalkoztam hasonló kérdéskörrel, így már volt az egyes eszközök használatához tapasztalat és implementáció is, amiből ki lehetett indulni. 
+Önálló labor tárgyban megismerkedtem a Go programozási nyelvvel, és elkészítettem egy Kubernetes operátort, ami képes egyedi erőforrás definíciók feldolgozására és ez alapján képes beépített objektumokat létrehozni. A félév elején elején ezt tovább kellett bővíteni, hogy képes legyen skálázót is létrehozni valamint javítani kellett a megbízhatóságán is.
 
-Korábban készítettem már egy Docker képfájl is, ami a jelenlegi rendszerben felhasználttal azonos céllal született, hogy szabadon konfigurálható paraméterezés alapján szolgálja ki a beérkező kéréseket.
+Korábban készítettem már egy Docker képfájl is, ami a jelenlegi rendszerben felhasználttal azonos céllal született, hogy szabadon konfigurálható paraméterezés alapján szolgálja ki a beérkező kéréseket. Az így megírt Go alapú webszervert is a félév során tovább kellett bővíteni, személyreszabni, hogy a valósághűbb eredményeket szolgáltasson.
 
 %----------------------------------------------------------------------------
 \section{Operátor}
@@ -40,9 +40,17 @@ Korábban készítettem már egy Docker képfájl is, ami a jelenlegi rendszerbe
 Fontos szempontnak tekintettük, hogy egyszerű konfigurációs fájl alapján létre lehessen hozni a szolgáltatáshálót, amit szeretnénk tesztelni. 
 Mivel a Kubernetes fejlesztők tudták, hogy nem tudnak minden igényt kiszolgálni gondoltak arra, hogy a rendszer könnyen kibővíthető legyen. Az operátorok pont erre valóak. Létrehozásukkal külön logikát tudunk implementálni, ami egy egyedi Kubernetes erőforrás objektumra figyel. 
 
-%TODO
+\subsection{Megírása}
+%----------------------------------------------------------------------------
+A klaszter operátorral való kibővítése egy gyakran alkalmazott megoldás, amikor összetettebb alkalmazást vagy logikát kell implementálni. Olyan szinten elterjedt megoldásról van szó, hogy több nyelv és keretrendszer közül lehet választani. Valamint külön weboldal is létezik, ahol össze vannak gyűjtve az egyes alkalmazásokhoz elérhető, korábban megírt operátorok.\citep{operatorhub} A Kubernetes alkalmazási lehetőségei között ezt a megoldást külön mintaként említik.\citep{KubernetesPatterns} 
 
-\subsection{Működése}
+Én a feladat megoldásához az Operator-SDK\citep{operatorSDK} keretrendszerét használtam fel. A keretrendszerrel könnyen írhatunk Kubernetes operátorokat. Ezt megtehetjük Helm, Ansible vagy Go segítségével is. Értelemszerűen a legnagyobb rugalmasságot a Go programozási nyelvvel érhetjük el, itt van lehetőségünk nagyon mély szinten belenyúlni a klaszter működébe. Én is ezt a megoldást választottam a korábbi projekttárgy keretén belül és sikerült megszerezni az alapvető ismeretket. A korábban megírt alkalmazás több hibát is tartalmazott, így a félévben ezeket ki kellett javítani és új funkciókkal bővítettem ki. 
+
+Sajnos nem sok segédanyag érhető el online formában ezért nehéz belekezdeni. Egyedül a korábban mások által megírt operátorok forráskódja tudott jó indulás lenni.
+
+Több megoldás is létezik az elkészült operátorunk futtatására. Futtathatjuk a klaszteren kívülről, mint alkalmazást, illetve a klaszteren belülről is. Utóbbi esetben készíteni kell az alkalmazásunkból egy Docker képfájlt, ami aztán külön kapszulában fog futni. Illetve klaszteren belül lehetőségünk van egy úgynevezett operátor életciklus kezelővel (OLM) is megtenni ezt. Az utóbbi megoldás a legfejlettebb úgy kell elképzelni mint egy külön csomagkezelő csak a klaszteren belül, az operátoroknak. A félévben én a klaszteren kívüli megoldást használtam, mivel az operátort is folyamatosan fejleszetni kellett. 
+
+\subsection{Használata}
 %----------------------------------------------------------------------------
 A \ref{servicegraph_example} kódrészlet mutat egy példát a szolgáltatásháló definíciójára. Számunkra elég végiggondolni, hogy milyen szolgáltatásokat szeretnénk, hogyan kövessék egymást, milyen erőforrást biztosítsunk számukra. Miután ezek megvannak készítünk belőle egy \textit{yaml} dokumentumot.
 
@@ -68,10 +76,23 @@ servicegraph.dipterv.my.domain/servicegraph created
 %----------------------------------------------------------------------------
 \section{Go konténer}
 %----------------------------------------------------------------------------
-A korábban látott módon lehetőségünk van tetszőleges szolgáltaásokat elindítani, azonban hogy az adott szolgáltatásoknak további paraméterek tudjunk átadni, olyan alkalmazás kell ami tudja kezelni őket. Például: milyen végpontokra figyeljenek, milyen kiszolgálási idővel dolgozzanak, mennyi erőforrást használjanak fel. Erre a feladatra létrehoztam külön egy Go alapú webalkalmazást. 
-A paraméterek átadására indításkor van lehetőség és futás közben figyelembe veszi ezeket. Beépítettként tartalmaz egy processzor intenzív algoritmust, amit megadott alkalommal lefuttat egy-egy kérés során. 
+A korábban látott módon lehetőségünk van tetszőleges szolgáltaásokat elindítani, azonban hogy az adott szolgáltatásoknak további paraméterek tudjunk átadni, olyan alkalmazás kell ami tudja kezelni őket. Például: milyen végpontokra figyeljenek, milyen kiszolgálási idővel dolgozzanak, mennyi erőforrást használjanak fel.
+A feladat megoldására létrehoztam egy Go alapú webalkalmazást, mely induláskor átveszi a szükséges paramétereket. A webszerverhez beérkező kérések pedig a megadott paraméterek által specifikált módon fognak végrehajtódni. 
 
-%TODO
+Az alkalmazás elkészítéséhez szintén rendelkezésre állt egy kódbázis, amit tovább kellett fejleszteni. Korábban egy \textit{http} alapú üzenetet küldött vissza az alkalmazás, ami számunkra könnyebben olvasható, azonban a gépek nehezebben kezelik. Így kicsit változtatni kellett a kódon és jelenleg \textit{json} üzenetet kapunk vissza.
+
+Lehetőségünk van a http kérés kiszolgálása közben további webalkalmazások felé továbbkérdezni. Ez a funkció ad lehetőséget, hogy a klaszeteren belül tetszőleges szolgáltatáshálókat valósítsunk meg. Ezt a funkciót is kicsit fejleszteni kellett és az egyes lekérdezéseket aszinkron hívásra cseréltem le. Ezáltal miközben várunk a kint meghívott rendszerek válaszára közben végezhetjük a saját csomópontban a konfigurációban megadott számításokat. 
+
+Az elkészült alkalmazást fel kellett készíteni, hogy a Kubernetesben tudjuk futtatni. Ehhez Docker képfájlt készítettem belőle és miután elláttam a megfelelő címkékkel feltöltöttem\citep{dockerContainer} a Docker Hub oldalra, ami egy ingyenes és publikus konténer adattár. \\
+
+\lstset{caption=Kénténer futtatása és válasza, label=describe_pod}
+\lstinputlisting{figures/describe_pod.sh}
+
+A \ref{describe_pod} sorszámú kódrészleten egy, az elkészült Docker konténert futtató kapszula leírásának részlete látszik. Az indításhoz a korábban látott, \ref{servicegraph_example} kódrészlet konfigurációját használtam fel. Érdemes megfigyelni, hogy az egyes  paraméterek hogyan képződnek le a konténerhez. Például átadásra kerül a szolgáltatás neve, hogy melyik porton fog figyelni, melyik végpontok havására kell válaszolnia és a hozzá tartozó egyéb paraméterek.
+
+A kódrészleten látott második paranccsal létrehozunk egy újabb kapszulát a klaszterben. Látható, hogy interaktív módban indítottuk el, így kaptunk egy felületet, ahonnan lekérdezést lehet indítani a \textit{front-end} kapszula felé. Ez jó megoldás abban az esetben, ha ki szeretnénk próbálni, hogyan működik az alkalmazásunk. A \verb+kubectl run+ parancs alatt látható, hogy a \textit{curl} alkalmazás kérésére milyen választ kaptunk. A válasz \textit{json} formátumban tartalmazza a lekérdezés főbb paramétereit. Látható, hogy melyik végpontra érkezett, milyen konfiguráció van beállítva a végponthoz.
+
+
 
 %----------------------------------------------------------------------------
 \section{Mérés vezénylése}

@@ -8,7 +8,22 @@
 \section{Elvégzett munka}
 %----------------------------------------------------------------------------
 
+A félév végére sikerült összeállítani egy olyan keretrendszert, amivel előre leírt konfigurációs
+fájlból kiindulva Kubernetes felett hoz létre egy szolgáltatás-hálót. Az elkészült
+szolgáltatáshálóba különböző mennyiségű felhasználói forgalmat tudunk generálni. Kiszolgálás közben
+folyamatosan monitorozzuk a rendszer terheltségét és egyéb metrikáit. A feladat megoldásához tovább kellett fejleszteni a korábbi operátort és webalkalmazásomat. Ezen felül Python kódokat írtam, ami képes autómatikusan elvégezni a méréseket és az eredményeket vizuálisan megjeleníteni.
+
+A rendszer működésének teszteléséhez igényeltem virtuális gépeket és azok telepítése után összeállítottam egy Kubernetes klasztert. A klaszter telepítését a \textit{Kubeadm} segítségével végeztem, de kipróbáltam a \textit{Kubespray} telepítőt is. 
+
+Az elkészült klaszterben próbaméréseket végeztem, amik sikeresen lefutottak, ezzel bizonyosságot nyert, hogy az egyes elemek nem csak a lokális környezetben képesek együttműködni, hanem a valósághoz közelálló rendszerben is. Az elkészült mérési eredményekből  sikerült kézzelfogható grafikont készíteni. 
+
+A projekt során úgy érzem sikerült a korábbinál mélyebben megismerni a Kubernetes platformot és ezzel egyidőben belátni, hogy olyan mélységei vannak, hogy mindig lesz újabb és újabb terület amit meg lehet ismerni. Ráadásul folyamatosan fejlődnek a keretrendszerben felhasznált egységek, így folyamatosan lehetőség van bővíteni is azokat.
 
 %----------------------------------------------------------------------------
 \section{Továbbhaladás}
 %----------------------------------------------------------------------------
+Megítélésem szerint a félévben egyenletesen sikerült hétről-hétre haladni, azonban folyamatosan bontakozott ki a feladat komplexitása. A diplomaterv hátralevő részében ezeket még tisztázni kell, ezt leginkább sok méréssel és a velük szerzett tapasztalattal lehet megtenni. A nyár folyamán elég idő lesz a mérések elvégzésére különböző szolgáltatáshálókkal illetve a beépített skálázóval. Ezek alapján ki kell alakítani egy analitikus modellt, ami fedi a mérési eredményeket. 
+
+Érdemes lenne kipróbálni egy saját skálázót is, ami a modellünk szerint az eredetinél optimálisabb erőforráselosztást tesz lehetővé. Implementáció után szintén méréseket kell rajta végezni és akkor megállapítható, hogy a felállított modellünk a valóságban is helyettáló-e és milyen hatékonysággal működik a már meglévő rendszerekkel összehasonlítva. 
+
+

@@ -22,11 +22,11 @@ Az érem másik oldala viszont az, hogy aki időben észreveszi a lehetőséget,
 Erre jó példa az Amazon\citep{amazon} és a Netflix\citep{netflix} is.  
 
 Egyre szélesebb körben terjednek el a konténerizációs technológiák és vele együtt az úgynevezett mikro-szolgáltatások.
-A paradigma értelmében a korábbi nagyobb kódegységeket szét lehet bontani több kisebb kódbázisra, ami így számtalan előnyt jelent az alkalmazás fejlesztéséhez.
-A kisebb egységeket könnyebb megérteni, így könnyebb új tagoknak becsatlakozni a fejlesztésbe, nem kell rögtön egyben látnia a rendszert.
-Valamint lehetőséget biztosít, hogy több nyelven, keretrendszerben legyenek megoldva az alfeladatok. 
-Ezáltal minden lépéshez a számára legelőnyösebb környezetet lehet megválasztani. 
-Valamint ha egy komponenst szeretnénk teljesen elölről fejleszteni, akkor az a rendszer többi részét nem érinti.
+A paradigma értelmében a korábbi nagyobb kódegységeket szét lehet bontani több kisebb kódbázisra, ami számtalan előnyt jelent az alkalmazás fejlesztéséhez.
+Mivel a kisebb egységeket könnyebb megérteni mint a teljes kódbázist, az új fejlesztők számára könnyebb becsatlakozni fejlesztésbe.
+A kisebb elemekre bontott kód lehetőséget biztosít arra is, hogy az egyes komponenseket több
+nyelven és többfajta keretrendszerben fejlesszük, minden kmponens számára az optimális fejlesztési környezetet kiválasztva. 
+Végül, ha egy komponenst szeretnénk teljesen előlről újraírni, akkor ez a rendszer többi részét nem érinti.
 Ezek által lehetőség nyílik egy agilis rendszer kialakítására.
 
 A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, ami lehetőséget biztosít a konténerizációs technológia széles körű és egyszerű használatára.
@@ -36,7 +36,7 @@ A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, am
 %----------------------------------------------------------------------------
 A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. 
 Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. 
-Ugye sokan választották az új megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
+Sokan választották az új megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
 Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük.
 Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül. 
 Azonban a valóság ennél jóval komplexebb. Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel.
@@ -44,8 +44,10 @@ Látható, hogy pár paramétert bevéve az egyenletbe már nem is könnyű fela
 Különösen megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor, memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető legjobb kiszolgálást tudja biztosítani a rendszer. 
 
 A diplomatervezés során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. 
-Első lépésként fontos tisztában lenni a használt platformmal, a Kubernetessel megnézni benne milyen skálázási megoldások vannak jelenleg és melyik hogyan van támogatva. 
-Egy konkrét példán keresztül bemutatom a HPA megoldását. 
+Első lépésben szeretném bemutatni a használt környezetet, a Kubernetes felépítését illetve, hogy
+milyen skálázási megoldások léteznek és melyiket hogyan támogatja.
+% Első lépésként fontos tisztában lenni a használt platformmal, a Kubernetessel megnézni benne milyen skálázási megoldások vannak jelenleg és melyik hogyan van támogatva. 
+Konkrét példán keresztül bemutatom a HPA megoldását. 
 
 Egy egyedi keretrendszert kellett összeállítani, ami képes tetszőleges szolgáltatáshálót létrehozni
 Kubernetesen belül és azt lekérdezésekkel terhelni. Ezáltal lehetőségünk nyílik szabadon

@@ -19,7 +19,7 @@ Amikor a fejlesztési rész kezdett alábbhagyni kellett egy rendes környezet, 
       \item \textbf{VM igénylés a koliban}: A Schönherz kollégiumban lévő Kollégiumi Számítástechnikai Körtől lehet igényelni virtuális gépeket, így sikerült lebeszélni, hogy a projektfeladat végéig biztosítanak számomra három gépet. Hátrány lehet, hogy öntevékeny a kör így probléma esetén kérdéses a megoldás gyorsasága. 
 \end{itemize}		
 
-A fenti opciók közül számomra a harmadik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian (v10 - Buster) operációs rendszert választottam, mert stabil, megbízható és széles körben támogatott. 
+A fenti opciók közül számomra a negyedik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian (v10 - Buster) operációs rendszert választottam, mert stabil, megbízható és széles körben támogatott. 
 
 \begin{center}
 \begin{tabular}{ c||cccc| } 
@@ -104,17 +104,28 @@ Fontos szempont volt, hogy minél könnyebben használható legyen az alkalmazá
 Az alkalmazás indításakor meg kell adni, hogy hova vannak mentve a korábbi mérések során készült kimeneti fájlok. Itt egy-egy mérés jelentése, hogy a Fortio adott darabszámú lekérdezést generál másodpercenként fix ideig. Tehát egy teszteset futtatása több ilyen értelemben vett mérést tartalmaz, hiszen egy skálán megy végig a rendszer, ahol a minimális QPS értéktől megadott lépésközzel halad a maximális QPS értékig. 
 Egyesével elkezdi beolvasni a mérési eredményeket és minden fájlból készít egy "tisztázott" eredményt. Ebben már csak az adott grafikon kirajzolásához nélkülözhetetlen értékeket tartalmazza. Például előfordul, hogy a Prometheus eredményében szerepel olyan pod is, ami nem vett részt az adott mérésben, mert még a korábbiból maradt ott. Az ilyen eseteket észlelni kell és kiszedni az értékeit, ne okozzanak anomáliákat. 
 
-A kapott eredményekből készült grafikon látható az \ref{fig:example_plot} ábrán. A mérések során a szolgáltatáshálóban két különböző feladatot ellátó szolgáltatás szerepelt. Volt egy kintről elérhető \textit{front-end} szolgáltatást szimuláló egység, ami a feltevéseink alapján nem használt sok erőforrást, és minden hozzá beérkező kérést továbbított a \textit{back-end} felé, ami viszont a szimulációban egy processzorigényes műveletet hajtott végre. 
+A kapott eredményekből készült grafikon látható az \ref{fig:example_plot} és \ref{fig:example_responsetime} ábrán. A mérések során a szolgáltatáshálóban két különböző feladatot ellátó szolgáltatás szerepelt. Volt egy kintről elérhető \textit{front-end} szolgáltatást szimuláló egység, ami a feltevéseink alapján nem használt sok erőforrást, és minden hozzá beérkező kérést továbbított a \textit{back-end} felé, ami viszont a szimulációban egy processzorigényes műveletet hajtott végre. 
 
-A kapott ábráról leolvasható, hogy az átlagos válaszidő a mérés során nem változott érdemben. A mérés során nem vittünk a rendszerbe mesterséges késleltetést, csak a kötelező műveletek elvégzését vártuk meg. Látható, hogy a kevésbé erőforrás-igényes \textit{front-end} processzor felhasználása lassan de folyamatosan nő egészen addig, amíg a \textit{back-end} is tudja növelni a processzor felhasználását. Ez körülbelül 125 QPS-ig tart. Érdemes figyelembe venni, hogy az $X$ tengely az igényelt lekérdezések darabszámát mutatja, nem a rendszer által valóságban kiszolgált kérések mennyiségét. \\
+A kapott \ref{fig:example_responsetime} ábráról leolvasható, hogy az átlagos válaszidő a mérés során nem változott érdemben, végig kellően alacsony maradt. Fontos megjegyezni, hogy a mérés során nem vittünk a rendszerbe mesterséges késleltetést, csak a kötelező műveletek elvégzését vártuk meg, így jött ki az állandó válaszidő.
+
+A másik, \ref{fig:example_plot} grafikonon látható, hogy a kevésbé erőforrás-igényes \textit{front-end} processzor felhasználása lassan de folyamatosan nő egészen addig, amíg a \textit{back-end} is tudja növelni a processzor felhasználását. Ez körülbelül 125 QPS-ig tart. Ilyenkor a \textit{back-end} eléri az indításkor beállított erőforrás limitációt és emiatt nem tud több beérkező igényt kiszolgálni.  Emiatt a felhasználói forgalmat generáló Fortio sem fog tudni több kérést a rendszer felé küldeni, mert meg kell várja, mire a front-end válaszol, de a front-end csak azután válaszol, hogy meghívta a végeletkig megterhelt back-end szolgáltatást.
+
+Érdemes figyelembe venni, hogy az $X$ tengely az igényelt lekérdezések darabszámát mutatja, nem a rendszer által valóságban kiszolgált kérések mennyiségét. \\
 
 
-% Generált példa ábra -------------------------------------------------------
+% Generált példa ábrák -------------------------------------------------------
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=150mm, keepaspectratio]{figures/example_plot.jpg}
-\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer eredménye}
+\includegraphics[width=150mm, keepaspectratio]{figures/sample_plot_cpu.jpg}
+\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer CPU felhasználása}
 \label{fig:example_plot}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/sample_plot_responsetime.jpg}
+\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer átlagos válaszideje}
+\label{fig:example_responsetime}
 \end{figure}
 
 
@@ -125,4 +136,4 @@ Az eredmények megjelenítésén még lehetne finomítani, mivel jelenleg egy gr
 
 Illetve érdemes elgondolkodni, hogyan kellene kezelni az esetet, ha a rendszer nem tudja kiszolgálni az elvárt lekérdezéseket. Több megoldás is szóba jöhet. Egyik, hogy már a mérések végzése folyamán figyeljük és ha nem tudja teljesíteni, akkor idő előtt leállítjuk a terheléseket. Másik, hogy az $X$ tengelyen a valódi, kiszolgált QPS értéket jelenítjük meg. Ezzel annyi gond lehet, hogy elveszítjük az információt, hogy az adott mérésnél a rendszer már túlterhelt állapotban volt és emiatt vagy alapból ennyi kéréssel terheltünk. Harmadik megoldás, hogy az $X$ tengelyen lévő értékeket addig ábrázoljuk, amíg elvárt módon futottak a mérések.
 
-Másik apróság, ami segítene az eredmények vizualizációjában, ha külön címkét kapna a válaszidő az $Y$ tengelyen.  
+Másik apróság, ami segítene az eredmények vizualizációjában, ha a felhasznált erőforrások és a hozzá kapcsolódó válaszidő egy ábrán lenne, viszont ehhez külön $Y$ tengely fog kelleni, hiszen más a mértékegysége.  
