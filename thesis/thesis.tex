@@ -40,6 +40,7 @@
 \input{include/preamble}
 \renewcommand{\lstlistingname}{kódrészlet}% Listing -> "kódrészlet"
 \usepackage{indentfirst}		% az első bekezdés is behúzott legyen, ne csak a 2-tól
+\usepackage{pdfpages}
 
 %\usepackage{xcolor}
 
@@ -89,9 +90,13 @@
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \include{include/titlepage}		    % Diplomaterv címlap
 
+% Feladat kiírás
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\includepdf[pages=-]{kiiras.pdf}
 
 % Table of Contents
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+\setcounter{tocdepth}{2}      % csak a főbb címeket mutassa
 \tableofcontents\vfill
 
 
