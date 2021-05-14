@@ -19,24 +19,25 @@ Amikor a fejlesztési rész kezdett alábbhagyni kellett egy rendes környezet, 
       \item \textbf{VM igénylés a koliban}: A Schönherz kollégiumban lévő Kollégiumi Számítástechnikai Körtől lehet igényelni virtuális gépeket, így sikerült lebeszélni, hogy a projektfeladat végéig biztosítanak számomra három gépet. Hátrány lehet, hogy öntevékeny a kör így probléma esetén kérdéses a megoldás gyorsasága. 
 \end{itemize}		
 
-A fenti opciók közül számomra a negyedik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian (v10 - Buster) operációs rendszert választottam, mert stabil, megbízható és széles körben támogatott. 
+A fenti opciók közül számomra a negyedik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian (v10 - Buster) operációs rendszert választottam, mert stabil, megbízható és széles körben támogatott. A virtuális gépek tulajdonságai az \ref{tab:nodes} ábrán láthatóak. Hasonló erőforrásértékekkel rendelkeznek, annyi különbséggel, hogy csak az egyik gépnek van publikus címe. Továbbá a táblázat tartalmazza az egyes csomópontok nevét és a klaszteren belüli szerepét is.
 
-\begin{center}
-\begin{tabular}{ c||cccc| } 
-\hline 
-Tulajdonság & VM 1 & VM 2 & VM 3 \\
-\hline \hline
-CPU (mag) & 4 & 4 & 4 \\ 
-Memória (GB) & 4 & 4 & 4 \\
-Tárhely (GB) & 10 & 10 & 10 \\  
-Node neve & dipterv1 & dipterv2 & dipterv3 \\ 
-Külső IP & 152.66.211.2 & $\varnothing$ & $\varnothing$ \\ 
-Belső IP & 10.151.103.1 & 10.151.103.2 & 10.151.103.3 \\
-K8s szerep& control-plane,master & worker & worker \\
-\hline
-\end{tabular}
-\end{center}
-%TODO VM adatokat kitölteni, mert csakl kolis netről vannak meg. 
+\begin{table}[ht]
+\centering
+  \begin{tabular}{c|cccc}
+	  Tulajdonság & VM 1 & VM 2 & VM 3 \\
+    \hline
+	CPU (mag) & 4 & 4 & 4 \\ 
+	Memória (GB) & 4 & 4 & 4 \\
+	Tárhely (GB) & 10 & 10 & 10 \\  
+	Node neve & dipterv1 & dipterv2 & dipterv3 \\ 
+	Külső IP & 152.66.211.2 & $\varnothing$ & $\varnothing$ \\ 
+	Belső IP & 10.151.103.1 & 10.151.103.2 & 10.151.103.3 \\
+	K8s szerep& control-plane,master & worker & worker \\
+  \end{tabular}
+  
+  \caption{Használt csomópontok tulajdonságai}
+\label{tab:nodes}
+\end{table}
 
 \subsection{Klaszter előkészítése}
 %----------------------------------------------------------------------------
