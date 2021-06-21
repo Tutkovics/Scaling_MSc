@@ -11,57 +11,143 @@ A félévben végzett munka jelentős mértékben támaszkodik a Kubernetes (K8s
 %----------------------------------------------------------------------------
 Ahogy egyre többen kezdték megismerni és használni a konténerizációs technikákat, mint például a Docker, úgy egyre tolódott át az üzemeltetési oldal is ilyen irányba. Ezek után nem  az jelentette a kihívást, hogy az egyes alkalmazásokat egy dedikált virtuális gépen kellett beüzemelni és elindítani. Az új igények szerint az alkalmazásunk egyes részeit egymástól függetlenül kellett konténerekben futtatni. Ezáltal sokkal több kisebb részegységre kellett figyelni, ami jelentősen több feladattal jár, mint a korábbi gépek kezelése. 
 
-Ezzel a problémával találkozott a Google is és kezdődött egy platform fejlesztése, ami képes a fenti feladatok megoldására. Eleinte ez a \textit{Borg}\citep{Borg} nevet viselte. Ezt 2014-ben a Google nyílt forráskódúvá tette immáron Kubernetes néven. A projektet a \textit{Cloud Native Computing Foundation (CNCF)} vette gondozásába. Innentől kezdve bárki szabadon elérheti és bele is fejleszthet. Az elmúlt 6 év alatt hatalmas fejlődésen ment keresztül és már a $22$.-ik kiadásánál tart.
+Ezzel a problémával találkozott a Google is és kezdődött egy platform fejlesztése, ami képes a fenti feladatok megoldására. Eleinte ez a \textit{Borg}\citep{Borg} nevet viselte. Ezt 2014-ben a Google nyílt forráskódúvá tette immáron Kubernetes néven. A projektet a \textit{Cloud Native Computing Foundation (CNCF)}\citep{cncf} vette gondozásába. Innentől kezdve bárki szabadon elérheti és bele is fejleszthet. Az elmúlt 6 év alatt hatalmas fejlődésen ment keresztül és már a $22$.-ik kiadásánál tart.
+
+Egészen fiatal rendszerről van tehát szó, azonban a VMware kutatásából\citep{VMwareSurvey} is sok érdekes dolog bontakozik ki. Egyre többen térnek át a Kubrenetesre és futtatják benne a konténerizált infrastruktúrájukat. Látható, hogy nem egy rövidtávon elmúló trendről van szó és még mindig felívelő ágban van. A kutatásban résztvevők jelentős részére hozott könnyebbségeket főként az erőforrás gazdálkodásban és a fejlesztési ciklusok rövidítésében. Mindössze a megkérdezettek 5\% nem számolt be érezhető előnyről.  
 
 %----------------------------------------------------------------------------
 \section{Felépítése}
 %----------------------------------------------------------------------------
-erőforrások: CPU és memoria
+
+\subsection{Klaszter elemei}
+%----------------------------------------------------------------------------
+Kubernetes alatt általában egy teljes klasztert szoktak érteni. Ennek a rendszernek az egyes részeit és azok feladatát szeretném bemutatni.  
+
+\subsubsection{Csomópontok}
+A legtöbb klaszter több csomópontot (node) tartalmaz. Ezek lehetnek akár egy egész szerver vagy egy szerveren futtatott virtuális gép is. Itt fognak futni a később részletesen tárgyalt kapszulák, amik az alkalmazásunkat valósítják meg. Ezért itt futniuk kell azoknak a szolgáltatásoknak, amik ezt lehetővé fogják tenni. A csomópontok konfigurációját a vezérlő sík (control plane) végzi. A \ref{k8s_nodes} sorszámmal ellátott kódrészleten láthatjuk, hogy az általunk későbbiekben használt klaszter esetében milyen csomópontok vannak. Fontos, hogy az egyes node nevek  különbözőek legyenek. 
+
+Feladatkörét tekintve két különböző típusú node lehet. Egyik, ami a vezérlő síkot biztosítja, ő az úgynevezett \textit{master} illetve a másik, ahol csak kapszulák futhatnak, ezek a \textit{worker} típusú csomópontok. Látható, hogy a példaként hozott kódrészletben a \verb+dipterv1+ névvel ellátott node van mester szerepben. Az utóbbi időben egyre jobban elmosódott a határvonal a két típus között és több csomóponton van megvalósítva a vezérlő sík, illetve ezeken is lehet kapszulákat futtatni. Valamint a hivatalos dokumentációból fokozatosan tűnik el a master/worker megnevezés.\\
+
+\lstset{caption=Később használt klaszter csomópontjai, label=k8s_nodes}
+\lstinputlisting{figures/kubectl_get_nodes.sh}
+
+Az egyes csomópontoknak biztosítani kell, hogy futhassanak rajtuk kapszulák. Ezért minden egyes node rendelkezik az alábbi komponsensekkel:
+
+\paragraph{Kubelet} Minden node rendelkezik egy \textit{kublet} nevű ügynökkel, akinek a feladat, hogy az adott csomópontra ütemezett konténerek rendesen, az elvárt módon fussanak. Ezt úgy tudja megtenni, hogy az API szerveren keresztül kap egy pod leírót és az abban leírtak alapján kezeli a konténereket. Ezen felül feladata, hogy az általa összegyűjtött információkat jelentse a vezérlő sík felé, ezzel lehetővé téve az új konténerek ütemezését csomópontokra. 
+
+\paragraph{Kube-proxy} A \textit{kube-proxy} szintén része minden csomópontnak, ahogy az a \ref{fig:k8s_components} ábrán is látszik. Ezen komponens feladata az adott node hálózatát karban tartani. Ezt úgy tudja megtenni, hogy operációs rendszer szintjén hoz létre és tartja karban a hálózati csomagokra vonatkozó szabályokat.
+
+\paragraph{Konténert futtató környezet} Mivel az egyes kapszulák konténereket tartalmaznak ezért szükség van egy olyan környezetre, ami képes futtatni ezeket a konténereket. Mai napig a legelterjedtebb a Docker, de a Kubernetes ezen kívül még másokat is támogat. 
+
+% Kubernetes cluster components ---------------------------------------------
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/kubernetes_components.png}
+\caption{Kubernetes klaszter elemei\citep{KubernetesComponents}}
+\label{fig:k8s_components}
+\end{figure}
+
+\subsubsection{Vezérlő sík}
+A Kubernetesen belül a vezérlő sík felelős a klaszteren belüli döntésekért. Feladata például meghatározni, hogy az újonnan létrehozandó kapszulák melyik csomóponton induljanak el. A \ref{fig:k8s_components} ábrán is láthatjuk a vezérlő síkot kék szaggatott vonallal keretezve.
+
+\paragraph{API szerver} A klaszter központi egysége. Minden művelet rajta keresztül történik. Ő felelős a beérkező kérések hitelesítéséért és továbbításáért a megfelelő rendszerelemek felé. Például a \verb+kubectl+ parancs használatakor is az történik, hogy a kliensünk összeállít és elküld egy üzenetet az API szerverhez, ami megkapja és válaszol rá.
+
+\paragraph{Etcd} Az \textit{etcd} komponense a vezérlő síknak egy elosztott módon működő\citep{raft} kulcs-érték párokat tartalmazó adatbázis. Itt tárolja a klaszter összes saját tulajdonságát, például az egyes objektumok állapotait is. Ezáltal a korábbi példaként említett \verb+kubectl+ lekérdezésünk is ebből az adatbázisból kiolvasott értékeket fogja megkapni.
+
+\paragraph{Ütemező} Az ütemező (\textit{kube-scheduler}) feladata, meghozni a döntést, hogy egy új pod melyik csomóponton kerüljön létrehozásra. Ez egy igazán izgalmas feladat, hiszen figyelembe kell vennie a rendszer jelenlegi foglaltságát, illetve a kapszula létrehozásakor külön meg lehet adni megkötéseket a node felé. Ilyen megkötés vonatkozhat a csomópont szoftverére vagy hardverére is. 
+
+\subsection{Erőforrások}
+%----------------------------------------------------------------------------
+Lehetőségünk van a konténerek erőforrás használatához különféle megkötéseket tenni. Megadhatunk olyan
+szabályokat, amik maximalizálják a konténer számára használható erőforrásokat. Ebben az esetben
+elérhető, hogy hibás működés esetén sem veszélyezteti a klaszter többi részét. Másik eset, amikor
+olyan szabályt adunk meg, ami előre lefoglalja a kellő mennyiségű erőforrást a konténer számára. Ez
+akkor lehet segítség, ha valami kritikus alkalmazást szeretnénk erőforrással ellátni, így nem
+veszélyezteti, hogy a rendszer többi része miatt nem tudja ellátni a saját feladatát. Ezeket 
+\verb+request+  és \verb+limit+ értékeknek nevezzük. Az igényelt erőforrásnál használhat a futó
+konténer többet is, azonban ez már függ a többi konténertől is. Limitáció esetén viszont csak a
+megadott mennyiség állhat a rendelkezésére. Fontos jól megválasztani az értékét, mert például, ha
+kevés memóriahasználatot engedélyezünk az egyik konténernek, akkor lehet hogy el sem tud majd
+indulni és hibát fog jelezni.
+
+Leginkább a processzor- és memóriahasználatra szoktak ilyen megkötéseket létrehozni, de lehetőség
+van más erőforrásokat is kezelni.
+A konténerek és podok létrehozásakor a \textit{kubelet} ütemezője figyelembe fogja venni a megadott
+paramétereket és ez alapján választja ki, hogy melyik csomóponton fog futni. 
 
 \subsection{Objektumok}
 %----------------------------------------------------------------------------
 A Kubernetes egyik erőssége, hogy az átlagos felhasználás esetében nem kell törődni a rendszer felépítésével, hiszen nekünk csak deklaratív módon meg kell létrehozni és kezelni bizonyos erőforrásokat, objektumokat.
   
-\paragraph{Pod}
+\paragraph{Pod (kapszula)}
+%\label{par:pod}
 A Kubernetesben megjelenő legkisebb egység. Általában egy konténert futtat, de lehetőségünk van több konténer futtatására is. Általánosságban elmondható, hogy rendszeresen létrejönnek és rendszeresen törölve is lesznek ezek az objektumok, tehát nem tartós életűek. Ez az egész rendszernek tud adni egy 
 
 \paragraph{ReplicaSet} 
-Az ő feladata, hogy bizonyos \textit{Podból} megfelelő számú egység fusson. Ennek értelmében, ha az egyik \textit{Pod} meghibásodik és megáll, akkor helyette egy újat fog létrehozni. Ezzáltal biztosított, hogy mindig a megfelelő számú egység fogja fogadni a beérkező kéréseket és nem kell munálisan monitorozni a státuszukat.
+Az ő feladata, hogy bizonyos \textit{Podból} megfelelő számú egység fusson. Ennek értelmében, ha az egyik \textit{Pod} meghibásodik és megáll, akkor helyette egy újat fog létrehozni. Ezáltal biztosított, hogy mindig a megfelelő számú egység fogja fogadni a beérkező kéréseket és nem kell manuálisan monitorozni a státuszukat.
 
 \paragraph{Deployment}
-Mivel \textit{Podok} 
+Mivel \textit{kapszulák} túl kicsi részei a teljes alkalmazásnak és életük sem kiszámítható ezért nem kifizetődő ilyen módon kezelni a rendszerünket. Erre találták ki a \textit{Deploment} objektumot, ahol meg tudjuk adni, hogy milyen \textit{Podok} jöjjenek létre, illetve beállíthatjuk a hozzájuk kapcsolódó \textit{ReplicaSet} értéket is. Ezáltal lehetőségünk van absztrakt szinten deklaratívan módon megadni a kívánt rendszer tulajdonságait.
 
 \paragraph{Service}
-asd
+A korábban említett objektumokkal már meg tudunk valósítani bizonyos funkciókat, viszont ezt szeretnénk a klaszteren belül és kívülre is elérhetővé tenni. Erre találták ki \textit{Service} objektumot. Ezen keresztül könnyen el tudjuk érni az azonos szolgáltatást nyújtó \textit{kapszulákat} és nem kell az alkalmazás logikában számontartani az ő elérhetőségeiket. Ez ugye különösen nehéz feladat lenne, hiszen a készenléti idejük is elég változó lehet, mivel folyamatosan jönnek létre és törlődnek.
+
+\paragraph{Custom Resources (CR)}
+A Kubernetes API lehetőséget biztosít számunkra, hogy tetszőlegesen kibővítsük. Így lehetőségünk van
+saját objektumokat is létrehozni, illetve azokat saját kontrollerrel kezelni. Ehhez először egy
+saját erőforrás leírót kell létrehozni (Custom Resource Definiton - CRD), ami tartalmazza az
+általunk kívánt erőforrás definícióját. Ezzel lehetőséget kapunk, hogy tetszőlegesen komplex
+leírásokat hozzunk létre és ezt egy logika deklaratív módon feldolgozza.
 
 %----------------------------------------------------------------------------
 \section{Skálázás}
 %----------------------------------------------------------------------------
-A felhős infrasturktúra egyik legcsábítóbb előnye, hogy az alkalmazásunk képes adaptálódni a külvilág felől érkező kérésekhez. Ez azt jelenti, hogy ha több felhasználót kell egyszerre kiszolgálni, akkor a rendszer autómatikusan növeli a kiszolgálásra fordított erőforrások mennyiségét. Ezzel a megoldással elérhetjük, hogy a végfelhasználó ne vegyen észre minőségbeli csökkenést és a kevésbé intenzív időkben pedig nem foglalunk feleslegesen erőforrást, ami az üzemeltetőnek is jól belátható anyagi érdeke.
+A felhő alapú infrastruktúra egyik legcsábítóbb előnye, hogy az alkalmazásunk képes adaptálódni a külvilág felől érkező kérésekhez. Ez azt jelenti, hogy ha több felhasználót kell egyszerre kiszolgálni, akkor a rendszer automatikusan növeli a kiszolgálásra fordított erőforrások mennyiségét. Ezzel a megoldással elérhetjük, hogy a végfelhasználó ne vegyen észre minőségbeli csökkenést és a kevésbé intenzív időkben pedig nem foglalunk feleslegesen erőforrást, ami az üzemeltetőnek is jól belátható anyagi érdeke.
  
 Alapvetően két különböző skálázási módszert lehet elkülöníteni. Az egyik a vertikális, míg a másik a horizontális skálázás. Ezekről a későbbiekben bővebben lesz szó. 
 
 \subsection{Horizontális skálázás}
 %----------------------------------------------------------------------------
-A két skálázási mód közötti különbséget mutatja a \refstruc{fig:scaling}. Jobb oldalon látható megoldás az úgynevezett horizontális skálázás (másnevén: scaling out). Ebben az esetben arról van szó, hogy a megnövekedett igények kiszolgálásához több azonos egységet hozunk létre. Az összes egység azonos erőforrás felhasználásra
+A két skálázási mód közötti különbséget mutatja a \refstruc{fig:scaling}. Jobb oldalon látható megoldás az úgynevezett horizontális skálázás (másik nevén: scaling out). Ebben az esetben arról van szó, hogy a megnövekedett igények kiszolgálásához több azonos egységet hozunk létre. Az összes egység azonos erőforrás felhasználással rendelkezik és a beérkező kérések köztük lesznek szétosztva. 
+A megoldás egyik legnagyobb előnye, hogy elég könnyű alkalmazni, a Kubernetes rendszere is alapértelmezettként támogatja. Hátrányánál meg lehet említeni, hogy több egység között oszlanak meg a beérkező kérések így nem biztos, hogy azonos egységnél köt ki egy felhasználó két különböző kérése. 
 
-Előnye: könnyű kezelni, elepértelmezetten támogatott, 
-Hátránya: amdal törvénye
+\subsubsection{Automatikus horizontális skálázás}
+%----------------------------------------------------------------------------
+Egy egyszerű példán keresztül szeretném bemutatni a Kubernetes beépített, automatikus horizontális skálázóját (HPA). Az automatikus skálázónak meg lehet adni, hogy milyen célértéket szeretnénk kapni. Például, hogy a futtatott \textit{Pod} által felhasználható CPU mennyiség milyen szinten legyen kihasználva. Jelenleg ilyen megkötést a memória és processzor felhasználásra lehet tenni, de tetszőlegesen létrehozhatunk saját metrikát. 
 
-% amdal törvénye
+Az algoritmus folyamatosan lekérdezi a metrikák aktuális értékét és a \ref{hpa_algo} egyenlet alapján meghatározza az éppen szükséges replika számot. Ezzel a számított értékkel frissíti a \textit{Pod} replika számát, amit így a replikációért felelős kontroller észlel és megpróbálja elérni a kívánt állapotot. Ezzel módszerrel megvalósítható fel- és leskálázás is.
+
+\begin{equation}
+\label{hpa_algo}
+desiredReplicas = \left\lceil currentReplicas * \frac{currentMetricValue}{desiredMetricValue} \right\rceil
+\end{equation}
+
+A folyamat szemléletesebb, ha konkrét példán nézzük meg működését. Ehhez először létre kellett hozni egy alkalmazást, amit tudunk majd skálázni. Ehhez egy egyszerű webszervert használtam, ami minden beérkezett kérés esetén egy CPU intenzív műveletet hajt végre. Miután létrejött a szükséges \textit{Deployment} és \textit{Service} utána létre lehetett hozni az automatikus skálázót. Ennek a forráskódja látható a \ref{hpa_example} kódrészlet tetején. Be lehet állítani, hogy mi legyen a minimális és maximális replika, ami között tud skálázni. Illetve meg kell a szabályt is, hogy mire kell figyelni. A példában látható, hogy $50\%$-os CPU felhasználást szeretnénk elérni. Fontos, hogy alapvetően a metrikákat a skálázó egy úgynevezett metrika szervertől gyűjti be, amit külön el kell indítani, mert alapértelmezettként nem fut a Kubernetesben.
+
+Ha létrehoztuk a skálázót, ki is lehet próbálni. Ehhez egy \verb+bash+ szkript segítségével állandó forgalmat generálunk és figyeljük meg, hogyan változik a kapszulák száma és ezzel összefüggően az egyes egységek CPU felhasználása. Kezdetben $1$ darab \textit{Pod} végezte az összes beérkező kérés kiszolgálását, ami így a célértéknél 3-4-szer több processzort használt. A korábban mutatott képlet alapján, a felső egész részt vesszük és a jelenlegi replikaszám 4-szeresére skálázunk. \\
+ 
+\lstset{caption=Automatikus horizontális skálázás folyamata, label=hpa_example}
+\lstinputlisting{figures/hpa_example.sh}
+
 
 \subsection{Vertikális skálázás}
 %----------------------------------------------------------------------------
-Tud ilyet is, alapból nem támogatott.
-
-Hátrány: nehezebb implementáció, nem növelhető végtelenségig (pl: ha az alkalmazás nem támogatja a többszálas futtatást.)
-előny: nincs sinkronizációs overhead
-
+A skálázási megoldások közül a másik megoldás a \refstruc{fig:scaling} bal oldalán látható. 
+Ezt vertikális skálázásnak (másik nevén: scaling up) hívnak. 
+Ebben az esetben a kiszolgáló egységek számát nem módosítjuk, hanem az általuk felhasználható
+erőforrások mennyiségét növeljük. Ilyen példa, amikor plusz memóriát rakunk a számítógépbe, vagy
+erősebb processzorra cseréljük a meglévőt. Kubernetes jelenleg még nem támogatja alapértelmezettként
+ezt a funkciót, de egyszerűen használatra lehet bírni. Előnye a megoldásnak, hogy a korábbi félévek
+munkái alatt azt figyeltük meg, hogy a vizsgált alkalmazásaink ezzel a stratégiával azonos erőforrás
+felhasználás mellett jobb eredményeket értek el.\citep{bscThesis} Hátránya, hogy a jelenlegi
+implementáció szerint a minden skálázásnál le kell állítani a futtatott egységet, ami bizonyos
+szolgáltatás esetén nem túl előnyös, hiszen ez idő alatt kevesebb egység végzi a beérkező kérések kiszolgálását.
 
 % Skálázás módjai ábra -------------------------------------------------------
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=150mm, keepaspectratio]{figures/scaling_types.png}
+\includegraphics[width=100mm, keepaspectratio]{figures/scaling_types.png}
 \caption{Vertikális és horizontális skálázás}
 \label{fig:scaling}
 \end{figure}
+

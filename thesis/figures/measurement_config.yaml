@@ -1,0 +1,22 @@
+Name: example-measurement        # Name of the measurement
+Servicegraphs:                   # Service graph specifications
+  - /path/to/service_graph1.yaml # Measured services config file
+  - /path/to/service_graph2.yaml # Can add more graphs
+Result_location: /path/to/result # Where to write results
+Cluster:                         # Not yet used
+  Name: Dipterv                  # Clustername
+  IP: 152.66.211.2               # CLuster / node IP address
+QPS:                             # query per seconds 
+  From: 0                        # QPS lower bound
+  To: 200                        # QPS upper bound
+  Granularity: 10                # QPS increment by this number
+Load:                            # Load specification
+  Preheat: 0                     # warmup time in seconds
+  Time: 180                      # measurement time in seconds
+  ServiceIP: 152.66.211.2        # IP for our service
+  ServicePort: 30000             # port for our service
+  ServicePath: to-backend        # path to our service
+  ServiceQuery: ''               # URI's query fragment
+Prometheus:                      # Prometheus values
+  IP: 152.66.211.2               # Prometheus IP address
+  Port: 31090                    # Prometheus port number

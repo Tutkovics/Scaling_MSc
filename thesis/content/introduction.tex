@@ -2,25 +2,77 @@
 \chapter{\bevezetes}
 %----------------------------------------------------------------------------
 
-Mi legyen benne:
-A bevezető tartalmazza a diplomaterv-kiírás elemzését, történelmi előzményeit, a feladat indokoltságát (a motiváció leírását), az eddigi megoldásokat, és ennek tükrében a hallgató megoldásának összefoglalását.
+%----------------------------------------------------------------------------
+\section{Motiváció}
+%----------------------------------------------------------------------------
 
-Tendencia: bare-metal --> virtualizáció --> konténerizáció --> felhő --> új alkalmazás architektúra (SM) 
+Nagyobb távlatól tekintve az informatikai rendszerekre számos tendenciát figyelhetünk meg a technológia változásával.
+Ilyen folyamat, hogy régebben jellemzően dedikált csapat, dedikált nyelven, dedikált alkalmazást, dedikált hardveres erőforrásra fejlesztett éveken keresztül. 
+Ennek az eredménye, a mostanra megbonthatatlanul nagyra nőtt rendszerek, amelyeknek külön szervereket kell biztosítani, hogy azok hiba nélkül tudják kiszolgálni a beérkező igényeket.
+Több területen használnak még ilyen rendszert, mely megbízható de továbbfejlesztése bonyolult és emiatt költséges is.
 
-Nagyobb távlatól rátekintve az informatikai rendszerekre számos tendenciát figyelhetünk meg a technológia változásával. Ilyen folyamat, hogy régebben jellemzően dedikált csapat, dedikált nyelven, dedikált alkalmazást, dedikált hardveres erőforrásra fejlesztett éveken keresztül. Ennek az eredménye, a mostani megbonthatatlnaul nagy rendszerek, amelyeknek külön szervereket kell biztosítani, hogy azok hiba nélkül tudják kiszolgálni a beérkező igényeket. Több területen használnak még ilyen rendszert, mely megbízható de továbbfejlesztése bonyolúlt és emiatt költséges is.
+Ezután következett, a realizáció, hogy nem éri meg minden ilyen szolgáltatáshoz egy külön fizikai szervert fenntartani, hiszen a kihasználtsága nem feltétlen indokolja, és a drágán megvásárolt erőforrások feleslegesen állnak.
+Ehhez plusz egy katalizátor volt a folyamatosan megjelenő virtualizációs technológiák, amik lehetővé tették, hogy a fizikai rendszert absztrahálva, különböző virtuális környezetet hozzunk létre azok felett.
+A megoldásnak köszönhetően lehetőség nyílt előre definiált lépésekkel azonos tulajdonsággal bíró rendszereket létrehozni igény szerint. 
+Természetesen mindezt úgy, hogy a fizikailag rendelkezésre álló erőforrások kihasználtsága is javult.
 
-Ezután következett, a realizáció, hogy nem éri meg minden ilyen szolgáltatáshoz egy külön fizikai szervert fenttartani, hiszen a kihasználtsága nem feltétlen indokolja, és a drágán megvásárolt erőforrások feleslegesen állnak. Ehhez plusz egy katalizátor volt a folyamatosan megjelenő virtualizációs technológiák, amik lehetővé tették, hogy a fizikai rendszert absztrahálva, különböző virtuális környezetet hozzunk létre azok felett. A megoldásnak köszönhetően lehetőség nyílt előre definiált lépésekkel azonos tulajdonsággal bíró rendszereket létrehozni igény szerint. Természetesen mindezt úgy, hogy a fizikailag rendelkezésre álló erőforrások kihasználtsága is javult.
+A korábban vázolt lehetőséggel mai napig sokan élnek, azonban a fizikai életben is megjelenő rugalmasság és agilitás iránti vágy köszön vissza az informatikában is. 
+Aki nem tud lépést tartani a gyors fejlődésben az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. 
+Az érem másik oldala viszont az, hogy aki időben észreveszi a lehetőséget, az hirtelen nagy előnyt tud szerezni. 
+Erre jó példa az Amazon\citep{amazon} és a Netflix\citep{netflix} is.  
 
-A korábban vázolt lehetőséggel mai napig sokan élnek, azonban a fizikai életben is megjelenő rugalmasság és agilitás iránti vágy köszön vissza az informatikában is. Aki nem tud lépést tartani a gyors fejlődésben az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. Az érem másik oldala viszont az, hogy aki időben észreveszi a lehetőséget, az hirtelen nagy előnyt tud szerezni [amazon/netflix].
+Egyre szélesebb körben terjednek el a konténerizációs technológiák és vele együtt az úgynevezett mikro-szolgáltatások.
+A paradigma értelmében a korábbi nagyobb kódegységeket szét lehet bontani több kisebb kódbázisra, ami számtalan előnyt jelent az alkalmazás fejlesztéséhez.
+Mivel a kisebb egységeket könnyebb megérteni mint a teljes kódbázist, az új fejlesztők számára könnyebb becsatlakozni fejlesztésbe.
+A kisebb elemekre bontott kód lehetőséget biztosít arra is, hogy az egyes komponenseket több
+nyelven és többfajta keretrendszerben fejlesszük, minden komponens számára az optimális fejlesztési környezetet kiválasztva. 
+Végül, ha egy komponenst szeretnénk teljesen elölről újraírni, akkor ez a rendszer többi részét nem érinti.
+Ezek által lehetőség nyílik egy agilis rendszer kialakítására.
 
-Egyre szélesebb körben terjednek el a konténerizációs technológiák és vele együtt az úgynevezett mikro-szolgáltatások. A paradigma értelmében a korábbi nagyobb kódegységeket szét lehet bontani több kisebb kódbázisra, ami így számtalan előnyt jelent az alkalmazás fejlesztéséhez. A kisebb egységeket könnyebb megérteni, így könnyebb új tagoknak becsatlakozni a fejlesztésbe, nem kell rögtön egyben látnia a rendszert. Valamint lehetőséget biztosít, hogy több nyelven, keretrendszerben legyenek megoldva az alfeladatok. Ezáltal minden lépéshez a számára legelőnyesebb környezetet lehet megválasztani. Valamint ha egy komponenst szeretnénk teljesen előlről fejleszteni, akkor az a rendszer többi részét nem érinti. Ezek által lehetőség nyílik egy agilis rendszer kialakítására.
-
-A konténerizációs technológiák másik nagy előnye, hogy környezettől független módon lehet 
-
-
-A következő fejezetekben szeretném ismertetni a diplomaterv elvégzéséhez szükséges feladatokat. Az x. fejezet foglakozik stb.
+A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, ami lehetőséget biztosít a konténerizációs technológia széles körű és egyszerű használatára.
 
 %----------------------------------------------------------------------------
-\section{A dolgozat felépítésee}
+\section{Feladat meghatározása}
 %----------------------------------------------------------------------------
-A következő fejezetekben bemutatom az általam használt rendszerek alapvető feléptését illetve  azok számunkra fontos részeit. A \ref{sec:Kubernetes} fejezetben szó lesz a Kubernetes részeiről, azok kapcsolatáról, illetve hogyan támogatja beépített módon az automatikus skálázást. Ezután az általunk írt
+A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. 
+Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. 
+Sokan választották az új megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
+Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük.
+Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül. 
+Azonban a valóság ennél jóval komplexebb. Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel.
+Látható, hogy pár paramétert bevéve az egyenletbe már nem is könnyű feladat. 
+Különösen megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor, memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető legjobb kiszolgálást tudja biztosítani a rendszer. 
+
+A diplomatervezés során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. 
+Első lépésben szeretném bemutatni a használt környezetet, a Kubernetes felépítését illetve, hogy
+milyen skálázási megoldások léteznek és melyiket hogyan támogatja.
+% Első lépésként fontos tisztában lenni a használt platformmal, a Kubernetessel megnézni benne milyen skálázási megoldások vannak jelenleg és melyik hogyan van támogatva. 
+Konkrét példán keresztül bemutatom a HPA megoldását. 
+
+Egy egyedi keretrendszert kellett összeállítani, ami képes tetszőleges szolgáltatáshálót létrehozni
+Kubernetesen belül és azt lekérdezésekkel terhelni. Ezáltal lehetőségünk nyílik szabadon
+konfigurálható körülmények között vizsgálni a Kubernetes beépített skálázóját, illetve az
+irodalomban javasolt egyéb megoldásokat is. Az így nyert eredményekből következtetéseket tudunk
+levonni az egyes implementációk dinamikáját, költségeit, hatékonyságát illetően.
+
+A feladat része a kapott mérési eredmények vizualizációja is, így könnyebben láthatóvá válnak a
+skálázási megoldások és a megoldások közötti különbségek is. 
+
+Amennyiben a mérési eredmények alapján fejleszthető lenne egy új stratégia, akkor azt implementálás
+után szintén meg lehet vizsgálni és kiértékelni a hipotézist.
+
+%A beépített skálázás értékeléséhez méréseket kell végezni minél több szolgáltatáshálón, hogy látni lehessen melyik rendszer hogyan viselkedik a terhelés függvényében. 
+%Az adatok gyűjtéséhez kell egy külön rendszer, ami képes lesz tetszőleges tulajdonságokkal rendelkező szolgáltatáshálót létrehozni és azokon szimulációkat végezni.
+
+%Az így gyűjtött eredményeket ki kell értékelni, hogy jobban megértsük a rendszert és következtetéseket tudjunk levonni a skálázás minőségét illetően. 
+%Amennyiben azt találjuk, hogy bizonyos lépésekkel optimálisabb skálázás valósítható meg, akkor erre
+%egy példát kell mutatni és bizonyítani a hipotézis igazát. 
+
+%----------------------------------------------------------------------------
+\section{A dolgozat felépítése}
+%----------------------------------------------------------------------------
+A dolgozat fejezetei úgy lettek sorba állítva, hogy azok a lehető legérthetőbb módon mutassák be a kapott eredményeket. Ehhez viszont az általános részektől kell indulni és így mutatva be az egyre konkrétabb részeket. 
+A \ref{sec:Kubernetes}. fejezetben szó lesz a Kubernetes architektúrájáról, illetve hogyan támogatja beépített módon az automatikus skálázást. 
+A \ref{sec:Publications}. fejezetben bemutatom, hogy milyen kutatások készültek ebben a témában, ki mire helyezte a hangsúlyt és hova sikerült eljutni.
+Ezután a \ref{sec:system} bemutatom az általam készített keretrendszert, annak építő elemeit a megvalósítás mérnöki döntéseit. 
+Az \ref{sec:results}. fejezetben lesz szó az elkészült eredményekről.
