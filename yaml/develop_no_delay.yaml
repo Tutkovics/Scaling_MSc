@@ -27,8 +27,8 @@ spec:
       port: 80
       resources:
         memory: 400
-        cpu: 600
+        cpu: 1000
       endpoints:
         - path: /heavy
-          cpuLoad: 40
-          delay: 2
+          cpuLoad: 20
+          delay: 0

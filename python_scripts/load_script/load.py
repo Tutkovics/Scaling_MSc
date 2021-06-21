@@ -65,9 +65,11 @@ def load(config, qps):
         # Create command to run
         # eg: fortio load -qps 10 -t 5s -a http://192.168.49.2:30000/instant
         # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query} ".format(
-        cmd = "fortio load -qps {qps} -t {time}s -jitter -json '{location}/warmup.json' http://{ip}:{port}/{path}?{query} ".format(
+        cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/warmup.json' http://{ip}:{port}/{path}?{query} ".format(
             qps = qps,
             time = config["load_preheat"],
+            users = config["load_users"],
+            timeout = config["load_timeout"], #ms
             ip = config["load_ip"],
             port = config["load_port"],
             path = config["load_path"],
@@ -79,9 +81,11 @@ def load(config, qps):
     
     # Actually measurement
     # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query}".format(
-    cmd = "fortio load -qps {qps} -t {time}s -jitter -json '{location}/fortio-results.json' http://{ip}:{port}/{path}?{query}".format(
+    cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/fortio-results.json' http://{ip}:{port}/{path}?{query}".format(
         qps = qps,
         time = config["load_time"],
+        users = config["load_users"],
+        timeout = config["load_timeout"], #ms
         ip = config["load_ip"],
         port = config["load_port"],
         path = config["load_path"],
@@ -92,12 +96,13 @@ def load(config, qps):
     start_time = time.time()
     return_param = subprocess.run(cmd, shell=True, universal_newlines=True, capture_output=True)
     # print("Return paramtere: " + str(return_param))
-    end_time = time.time()
+    
 
     # stop spinner
     spinner.stop()
 
     SpinnerSleep(30, "Wait to Prometheus get all data.")
+    end_time = time.time() #
 
     fortio_results = get_json_from_file(config["result_location"] + "/fortio-results.json")
 

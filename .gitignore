@@ -9,6 +9,7 @@ python_scripts/load_script/__pycache__/
 # Not upload test result 
 */*/warmup.json
 */*/fortio-results.json
+python_scripts/results/
 
 # Helm charts
 helm_charts/

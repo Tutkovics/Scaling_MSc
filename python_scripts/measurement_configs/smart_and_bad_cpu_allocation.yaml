@@ -1,0 +1,23 @@
+Name: Develop-measurement       # Name of the measurement
+Servicegraphs:                  # Service graph specifications
+  - /home/tutkovics/Scaling_MSc/yaml/cpu-smart-allocation/bad-allocation.yaml     # Measured services config file
+  - /home/tutkovics/Scaling_MSc/yaml/cpu-smart-allocation/good-allocation.yaml     # Measured services config file
+Result_location: ../results/cpu-smart-allocation   # Where to write results
+Cluster:                        # Not yet used
+  Name: Dipterv                 # Clustername
+  IP: 152.66.211.2              # CLuster / node IP address
+QPS:                            # query per seconds 
+  From: 0                       # QPS lower bound
+  To: 500                       # QPS upper bound
+  Granularity: 10               # QPS increment by this number
+Load:                           # Load specification
+  Preheat: 0                    # warmup time in seconds
+  Users: 100                    # Fortio user number
+  Time: 300                     # measurement time in seconds (Should be at least 3*60)
+  ServiceIP: 152.66.211.2       # IP for our service
+  ServicePort: 30000            # port for our service
+  ServicePath: to-backend       # path to our service
+  ServiceQuery: ''              # URI's query fragment
+Prometheus:                     # Prometheus values
+  IP: 152.66.211.2              # Prometheus IP address
+  Port: 31090                   # Prometheus port number

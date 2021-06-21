@@ -27,7 +27,9 @@ def read_config_file(file_name):
 
         config_values["load_preheat"] = config["Load"]["Preheat"]
         config_values["load_time"] = config["Load"]["Time"]
+        config_values["load_users"] = config["Load"]["Users"]
         config_values["load_ip"] = config["Load"]["ServiceIP"]
+        config_values["load_timeout"] = config["Load"]["TimeOut"]
         config_values["load_port"] = config["Load"]["ServicePort"]
         config_values["load_path"] = config["Load"]["ServicePath"]
         config_values["load_query"] = config["Load"]["ServiceQuery"]

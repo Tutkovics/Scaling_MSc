@@ -9,11 +9,11 @@ The most important task, that watch HPA how will scale deployments.
 - [x] Create operator
 - [x] Add HPA support for operator
 - [x] Worker node response json
-- [ ] Create deployable and configurable node source
-- [ ] Create measurment script
-- [ ] Check them locally
+- [x] Create deployable and configurable node source
+- [x] Create measurment script
+- [x] Check them locally
 - [x] Ask for VMs
-- [ ] Deploy  a real K8s cluster
-- [ ] Think benchmark senarios
+- [x] Deploy  a real K8s cluster
+- [x] Think benchmark senarios
 - [ ] Run benchmarks/measurements
 - [ ] ...

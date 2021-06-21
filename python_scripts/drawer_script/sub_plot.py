@@ -96,6 +96,7 @@ def sumCpuByRunningContainer(obj, runningPods):
 
 def draw(datas, args):
     x = []  # qps
+    x_act = [] # actual QPS
     y = {}  # cpu usage
     y2 = [] # average response time
 
@@ -111,6 +112,7 @@ def draw(datas, args):
     for data in datas:
         reqQps = data["reqQPS"]
         x.append(reqQps)  # add qps to x axis
+        x_act.append(data["actQPS"])
 
         # update latest qps
         if end < int(reqQps):
@@ -124,25 +126,41 @@ def draw(datas, args):
         y2.append(data["avgResponseTime"])
 
     
-    fig, ax = plt.subplots()
-
-    plt.title(args.title)
-    ax.set_xlabel(args.x)
-    ax.set_ylabel(args.y)
-
-    # Configure X axis ticks
-    ax.xaxis.set_ticks(np.arange(0, end, 5))
+    fig, axs = plt.subplots(2, 2)
+    plt.title("asd") #args.title)  # Set title
 
     for container in y:
-        ax.plot(x,y[container], label=str(container) + " - CPU usage")
+        axs[0, 0].plot(x,y[container], label=str(container) + " - CPU usage")
+    axs[0, 0].set_title("Req QPS / mCPU")
+    axs[0,0].set_xticks(np.arange(0, end, 5), minor=False)
+    #axs[0,0].xticks(np.arange(0, end, 5))
+
+    # response time
+    axs[1, 0].plot(x, y2)
+    axs[1, 0].set_title("Response time")
+    axs[1, 0].sharex(axs[0, 0])
+    
+    axs[0, 1].scatter(x_act, y2)
+    axs[0, 1].set_title("Actual QPS")
+
+    axs[1, 1].plot(x, x_act)
+    axs[1, 1].set_title("Actual vs requested")
+    fig.tight_layout()
+    print("plotting...")
+    #ax.set_xlabel(args.x)
+    #ax.set_ylabel(args.y)
+
+    # Configure X axis ticks
+    #ax.xaxis.set_ticks(np.arange(0, end, 5))
+
 
 
     # plt.ylim(-0.02, 0.5)
 
-    ax.plot(x,y2, label="Average Response Time")
+    #ax.plot(x,y2, label="Average Response Time")
 
 
-    ax.legend() 
+    #ax.legend() 
     plt.show()
 
     # Save the figure if command line flag was given

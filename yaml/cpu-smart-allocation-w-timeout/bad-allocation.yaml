@@ -6,29 +6,29 @@ metadata:
 spec:
   nodes:
     - name: front-end
-      replicas: 2
+      replicas: 1
       port: 80
       nodePort: 30000
       resources:
-        memory: 200
-        cpu: 200
+        memory: 500
+        cpu: 500
       endpoints:
         - path: /only-frontend
           cpuLoad: 1
           delay: 0
         - path: /to-backend
-          cpuLoad: 1
+          cpuLoad: 5
           delay: 0
           callouts:
             - url: back-end:80/heavy
 
     - name: back-end
-      replicas: 3
+      replicas: 1
       port: 80
       resources:
-        memory: 400
-        cpu: 600
+        memory: 500
+        cpu: 500
       endpoints:
         - path: /heavy
-          cpuLoad: 40
-          delay: 2
+          cpuLoad: 15
+          delay: 0

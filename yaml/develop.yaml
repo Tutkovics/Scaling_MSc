@@ -31,4 +31,4 @@ spec:
       endpoints:
         - path: /heavy
           cpuLoad: 40
-          delay: 2
+          delay: 2000
