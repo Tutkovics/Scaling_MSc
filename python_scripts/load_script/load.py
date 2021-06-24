@@ -101,8 +101,9 @@ def load(config, qps):
     # stop spinner
     spinner.stop()
 
+    end_time = time.time() 
+    
     SpinnerSleep(30, "Wait to Prometheus get all data.")
-    end_time = time.time() #
 
     fortio_results = get_json_from_file(config["result_location"] + "/fortio-results.json")
 

@@ -48,6 +48,7 @@ def readFileAndGetValues(fileName):
     runningPodsByContainer = getRunningPodsByContainer(obj)
 
     cpu = sumCpuByRunningContainer(obj, runningPods)
+    memory = sumMemoryByRunningContainer(obj, runningPods)
 
     measurementDuration = obj["config"]["load_time"]
 
@@ -58,6 +59,7 @@ def readFileAndGetValues(fileName):
               "runningPods" : len(runningPods),
               "runningPodsByContainer": runningPodsByContainer,
               "cpu" : cpu,
+              "memory" : memory,
               "measurementDuration": measurementDuration,
               "avgResponseTime": avgResponseTime,
               }
@@ -94,15 +96,32 @@ def sumCpuByRunningContainer(obj, runningPods):
     # print(dict(cpus))
     return dict(cpus)
 
-def draw(datas, args):
-    x = []  # qps
-    x_act = [] # actual QPS
-    y = {}  # cpu usage
-    y2 = [] # average response time
+def sumMemoryByRunningContainer(obj, runningPods):
+    memory = defaultdict(float)
 
-    # Init cpu dict
+    for result in obj["prometheus"]["memory"]["data"]["result"]:
+        # if the current pod name was in running pods
+        if result["metric"]["pod"] in runningPods:
+            # Check if the memory usage raised during reported period
+            diff = float(result["values"][-1][1]) - float(result["values"][0][1])
+            if diff != 0:
+                memory[result["metric"]["container"]] += diff
+
+    return dict(memory)
+
+def draw(datas, args):
+    x = []      # requested QPS
+    x_act = []  # actual QPS
+    y = {}      # cpu usage (per container)
+    cpu_sum = [] # Summary of cpu usage
+    memory = {} # Memory usage (per container)
+    memory_sum = [] # Summary of memory usage 
+    y2 = []     # average response time
+
+    # Init cpu and memory dict
     for container in datas[0]["runningPodsByContainer"]:
         y[container] = []
+        memory[container] = []
 
 
     last_data = None
@@ -118,33 +137,88 @@ def draw(datas, args):
         if end < int(reqQps):
                 end = int(reqQps)
 
+        # Counter of cpu and memory usage
+        tmp_sum_cpu = 0
+        tmp_sum_memory = 0
+
         for container in data["runningPodsByContainer"]:
-            calculated_cpu = data["cpu"][container] / (int(data["runningPodsByContainer"][container]) * data["measurementDuration"])
+            # Calculate resource usage per container
+            container_count = int(data["runningPodsByContainer"][container])
+
+            # "Solve" zero division count
+            if container_count == 0:
+                container_count = 1
+            
+            
+            calculated_cpu = data["cpu"][container] / (container_count * data["measurementDuration"])
+            calculated_memory = data["memory"][container] / (container_count * data["measurementDuration"])
+            
+            # Add container resource usage
             y[container].append(calculated_cpu)
+            memory[container].append(calculated_memory)
+
+            # Increment counters
+            tmp_sum_cpu += calculated_cpu
+            tmp_sum_memory += calculated_memory
+
+        cpu_sum.append(tmp_sum_cpu)
+        memory_sum.append(tmp_sum_memory)
 
         # add response time
         y2.append(data["avgResponseTime"])
 
     
-    fig, axs = plt.subplots(2, 2)
+    # subplot(nrows, ncols, index, **kwargs)
+    fig, axs = plt.subplots(4, 2)
     plt.title("asd") #args.title)  # Set title
+    
+    # Left upper
+    axs[0, 0].plot(x, cpu_sum)
+    min_x, max_x = axs[0, 0].get_xlim()
+    axs[0, 0].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    # axs[0, 0].set_xticks(np.arange(min(x), max(x)), minor=False)
+    axs[0, 0].set_title("Sum CPU (mCPU) / requested QPS")
+    
 
+    # Right upper
+    axs[0, 1].plot(x, memory_sum)
+    axs[0, 1].set_title("Sum Memory / requested QPS")
+
+    # CPU usage per container
     for container in y:
-        axs[0, 0].plot(x,y[container], label=str(container) + " - CPU usage")
-    axs[0, 0].set_title("Req QPS / mCPU")
-    axs[0,0].set_xticks(np.arange(0, end, 5), minor=False)
-    #axs[0,0].xticks(np.arange(0, end, 5))
+        axs[1, 0].plot(x, y[container], label=str(container) + " - CPU usage")
+    axs[1, 0].set_title("Container CPU usage / requested QPS")
+    #axs[1, 0].set_xticks(np.arange(0, end, 5), minor=False)
+
+    for container in memory:
+        axs[1, 1].plot(x, memory[container], label=str(container) + " - Memory usage")
+    axs[1, 1].set_title("Container Memory usage / requested QPS")
+    #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
+
+    # CPU usage per container / X axis: actual QPS
+    for container in y:
+        axs[2, 0].scatter(x_act, y[container], label=str(container) + " - CPU usage")
+    axs[2, 0].set_title("Container CPU usage / actual QPS")
+    #axs[1, 0].set_xticks(np.arange(0, end, 5), minor=False)
+
+    for container in memory:
+        axs[2, 1].plot(x_act, memory[container], label=str(container) + " - Memory usage")
+    axs[2, 1].set_title("Container Memory usage / actual QPS")
+    #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
+
+    # Bottom left
+    axs[3, 0].scatter(x_act, y2)
+    axs[3, 0].set_title("Response time / actual QPS")
+    
+    # Bottom right
+    axs[3, 1].plot(x, x_act)
+    axs[3, 1].set_title("Actual vs requested")
 
     # response time
-    axs[1, 0].plot(x, y2)
-    axs[1, 0].set_title("Response time")
-    axs[1, 0].sharex(axs[0, 0])
-    
-    axs[0, 1].scatter(x_act, y2)
-    axs[0, 1].set_title("Actual QPS")
+    # axs[1, 0].plot(x, y2)
+    # axs[1, 0].set_title("Response time")
+    # axs[1, 0].sharex(axs[0, 0])
 
-    axs[1, 1].plot(x, x_act)
-    axs[1, 1].set_title("Actual vs requested")
     fig.tight_layout()
     print("plotting...")
     #ax.set_xlabel(args.x)
@@ -153,14 +227,6 @@ def draw(datas, args):
     # Configure X axis ticks
     #ax.xaxis.set_ticks(np.arange(0, end, 5))
 
-
-
-    # plt.ylim(-0.02, 0.5)
-
-    #ax.plot(x,y2, label="Average Response Time")
-
-
-    #ax.legend() 
     plt.show()
 
     # Save the figure if command line flag was given
