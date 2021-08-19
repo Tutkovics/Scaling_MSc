@@ -149,9 +149,16 @@ def draw(datas, args):
             if container_count == 0:
                 container_count = 1
             
-            
-            calculated_cpu = data["cpu"][container] / (container_count * data["measurementDuration"])
-            calculated_memory = data["memory"][container] / (container_count * data["measurementDuration"])
+            try:
+                calculated_cpu = data["cpu"][container] / (container_count * data["measurementDuration"])
+                calculated_memory = data["memory"][container] / (container_count * data["measurementDuration"])
+            except KeyError:
+                # If something went wrong in Prometheus collecting, then use the latest data
+                calculated_cpu = 1    # y[container][-1]
+                calculated_memory = 1 # memory[container][-1]
+                print("KeyError: " + str(container) + str(reqQps))
+                
+
             
             # Add container resource usage
             y[container].append(calculated_cpu)
@@ -182,17 +189,23 @@ def draw(datas, args):
 
     # Right upper
     axs[0, 1].plot(x, memory_sum)
+    min_x, max_x = axs[0, 1].get_xlim()
+    axs[0, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     axs[0, 1].set_title("Sum Memory / requested QPS")
 
     # CPU usage per container
     for container in y:
         axs[1, 0].plot(x, y[container], label=str(container) + " - CPU usage")
     axs[1, 0].set_title("Container CPU usage / requested QPS")
+    min_x, max_x = axs[1, 0].get_xlim()
+    axs[1, 0].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     #axs[1, 0].set_xticks(np.arange(0, end, 5), minor=False)
 
     for container in memory:
         axs[1, 1].plot(x, memory[container], label=str(container) + " - Memory usage")
     axs[1, 1].set_title("Container Memory usage / requested QPS")
+    min_x, max_x = axs[1, 1].get_xlim()
+    axs[1, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # CPU usage per container / X axis: actual QPS
@@ -213,6 +226,8 @@ def draw(datas, args):
     # Bottom right
     axs[3, 1].plot(x, x_act)
     axs[3, 1].set_title("Actual vs requested")
+    min_x, max_x = axs[3, 1].get_xlim()
+    axs[3, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
 
     # response time
     # axs[1, 0].plot(x, y2)
