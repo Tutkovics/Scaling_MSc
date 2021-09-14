@@ -10,8 +10,8 @@ spec:
       port: 80
       nodePort: 30000
       resources:
-        memory: 500
-        cpu: 1000
+        memory: 1000
+        cpu: 2000
       endpoints:
         - path: /only-frontend
           cpuLoad: 1
@@ -26,7 +26,7 @@ spec:
       replicas: 1
       port: 80
       resources:
-        memory: 500
+        memory: 1000
         cpu: 500
       endpoints:
         - path: /heavy
