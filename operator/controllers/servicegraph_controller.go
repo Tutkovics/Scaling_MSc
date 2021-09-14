@@ -194,7 +194,8 @@ func (r *ServicegraphReconciler) deploymentForNode(node *diptervv1beta1.Node, sg
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Image:   "tuti/service-graph-simulator:json2",
+						// Image:   "tuti/service-graph-simulator:json2",
+						Image:   "tuti/service-graph-simulator:latest",
 						Name:    node.Name, // from: "servicenode" --> so we can get container resource usage
 						Command: args,
 						Ports: []corev1.ContainerPort{{
