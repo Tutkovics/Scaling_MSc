@@ -13,7 +13,7 @@ func main() {
 	fmt.Println("Bye my Friend!")
 }
 
-func algorithm(milliseconds int) {
+func tightAlgorithm(milliseconds int) {
 	now := time.Now() //.Nanosecond() / 1000000
 
 	duration := milliseconds * int(time.Millisecond)

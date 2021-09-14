@@ -77,19 +77,19 @@ func (c *config) check() bool {
 }
 
 type Response struct {
-	ServiceName      string    `json:"service"`          // Name of the service
-	Host             string    `json:"host"`             // Name of the host who answer
-	ConfigOK         bool      `json:"config"`           // Results of parameter check
-	CalledEnpoint    string    `json:"endpoint"`         // Name of the called endpoint
-	CPU              int32     `json:"cpu"`              // CPU usage for the endpoint
-	Delay            int32     `json:"delay"`            // Delay time of the endpoint
-	CalloutParameter string    `json:"calloutparameter"` // Commandline parameter given in start
-	Callouts         []string  `json:"callouts"`         //[]Response // Responses from callouts
+	ServiceName      string        `json:"service"`          // Name of the service
+	Host             string        `json:"host"`             // Name of the host who answer
+	ConfigOK         bool          `json:"config"`           // Results of parameter check
+	CalledEnpoint    string        `json:"endpoint"`         // Name of the called endpoint
+	CPU              int32         `json:"cpu"`              // CPU usage for the endpoint
+	Delay            int32         `json:"delay"`            // Delay time of the endpoint
+	CalloutParameter string        `json:"calloutparameter"` // Commandline parameter given in start
+	Callouts         []string      `json:"callouts"`         //[]Response // Responses from callouts
 	ActualDelay      time.Duration `json:"actualDelay"`      // Actual delay in response
-	Time             time.Time `json:"time"`             // Current time in response
-	RequestMethod    string    `json:"requestMethod"`    // Method of request
-	RequestURL       *url.URL  `json:"requestURL"`       // Full URL of request
-	RequestAddress   string    `json:"requestAddr"`      // Remote address from request
+	Time             time.Time     `json:"time"`             // Current time in response
+	RequestMethod    string        `json:"requestMethod"`    // Method of request
+	RequestURL       *url.URL      `json:"requestURL"`       // Full URL of request
+	RequestAddress   string        `json:"requestAddr"`      // Remote address from request
 }
 
 func main() {
@@ -169,13 +169,16 @@ func main() {
 					// }
 
 					// Generate CPU usage
+					tightAlgorithm(int(cfg.EndpointsCPU[k]))
+
+					// OLD: call CPU intense algorithm in different goroutines
 					// Create waitgroup to wait all calculations done
-					var waitgroup sync.WaitGroup
-					waitgroup.Add(int(cfg.EndpointsCPU[k]))
-					for i := 0; i < int(cfg.EndpointsCPU[k]); i++ {
-						go AlgorithmToUseCPU(600, &waitgroup)
-					}
-					waitgroup.Wait()
+					// var waitgroup sync.WaitGroup
+					// waitgroup.Add(int(cfg.EndpointsCPU[k]))
+					// for i := 0; i < int(cfg.EndpointsCPU[k]); i++ {
+					// 	go AlgorithmToUseCPU(600, &waitgroup)
+					// }
+					// waitgroup.Wait()
 
 					// Wait until all callout response get answer
 					waitgroupToCallouts.Wait()
@@ -183,7 +186,7 @@ func main() {
 					response.Callouts = calloutResponses
 
 					// After CPU calcualation wait if the delay time not passed
-					waitTime := (time.Duration(cfg.EndpointsDelay[k]) * time.Millisecond) - time.Now().Sub(start)
+					waitTime := (time.Duration(cfg.EndpointsDelay[k]) * time.Millisecond) - time.Since(start)
 
 					// Wait more if necessary
 					if waitTime > 0 {
@@ -196,7 +199,7 @@ func main() {
 					response.RequestURL = r.URL
 					response.RequestAddress = r.RemoteAddr
 					response.Host = r.Host
-					response.ActualDelay = time.Now().Sub(start)
+					response.ActualDelay = time.Since(start)
 
 					json.NewEncoder(w).Encode(response)
 				}
@@ -225,36 +228,55 @@ func main() {
 }
 
 // Sieve of Eratosthenes
-func AlgorithmToUseCPU(number int, waitgroup *sync.WaitGroup) {
-	max := number
-	numbers := make([]bool, max+1)
-	// Set values to ture
-	for i := range numbers {
-		numbers[i] = true
+// func AlgorithmToUseCPU(number int, waitgroup *sync.WaitGroup) {
+// 	max := number
+// 	numbers := make([]bool, max+1)
+// 	// Set values to ture
+// 	for i := range numbers {
+// 		numbers[i] = true
+// 	}
+
+// 	// main algorithm
+// 	for p := 2; p*p <= max; p++ {
+// 		if numbers[p] {
+// 			for i := p * p; i <= max; i += p {
+
+// 				numbers[i] = false
+// 			}
+// 		}
+// 	}
+
+// 	// Print prime numbers
+// 	for p := 2; p <= max; p++ {
+// 		if numbers[p] {
+// 			fmt.Printf("%d ", p)
+// 		}
+// 	}
+
+// 	waitgroup.Done()
+// }
+
+// Function to use CPU 100% to a specific duration
+func tightAlgorithm(milliseconds int) {
+	now := time.Now() //.Nanosecond() / 1000000
+
+	duration := milliseconds * int(time.Millisecond)
+	iteration := 0
+
+	fmt.Println(time.Now())
+
+	for now.Add(time.Duration(duration)).After(time.Now()) {
+		iteration += 1
 	}
 
-	// main algorithm
-	for p := 2; p*p <= max; p++ {
-		if numbers[p] {
-			for i := p * p; i <= max; i += p {
+	fmt.Println("# of runned iteration >", iteration, "<")
 
-				numbers[i] = false
-			}
-		}
-	}
+	fmt.Println(time.Now())
 
-	// Print prime numbers
-	for p := 2; p <= max; p++ {
-		if numbers[p] {
-			fmt.Printf("%d ", p)
-		}
-	}
-
-	waitgroup.Done()
 }
 
 func calloutFunction(i int, callOut string, calloutResponses []string, waitgroupToCallouts *sync.WaitGroup) {
-	fmt.Printf("\n[calloutFunction] New async callout started: '%s' --> '%s'\n", i, callOut)
+	fmt.Printf("\n[calloutFunction] New async callout started: '%d' --> '%s'\n", i, callOut)
 
 	callOut = strings.ReplaceAll(callOut, "'", "")
 	fmt.Printf("[CALL_OUT]\t#no%d --> %s\n", i, callOut)
@@ -272,7 +294,7 @@ func calloutFunction(i int, callOut string, calloutResponses []string, waitgroup
 			calloutResponses = append(calloutResponses, "Oops, failed to convert response to string")
 		} else {
 			// Convertion was successfull
-			fmt.Printf("\n[calloutFunction] Async callout response: '%s' --> '%s'\n", i, string(buf.String()))
+			fmt.Printf("\n[calloutFunction] Async callout response: '%d' --> '%s'\n", i, string(buf.String()))
 			calloutResponses = append(calloutResponses, string(buf.String()))
 		}
 
