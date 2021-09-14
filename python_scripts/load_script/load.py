@@ -66,7 +66,7 @@ def load(config, qps):
         # eg: fortio load -qps 10 -t 5s -a http://192.168.49.2:30000/instant
         # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query} ".format(
         # cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/warmup.json' http://{ip}:{port}/{path}?{query} ".format(
-        cmd = 'echo "GET http://{ip}}:{port}/{path}?{query}" | vegeta attack -duration={time}s -rate={qps} -timeout={timeout}s -max-workers={users} -workers{users} | tee results.bin | vegeta report -type=json  > {location}/warmup.json'.format(
+        cmd = 'echo "GET http://{ip}:{port}/{path}?{query}" | vegeta attack -duration={time}s -rate={qps} -timeout={timeout}s -max-workers={users} -workers={users} | tee results.bin | vegeta report -type=json  > {location}/warmup.json'.format(
             qps = qps,
             time = config["load_preheat"],
             users = config["load_users"],
@@ -84,7 +84,7 @@ def load(config, qps):
     # Actually measurement
     # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query}".format(
     # cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/fortio-results.json' http://{ip}:{port}/{path}?{query}".format(
-    cmd = 'echo "GET http://{ip}}:{port}/{path}?{query}" | vegeta attack -duration={time}s -rate={qps} -timeout={timeout}s -max-workers={users} -workers{users} | tee results.bin | vegeta report -type=json  > {location}/vegeta-results.json'.format(
+    cmd = 'echo "GET http://{ip}:{port}/{path}?{query}" | vegeta attack -duration={time}s -rate={qps} -timeout={timeout}s -max-workers={users} -workers={users} | tee results.bin | vegeta report -type=json  > {location}/vegeta-results.json'.format(
 
         qps = qps,
         time = config["load_time"],

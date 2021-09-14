@@ -52,10 +52,11 @@ def readFileAndGetValues(fileName):
 
     measurementDuration = obj["config"]["load_time"]
 
-    avgResponseTime = obj["fortio"]["DurationHistogram"]["Avg"]
     
-    values = {"reqQPS" : obj["fortio"]["RequestedQPS"],
-              "actQPS" : obj["fortio"]["ActualQPS"],
+    avgResponseTime = obj["benchmark"]["latencies"]["mean"] / 1000000
+    
+    values = {"reqQPS" : obj["benchmark"]["rate"],
+              "actQPS" : obj["benchmark"]["throughput"],
               "runningPods" : len(runningPods),
               "runningPodsByContainer": runningPodsByContainer,
               "cpu" : cpu,
@@ -63,6 +64,19 @@ def readFileAndGetValues(fileName):
               "measurementDuration": measurementDuration,
               "avgResponseTime": avgResponseTime,
               }
+    
+    # Fortio result process
+    # avgResponseTime = obj["fortio"]["DurationHistogram"]["Avg"]
+    # values = {"reqQPS" : obj["fortio"]["RequestedQPS"],
+    #           "actQPS" : obj["fortio"]["ActualQPS"],
+    #           "runningPods" : len(runningPods),
+    #           "runningPodsByContainer": runningPodsByContainer,
+    #           "cpu" : cpu,
+    #           "memory" : memory,
+    #           "measurementDuration": measurementDuration,
+    #           "avgResponseTime": avgResponseTime,
+    #           }
+
 
     print(values)
     return values
