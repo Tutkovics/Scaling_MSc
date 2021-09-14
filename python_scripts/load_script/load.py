@@ -59,13 +59,14 @@ def load(config, qps):
 
     # Start spinner to be fancy
     spinner = Halo(text='Loading', spinner='dots')
-    spinner.start("Fortio measurement is running.")
+    spinner.start("Benchmark measurement is running.")
 
     if config["load_preheat"] > 0:
         # Create command to run
         # eg: fortio load -qps 10 -t 5s -a http://192.168.49.2:30000/instant
         # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query} ".format(
-        cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/warmup.json' http://{ip}:{port}/{path}?{query} ".format(
+        # cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/warmup.json' http://{ip}:{port}/{path}?{query} ".format(
+        cmd = 'echo "GET http://{ip}}:{port}/{path}?{query}" | vegeta attack -duration={time}s -rate={qps} -timeout={timeout}s -max-workers={users} -workers{users} | tee results.bin | vegeta report -type=json  > {location}/warmup.json'.format(
             qps = qps,
             time = config["load_preheat"],
             users = config["load_users"],
@@ -76,12 +77,15 @@ def load(config, qps):
             query = config["load_query"],
             location = config["result_location"]
         )
-        logging.debug("Fortio (preheat) full query: %s", cmd)
+        
+        logging.debug("Vegeta (preheat) full query: %s", cmd)
         return_param = subprocess.run(cmd, shell=True, universal_newlines=True, capture_output=True)
     
     # Actually measurement
     # cmd = "fortio load -qps {qps} -t {time}s -a -data-dir {location} http://{ip}:{port}/{path}?{query}".format(
-    cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/fortio-results.json' http://{ip}:{port}/{path}?{query}".format(
+    # cmd = "fortio load -qps {qps} -t {time}s -c {users} -timeout {timeout}ms -jitter -json '{location}/fortio-results.json' http://{ip}:{port}/{path}?{query}".format(
+    cmd = 'echo "GET http://{ip}}:{port}/{path}?{query}" | vegeta attack -duration={time}s -rate={qps} -timeout={timeout}s -max-workers={users} -workers{users} | tee results.bin | vegeta report -type=json  > {location}/vegeta-results.json'.format(
+
         qps = qps,
         time = config["load_time"],
         users = config["load_users"],
@@ -92,7 +96,7 @@ def load(config, qps):
         query = config["load_query"],
         location = config["result_location"]
     )
-    logging.debug("Fortio full query: %s", cmd)
+    logging.debug("Vegeta full query: %s", cmd)
     start_time = time.time()
     return_param = subprocess.run(cmd, shell=True, universal_newlines=True, capture_output=True)
     # print("Return paramtere: " + str(return_param))
@@ -105,14 +109,14 @@ def load(config, qps):
     
     SpinnerSleep(30, "Wait to Prometheus get all data.")
 
-    fortio_results = get_json_from_file(config["result_location"] + "/fortio-results.json")
+    vegeta_results = get_json_from_file(config["result_location"] + "/vegeta-results.json")
 
     # Fetch results from Prometheus
     prometheus_results = fetch_data(start_time, end_time, config)
     result = {
         "prometheus": prometheus_results,
         "config": config,
-        "fortio": fortio_results
+        "benchmark": vegeta_results
     }
     write_results_file(config["result_location"], result)
 
