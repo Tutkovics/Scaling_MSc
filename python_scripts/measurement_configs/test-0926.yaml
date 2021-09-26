@@ -7,8 +7,8 @@ Cluster:                        # Not yet used
   Name: Dipterv                 # Clustername
   IP: 152.66.211.2              # CLuster / node IP address
 QPS:                            # query per seconds 
-  From: 55                       # QPS lower bound
-  To: 100                        # QPS upper bound
+  From: 105                       # QPS lower bound
+  To: 155                        # QPS upper bound
   Granularity: 5                # QPS increment by this number
 Load:                           # Load specification
   Preheat: 0                    # warmup time in seconds
