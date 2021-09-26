@@ -8,7 +8,7 @@ import (
 func main() {
 	fmt.Println("Starting...")
 
-	algorithm(3000)
+	tightAlgorithm(30000)
 
 	fmt.Println("Bye my Friend!")
 }
@@ -23,6 +23,7 @@ func tightAlgorithm(milliseconds int) {
 
 	for now.Add(time.Duration(duration)).After(time.Now()) {
 		iteration += 1
+		iteration = iteration * iteration / (iteration * 1)
 	}
 
 	fmt.Println("# of runned iteration >", iteration, "<")
