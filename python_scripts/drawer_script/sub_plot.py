@@ -29,10 +29,14 @@ def getFilesToRead(directory):
     extension = 'json'
     files = glob.glob(directory + '/*.' + extension)
 
-    # sort by name
-    files = sorted(files)
+    print(files)
+    filtered_files = [file for file in files if "vegeta" not in file]
+    print(filtered_files)
 
-    return files
+    # sort by name
+    filtered_files = sorted(filtered_files)
+
+    return filtered_files
 
 def readFileAndGetValues(fileName):
     # read file
@@ -198,7 +202,7 @@ def draw(datas, args):
     min_x, max_x = axs[0, 0].get_xlim()
     axs[0, 0].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     # axs[0, 0].set_xticks(np.arange(min(x), max(x)), minor=False)
-    axs[0, 0].set_title("Sum CPU (mCPU) / requested QPS")
+    axs[0, 0].set_title("Sum CPU (x1000mCPU) / requested QPS")
     
 
     # Right upper
@@ -210,36 +214,40 @@ def draw(datas, args):
     # CPU usage per container
     for container in y:
         axs[1, 0].plot(x, y[container], label=str(container) + " - CPU usage")
-    axs[1, 0].set_title("Container CPU usage / requested QPS")
+    axs[1, 0].set_title("Container CPU usage (x1000mCPU) / requested QPS")
     min_x, max_x = axs[1, 0].get_xlim()
     axs[1, 0].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     #axs[1, 0].set_xticks(np.arange(0, end, 5), minor=False)
 
     for container in memory:
-        axs[1, 1].plot(x, memory[container], label=str(container) + " - Memory usage")
+        axs[1, 1].plot(x, memory[container], label=str(container))
     axs[1, 1].set_title("Container Memory usage / requested QPS")
     min_x, max_x = axs[1, 1].get_xlim()
     axs[1, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    axs[1, 1].legend(loc=0)
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # CPU usage per container / X axis: actual QPS
     for container in y:
-        axs[2, 0].scatter(x_act, y[container], label=str(container) + " - CPU usage")
-    axs[2, 0].set_title("Container CPU usage / actual QPS")
+        axs[2, 0].scatter(x_act, y[container], label=str(container))
+    axs[2, 0].set_title("Container CPU usage (x1000mCPU) / actual QPS")
+    # axs[2, 0].legend(loc=0)
     #axs[1, 0].set_xticks(np.arange(0, end, 5), minor=False)
 
     for container in memory:
-        axs[2, 1].plot(x_act, memory[container], label=str(container) + " - Memory usage")
+        axs[2, 1].scatter(x_act, memory[container], label=str(container))
     axs[2, 1].set_title("Container Memory usage / actual QPS")
+    axs[2, 1].legend(loc=0)
+    
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # Bottom left
     axs[3, 0].scatter(x_act, y2)
-    axs[3, 0].set_title("Response time / actual QPS")
+    axs[3, 0].set_title("Response time (ms) / actual QPS")
     
     # Bottom right
     axs[3, 1].plot(x, x_act)
-    axs[3, 1].set_title("Actual vs requested")
+    axs[3, 1].set_title("Actual QPS / Requested QPS")
     min_x, max_x = axs[3, 1].get_xlim()
     axs[3, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
 
@@ -255,7 +263,7 @@ def draw(datas, args):
 
     # Configure X axis ticks
     #ax.xaxis.set_ticks(np.arange(0, end, 5))
-
+    # axs.legend()
     plt.show()
 
     # Save the figure if command line flag was given
