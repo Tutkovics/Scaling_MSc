@@ -92,6 +92,27 @@ type Response struct {
 	RequestAddress   string        `json:"requestAddr"`      // Remote address from request
 }
 
+var NumberOfIterationsPerSec = 0
+
+func init() {
+	fmt.Println("Start INIT function")
+	now := time.Now()
+
+	duration := 1000 * int(time.Millisecond)
+	iteration := 0
+
+	fmt.Println(time.Now())
+
+	for now.Add(time.Duration(duration)).After(time.Now()) {
+		iteration += 1
+	}
+
+	NumberOfIterationsPerSec = iteration
+
+	fmt.Println("# of runned iteration >", iteration, "/", NumberOfIterationsPerSec, "<")
+	fmt.Println(time.Now())
+}
+
 func main() {
 	var cfg = readConfigParameters()
 
@@ -258,20 +279,25 @@ func main() {
 
 // Function to use CPU 100% to a specific duration
 func tightAlgorithm(milliseconds int) {
-	now := time.Now() //.Nanosecond() / 1000000
+	fmt.Println("Tight algoritm started")
+	start := time.Now()
 
 	duration := milliseconds * int(time.Millisecond)
+	iterationNeeded := (NumberOfIterationsPerSec * milliseconds) / 1000
+	
 	iteration := 0
+	dontCare := false
 
-	fmt.Println(time.Now())
 
-	for now.Add(time.Duration(duration)).After(time.Now()) {
+	for iteration < iterationNeeded {
+		// time calculation need because init() function do the same in for loop
+		dontCare = start.Add(time.Duration(duration)).After(time.Now())
 		iteration += 1
 	}
 
-	fmt.Println("# of runned iteration >", iteration, "<")
+	fmt.Println("# of runned iteration (TightAlgorithm) >", iteration, "<", dontCare)
 
-	fmt.Println(time.Now())
+	fmt.Println("Running time: ", start, "-->", time.Now())
 
 }
 
