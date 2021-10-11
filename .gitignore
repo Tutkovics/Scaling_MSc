@@ -10,7 +10,7 @@ python_scripts/load_script/__pycache__/
 */*/warmup.json
 */*/fortio-results.json
 python_scripts/results/*
-python_scripts/results/*.json
+python_scripts/results/*.jsonNN
 python_scripts/load_script/results.bin
 
 # Helm charts

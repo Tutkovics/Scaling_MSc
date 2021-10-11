@@ -1,0 +1,31 @@
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+  name: servicegraph-taildrop
+  namespace: default
+spec:
+  nodes:
+    - name: front-end-1
+      replicas: 3
+      port: 80
+      nodePort: 30000
+      resources:
+        memory: 1000
+        cpu: 1000
+      endpoints:
+        - path: /forward
+          cpuLoad: 10
+          delay: 0
+          callouts:
+            - url: back-end-1:80/heavy
+
+    - name: back-end-1
+      replicas: 1
+      port: 80
+      resources:
+        memory: 1000
+        cpu: 2000
+      endpoints:
+        - path: /heavy
+          cpuLoad: 100
+          delay: 0
