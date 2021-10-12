@@ -14,7 +14,7 @@ Load:                           # Load specification
   Preheat: 0                    # warmup time in seconds
   Users: 1000                   # Fortio user number
   Time: 180                     # measurement time in seconds (Should be at least 3*60)
-  TimeOut: 30                   # sec
+  TimeOut: 5                    # sec
   ServiceIP: 152.66.211.2       # IP for our service
   ServicePort: 30000            # port for our service
   ServicePath: forward       # path to our service

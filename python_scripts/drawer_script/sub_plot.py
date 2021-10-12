@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('TkAgg')
+
 from argparse import ArgumentParser
 from collections import defaultdict
 from matplotlib import pyplot as plt
@@ -6,6 +9,8 @@ import numpy as np
 # import os
 import glob
 import json
+
+# matplotlib.use( 'tkagg' )
 
 def readCommandLineParameters():
     parser = ArgumentParser()
@@ -242,8 +247,8 @@ def draw(datas, args):
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # Bottom left
-    axs[3, 0].scatter(x_act, y2)
-    axs[3, 0].set_title("Response time (ms) / actual QPS")
+    axs[3, 0].scatter(x, y2)
+    axs[3, 0].set_title("Response time (ms) / Requested QPS")
     
     # Bottom right
     axs[3, 1].plot(x, x_act)
