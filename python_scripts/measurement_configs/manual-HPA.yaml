@@ -1,8 +1,11 @@
 # Test the CPU usage with new algorithm
-Name: Taildrop-measurement       # Name of the measurement
+Name: Manual-HPA-measurement       # Name of the measurement
 Servicegraphs:                  # Service graph specifications
-  - /home/tutkovics/Scaling_MSc/yaml/multiFE-singleBE-1003/multiFE-singleBE.yaml     # Measured services config file
-Result_location: ../results/multiFE-singleBE-1013
+  - /home/tutkovics/Scaling_MSc/yaml/manual-HPA/manual-HPA-1FE-1BE.yaml     # Measured services config file
+  - /home/tutkovics/Scaling_MSc/yaml/manual-HPA/manual-HPA-1FE-2BE.yaml     # Measured services config file
+  - /home/tutkovics/Scaling_MSc/yaml/manual-HPA/manual-HPA-1FE-3BE.yaml     # Measured services config file
+  - /home/tutkovics/Scaling_MSc/yaml/manual-HPA/manual-HPA-1FE-4BE.yaml     # Measured services config file
+Result_location: ../results/manual-HPA
 Cluster:                        # Not yet used
   Name: Dipterv                 # Clustername
   IP: 152.66.211.2              # CLuster / node IP address

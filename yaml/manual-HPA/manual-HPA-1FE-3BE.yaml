@@ -6,7 +6,7 @@ metadata:
 spec:
   nodes:
     - name: front-end-1
-      replicas: 3
+      replicas: 1
       port: 80
       nodePort: 30000
       resources:
@@ -20,11 +20,11 @@ spec:
             - url: back-end-1:80/heavy
 
     - name: back-end-1
-      replicas: 1
+      replicas: 3
       port: 80
       resources:
         memory: 1000
-        cpu: 2000
+        cpu: 1000
       endpoints:
         - path: /heavy
           cpuLoad: 100

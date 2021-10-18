@@ -173,8 +173,8 @@ def draw(datas, args):
                 container_count = 1
             
             try:
-                calculated_cpu = data["cpu"][container] / (container_count * data["measurementDuration"])
-                calculated_memory = data["memory"][container] / (container_count * data["measurementDuration"])
+                calculated_cpu = data["cpu"][container] / (1 * data["measurementDuration"]) #(container_count * data["measurementDuration"])
+                calculated_memory = data["memory"][container] / (1 * data["measurementDuration"] * 10000) #(container_count * data["measurementDuration"] * 10000) # 1000000 change to Mi
             except KeyError:
                 # If something went wrong in Prometheus collecting, then use the latest data
                 calculated_cpu = 1    # y[container][-1]
@@ -226,7 +226,7 @@ def draw(datas, args):
 
     for container in memory:
         axs[1, 1].plot(x, memory[container], label=str(container))
-    axs[1, 1].set_title("Container Memory usage / requested QPS")
+    axs[1, 1].set_title("Container Memory usage (Mi) / requested QPS")
     min_x, max_x = axs[1, 1].get_xlim()
     axs[1, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     axs[1, 1].legend(loc=0)
@@ -241,7 +241,7 @@ def draw(datas, args):
 
     for container in memory:
         axs[2, 1].scatter(x_act, memory[container], label=str(container))
-    axs[2, 1].set_title("Container Memory usage / actual QPS")
+    axs[2, 1].set_title("Container Memory usage (Mi) / actual QPS")
     axs[2, 1].legend(loc=0)
     
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
