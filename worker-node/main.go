@@ -13,6 +13,11 @@ import (
 	"time"
 
 	"github.com/octago/sflags/gen/gflag"
+
+	// Prometheus exporter
+	// "github.com/prometheus/client_golang/prometheus"
+	// "github.com/prometheus/client_golang/prometheus/promauto"
+	// "github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // example: main.go -name Frontend -delay 9 -port 9090 -cpu 90 -memory 900 -endpoint-url /read -endpoint-cpu 99 -endpoint-delay 98 -endpoint-url /index -endpoint-cpu 22 -endpoint-delay 202
@@ -112,6 +117,19 @@ func init() {
 	fmt.Println("# of runned iteration >", iteration, "/", NumberOfIterationsPerSec, "<")
 	fmt.Println(time.Now())
 }
+
+// func recorPrometheusMetrics() {
+// 	go func() {
+// 		numberOfRequest.Inc()
+// 	}()
+// }
+
+// var (
+// 	numberOfRequest = promauto.NewCounter(prometheus.CounterOpts{
+// 			Name: "worker_precessed_request", //"myapp_processed_ops_total",
+// 			Help: "The total number of processed incomming request",
+// 	})
+// )
 
 func main() {
 	var cfg = readConfigParameters()
@@ -241,6 +259,10 @@ func main() {
 		fmt.Fprintf(w, "<h1>'/' or 404 page</h1>\n")
 		fmt.Fprintf(w, "%+v", r)
 	})
+
+	// Default Prometheus exporter for Go
+	// src: https://prometheus.io/docs/guides/go-application/
+	http.Handle("/metrics", promhttp.Handler())
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
