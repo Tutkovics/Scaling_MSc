@@ -104,21 +104,9 @@ func (r *ServicegraphReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 
-		// Ensure the deployment size is the same as the spec
-		size := int32(node.Replicas)
-		if *found.Spec.Replicas != size {
-			found.Spec.Replicas = &size
-			err = r.Update(ctx, found)
-			if err != nil {
-				log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
-				return ctrl.Result{}, err
-			}
-			// Spec updated - return and requeue
-			return ctrl.Result{Requeue: true}, nil
-		}
-
 		foundHPA := &autoscalev1.HorizontalPodAutoscaler{}
 		err = r.Get(ctx, types.NamespacedName{Name: node.Name, Namespace: "default"}, foundHPA)
+
 		// Check maxReplicas --> if 0 HPA was not specified
 		if node.HPA.MaxReplicas != 0 || node.HPA.MinReplicas != 0 {
 
@@ -136,6 +124,19 @@ func (r *ServicegraphReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			} else if err != nil {
 				log.Error(err, "Failed to get HorizontalPodAutoscaler")
 				return ctrl.Result{}, err
+			}
+		} else {
+			// If HPA was not specified --> Ensure the deployment size is the same as the spec
+			size := int32(node.Replicas)
+			if *found.Spec.Replicas != size {
+				found.Spec.Replicas = &size
+				err = r.Update(ctx, found)
+				if err != nil {
+					log.Error(err, "Failed to update Deployment", "Deployment.Namespace", found.Namespace, "Deployment.Name", found.Name)
+					return ctrl.Result{}, err
+				}
+				// Spec updated - return and requeue
+				return ctrl.Result{Requeue: true}, nil
 			}
 		}
 

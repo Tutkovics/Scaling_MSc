@@ -1,0 +1,89 @@
+Every 2.0s: kubectl get all                                                                                                                                                        dipterv1: Sun Oct 24 14:10:09 2021
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/back-end-1-7cb9d49594-7btf8    1/1     Running   0          2m48s
+pod/back-end-1-7cb9d49594-fpgcj    0/1     Pending   0          108s
+pod/back-end-1-7cb9d49594-lhjvl    0/1     Pending   0          108s
+pod/back-end-1-7cb9d49594-rvsgk    1/1     Running   0          5m34s
+pod/back-end-1-7cb9d49594-vdl7m    1/1     Running   0          3m48s
+pod/front-end-1-6677c56849-26nmn   1/1     Running   0          5m34s
+pod/front-end-1-6677c56849-26zr2   1/1     Running   0          3m48s
+pod/front-end-1-6677c56849-8s9ph   0/1     Pending   0          48s
+pod/front-end-1-6677c56849-fndnw   1/1     Running   0          2m48s
+
+NAME                  TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/back-end-1    ClusterIP   10.107.129.217   <none>        80/TCP         5m33s
+service/front-end-1   NodePort    10.105.158.61    <none>        80:30000/TCP   5m34s
+service/kubernetes    ClusterIP   10.96.0.1        <none>        443/TCP        194d
+
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/back-end-1    3/5     5            3           5m34s
+deployment.apps/front-end-1   3/4     4            3           5m34s
+
+NAME                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/back-end-1-7cb9d49594    5         5         3       5m34s
+replicaset.apps/front-end-1-6677c56849   4         4         3       5m34s
+
+NAME                                              REFERENCE                TARGETS    MINPODS   MAXPODS   REPLICAS   AGE                                                                                            
+horizontalpodautoscaler.autoscaling/back-end-1    Deployment/back-end-1    100%/70%   1         5         5          5m34s                                                                                          
+horizontalpodautoscaler.autoscaling/front-end-1   Deployment/front-end-1   80%/70%    1         5         4          5m34s                                                                                          
+
+----------------
+
+tutkovics@dipterv1:~$ kubectl describe pod back-end-1-7cb9d49594-lhjvl                                                                                                                                          [4/4]
+Name:           back-end-1-7cb9d49594-lhjvl                                                                                                                                                                          
+Namespace:      default                                                                                                                                                                                              
+Priority:       0     
+Node:           <none>
+Labels:         app=servicegraph
+                node=back-end-1
+                pod-template-hash=7cb9d49594
+Annotations:    <none>
+Status:         Pending
+IP:
+IPs:            <none>
+Controlled By:  ReplicaSet/back-end-1-7cb9d49594
+Containers:
+  back-end-1:
+    Image:      tuti/service-graph-simulator:latest
+    Port:       80/TCP
+    Host Port:  0/TCP
+    Command:
+      /app/main
+      -name=back-end-1
+      -port=80
+      -cpu=1000
+      -memory=1000
+      -endpoint-url=/heavy
+      -endpoint-delay=0
+      -endpoint-call=''
+      -endpoint-cpu=100
+    Limits:
+      cpu:     1
+      memory:  1000Mi
+    Requests:
+      cpu:        1
+      memory:     1000Mi
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-s9zjw (ro)
+Conditions:
+  Type           Status
+  PodScheduled   False
+Volumes:
+  kube-api-access-s9zjw:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Guaranteed
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason            Age    From               Message
+  ----     ------            ----   ----               -------
+  Warning  FailedScheduling  2m14s  default-scheduler  0/3 nodes are available: 1 node(s) had taint {node-role.kubernetes.io/master: }, that the pod didn't tolerate, 2 Insufficient cpu, 2 Insufficient memory.    
+  Warning  FailedScheduling  2m12s  default-scheduler  0/3 nodes are available: 1 node(s) had taint {node-role.kubernetes.io/master: }, that the pod didn't tolerate, 2 Insufficient cpu, 2 Insufficient memory.
+  ----------------------
