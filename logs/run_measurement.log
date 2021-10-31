@@ -1,3 +1,5 @@
+## Pods can't start because of lack of CPU
+
 Every 2.0s: kubectl get all                                                                                                                                                        dipterv1: Sun Oct 24 14:10:09 2021
 
 NAME                               READY   STATUS    RESTARTS   AGE
@@ -87,3 +89,82 @@ Events:
   Warning  FailedScheduling  2m14s  default-scheduler  0/3 nodes are available: 1 node(s) had taint {node-role.kubernetes.io/master: }, that the pod didn't tolerate, 2 Insufficient cpu, 2 Insufficient memory.    
   Warning  FailedScheduling  2m12s  default-scheduler  0/3 nodes are available: 1 node(s) had taint {node-role.kubernetes.io/master: }, that the pod didn't tolerate, 2 Insufficient cpu, 2 Insufficient memory.
   ----------------------
+  ## Istio install ##
+
+NAME              STATUS   AGE
+default           Active   195d
+kube-node-lease   Active   195d
+kube-public       Active   195d
+kube-system       Active   195d
+monitoring        Active   194d
+tutkovics@dipterv1:~/Downloads/istio-1.11.4$
+tutkovics@dipterv1:~/Downloads/istio-1.11.4$  curl -L https://istio.io/downloadIstio | sh -^C
+tutkovics@dipterv1:~/Downloads/istio-1.11.4$ istioctl install --set profile=demo -y
+✔ Istio core installed                                                                                                                                                                                              
+✔ Istiod installed                                                                                                                                                                                                  
+✔ Ingress gateways installed                                                                                                                                                                                        
+✔ Egress gateways installed                                                                                                                                                                                         
+✔ Installation complete                                                                                                                                                                                             
+Thank you for installing Istio 1.11.  Please take a few minutes to tell us about your install/upgrade experience!  https://forms.gle/kWULBRjUv7hHci7T6                                                              
+tutkovics@dipterv1:~/Downloads/istio-1.11.4$ kubectl get ns
+NAME              STATUS   AGE
+default           Active   195d
+istio-system      Active   84s
+kube-node-lease   Active   195d
+kube-public       Active   195d
+kube-system       Active   195d
+monitoring        Active   194d
+
+tutkovics@dipterv1:~/Downloads/istio-1.11.4$ kubectl label namespace default istio-injection=enabled
+namespace/default labeled
+
+---------------------------------
+
+Every 2.0s: kubectl get horizontalpodautoscalers.autoscaling                                                                                                                       dipterv1: Mon Oct 25 21:52:16 2021
+
+NAME          REFERENCE                TARGETS    MINPODS   MAXPODS   REPLICAS   AGE
+back-end-1    Deployment/back-end-1    108%/70%   1         5         5          7m52s
+front-end-1   Deployment/front-end-1   73%/70%    1         5         3          7m52s
+
+Every 2.0s: kubectl get all                                            dipterv1: Mon Oct 25 21:52:01 2021                                                                                                     [0/115]
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/back-end-1-7cb9d49594-59ppl    2/2     Running   0          7m38s
+pod/back-end-1-7cb9d49594-fgcv4    2/2     Running   0          3m36s
+pod/back-end-1-7cb9d49594-tzsv5    2/2     Running   0          5m37s
+pod/back-end-1-7cb9d49594-w8gs8    0/2     Pending   0          94s
+pod/back-end-1-7cb9d49594-zx577    0/2     Pending   0          3m35s
+pod/front-end-1-6677c56849-95dfw   2/2     Running   0          7m38s
+pod/front-end-1-6677c56849-mvlnt   2/2     Running   0          3m36s
+pod/front-end-1-6677c56849-wpfsd   2/2     Running   0          5m37s
+
+Every 2.0s: kubectl top pod                                           dipterv1: Mon Oct 25 21:52:15 2021
+
+W1025 21:52:15.603163   25545 top_pod.go:140] Using json format to get metrics. Next release will switch
+ to protocol-buffers, switch early by passing --use-protocol-buffers flag
+NAME                           CPU(cores)   MEMORY(bytes)
+back-end-1-7cb9d49594-fgcv4    982m         332Mi
+front-end-1-6677c56849-95dfw   951m         888Mi
+front-end-1-6677c56849-mvlnt   845m         426Mi
+
+                                                                                                      │
+  1  [||||||||||||||||||||||||||||||||||||87.3%]   Tasks: 89, 704 thr; 4 running                      │  1  [||||||||||                              20.8%]   Tasks: 90, 675 thr; 4 running                         
+  2  [||||||||||||||||||||||||||||||||||| 81.9%]   Load average: 24.91 12.03 5.06                     │  2  [||||||||||||||||                        31.9%]   Load average: 44.36 16.75 6.82                        
+  3  [||||||||||||||||||||||||||||||||||||87.6%]   Uptime: 24 days, 00:13:40                          │  3  [|||||||||||                             21.6%]   Uptime: 24 days, 00:15:41                             
+  4  [||||||||||||||||||||||||||||||||||||89.5%]                                                      │  4  [|||||||||||||||                         31.0%]
+  Mem[||||||||||||||||||||||||||||||3.56G/3.85G]                                                      │  Mem[||||||||||||||||||||||||||||||||||3.60G/3.85G]
+  Swp[                                    0K/0K]                                                      │  Swp[                                        0K/0K]
+                                                                                                      │
+  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command                                │  PID USER      PRI  NI  VIRT   RES   SHR S CPU% MEM%   TIME+  Command                                        
+25490 root       20   0 1335M  149M  1088 R 107.  3.8  6:03.73 /app/main -name=back-end-1 -port=80 -cp│25485 root       20   0 1335M  140M     0 S 64.1  3.6  4:00.15 /app/main -name=back-end-1 -port=80 -cpu=1000 -
+27376 root       20   0 1336M  159M   908 R 104.  4.0  4:27.91 runc init                              │25770 root       20   0 1335M  140M     0 D 18.2  3.6  0:48.20 /app/main -name=back-end-1 -port=80 -cpu=1000 -
+27520 root       20   0 1610M  342M  1984 S 55.6  8.7  2:48.48 /app/main -name=front-end-1 -port=80 -c│25509 root       20   0 1335M  140M     0 D 16.1  3.6  0:51.99 /app/main -name=back-end-1 -port=80 -cpu=1000 -
+25509 root       20   0 1335M  149M  1088 R 32.2  3.8  1:06.14 /app/main -name=back-end-1 -port=80 -cp│25508 root       20   0 1335M  140M     0 R 14.2  3.6  0:44.68 /app/main -name=back-end-1 -port=80 -cpu=1000 -
+27397 root       20   0 1336M  159M   908 R 29.8  4.0  0:54.26 /app/main -name=back-end-1 -port=80 -cp│21724 root       20   0 1812M  510M     0 D 11.8 12.9  7:03.67 /app/main -name=front-end-1 -port=80 -cpu=1000 
+25645 root       20   0 1335M  149M  1088 R 28.7  3.8  0:47.23 /app/main -name=back-end-1 -port=80 -cp│ 4006 root       20   0  692M  7792     0 S  7.9  0.2  2:30.07 cilium-health-responder --pidfile /var/run/cili
+27394 root       20   0 1336M  159M   908 R 26.9  4.0  0:41.21 /app/main -name=back-end-1 -port=80 -cp│31472 root       20   0  692M  7792     0 D  7.6  0.2  0:21.29 cilium-health-responder --pidfile /var/run/cili
+25508 root       20   0 1335M  149M  1088 R 24.0  3.8  1:15.17 /app/main -name=back-end-1 -port=80 -cp│25313 root       20   0 1542M  295M     0 D  6.1  7.5  2:48.71 /app/main -name=front-end-1 -port=80 -cpu=1000 
+27630 root       20   0 1336M  159M   908 R 24.0  4.0  0:50.33 /app/main -name=back-end-1 -port=80 -cp│21781 root       20   0 1812M  510M     0 D  4.5 12.9  1:06.63 /app/main -name=front-end-1 -port=80 -cpu=1000 
+F1Help  F2Setup F3SearchF4FilterF5Tree  F6SortByF7Nice -F8Nice +F9Kill  F10Quit                       │F1Help  F2Setup F3SearchF4FilterF5Tree  F6SortByF7Nice -F8Nice +F9Kill  F10Quit                               
+
+Worker nodes went to unresponsive
