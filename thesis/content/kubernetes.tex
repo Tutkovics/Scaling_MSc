@@ -115,7 +115,7 @@ A megoldás egyik legnagyobb előnye, hogy elég könnyű alkalmazni, a Kubernet
 %----------------------------------------------------------------------------
 Egy egyszerű példán keresztül szeretném bemutatni a Kubernetes beépített, automatikus horizontális skálázóját (HPA). Az automatikus skálázónak meg lehet adni, hogy milyen célértéket szeretnénk kapni. Például, hogy a futtatott \textit{Pod} által felhasználható CPU mennyiség milyen szinten legyen kihasználva. Jelenleg ilyen megkötést a memória és processzor felhasználásra lehet tenni, de tetszőlegesen létrehozhatunk saját metrikát. 
 
-Az algoritmus folyamatosan lekérdezi a metrikák aktuális értékét és a \ref{hpa_algo} egyenlet alapján meghatározza az éppen szükséges replika számot. Ezzel a számított értékkel frissíti a \textit{Pod} replika számát, amit így a replikációért felelős kontroller észlel és megpróbálja elérni a kívánt állapotot. Ezzel módszerrel megvalósítható fel- és leskálázás is.
+Az algoritmus folyamatosan lekérdezi a metrikák aktuális értékét és \aref{hpa_algo} egyenlet alapján meghatározza az éppen szükséges replika számot. Ezzel a számított értékkel frissíti a \textit{Pod} replika számát, amit így a replikációért felelős kontroller észlel és megpróbálja elérni a kívánt állapotot. Ezzel módszerrel megvalósítható fel- és leskálázás is.
 
 \begin{equation}
 \label{hpa_algo}

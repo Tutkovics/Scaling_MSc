@@ -41,6 +41,7 @@
 \renewcommand{\lstlistingname}{kódrészlet}% Listing -> "kódrészlet"
 \usepackage{indentfirst}		% az első bekezdés is behúzott legyen, ne csak a 2-tól
 \usepackage{pdfpages}
+\usepackage{graphicx}
 
 %\usepackage{xcolor}
 
@@ -82,8 +83,6 @@
 \begin{document}
 
 \pagenumbering{gobble} 
-
-
 \selectthesislanguage
 
 %Titlepage
@@ -102,8 +101,8 @@
 
 % Declaration and Abstract (Diplomatervbe bele kell rakni)
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-%\include{include/declaration} %TODO Hallgatói nyilatkozat
-%\include{content/abstract}    %TODO Összefoglaló
+\include{include/declaration} % Hallgatói nyilatkozat
+\include{content/abstract}    % Magyar és angol nyelvű absztrakt
 
 
 % The main part of the thesis
@@ -121,7 +120,7 @@
 
 % Acknowledgements
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-%\include{content/acknowledgement}
+\include{content/acknowledgement}
  
 
 % List of Figures, Tables

@@ -8,10 +8,23 @@
 %----------------------------------------------------------------------------
 \chapter*{Kivonat}\addcontentsline{toc}{chapter}{Kivonat}
 
-Megfigyelhető trend az iparban, hogy egyre többen választják és térnek át a megszokott informatikai rendszerekről a felhő által nyújtott szolgáltatásokhoz. Ennek egyik oka a felhő által kínált rugalmasság, mely alapján a szolgáltatásunk képes alkalmazkodni a beérkező kérésekhez és ezalapján erőforrásokat használni. Ezt úgy hívjuk, hogy az alkalmazásunk képes skálázódni.
+Az elmúlt években megfigyelhető egy jelentős szemléletmódváltás a fejlesztett és használt alkalmazások körében, illetve ezzel összefüggően a futtató környezetben is.
+Egyre több informatikai szereplő ismeri fel, hogy milyen előnyöket tud nyújtani a monolitikus alkalmazások cseréje mikroszolgáltatások architektúrára.
+Az új trenddel párhuzamosan, illetve egymást erősítve folyamatosan kezd csökkenni az alkalmazásfejlesztő és üzemeltető feladatkörök távolsága.
 
-Ez elég hasznos tulajdonsága az infrastruktúrának, azonban ezzel újszerű kihívások is járnak. 
+A frissen készülő alkalmazások egyre nagyobb része direkt konténerizálva, a felhőre optimalizáltan készül.
+Sokak számára vonzó alternatívát kínál a könnyű és kölcséghatékony belépésének és a skálázhatóságának köszönhetően.
+Az így elkészített alklamazások üzemeltetése is új kihívásokkal szembesül és erre az igényre jelent meg az azóta folyamatosan fejlődő és növekvő Kubernetes konténer orkesztrációs platform.
 
+A Kubernetes platform lehetőséget kínál számunkra több metódus alapján skálázni az adott alkalmazásunkat a beérkező terheléstől függően.
+A diplomamunkában azzal a kérdéskörrel foglalkozopruim, hogyan viselkedik a rendszer, ha a rendelkezésre álló erőforrások limitáltak vagy pedig minél költséghatékonyabban szeretnénk üzemeltetni az alkalmazást. 
+
+Keressük a jelenelgi implementációban létező limitációkat, hogy milyen helyezetek adódhatnak, amikor ideálistól eltérő erőforrás elosztás és használat figyelhető meg.
+
+Ehhez a feladathoz készítettem egy mikroszolgáltatás architektúrájú alkalmazás szimulációjához szükséges környezetet. Ezzel lehetőségünk van tetszőleges konfigurációval Kubernetes felett elindíteni egy szimulált környezetet, ahol személyre szabhatjuk a válaszidőket és processzor használatot.
+A környezeten előállított alkalmazásokat pedig meg kellett figyelni, hogyan viselkednek a nagy számú külső terhelés hatására.
+
+A mérések során felderített, előnytelen működési esetekre megoldást javaslunk, amivel kiegészítve az alap infrastruktúrát csökkenthető az erőforrások pazarlása, így környezet- és pénztárcabarát megoldás is egyben.
 
 \vfill
 \selectenglish
@@ -22,7 +35,7 @@ Ez elég hasznos tulajdonsága az infrastruktúrának, azonban ezzel újszerű k
 %----------------------------------------------------------------------------
 \chapter*{Abstract}\addcontentsline{toc}{chapter}{Abstract}
 
-todo
+%TODO
 
 
 \vfill

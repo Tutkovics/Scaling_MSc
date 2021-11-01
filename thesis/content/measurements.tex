@@ -148,6 +148,7 @@ A másik, \ref{fig:example_plot} grafikonon látható, hogy a kevésbé erőforr
 %----------------------------------------------------------------------------
 \section{Finomhangolás}
 %----------------------------------------------------------------------------
+% TODO: frissíteni / törölni
 Az eredmények megjelenítésén még lehetne finomítani, mivel jelenleg egy grafikonon csak egy mérési sorozat kimenetét dolgozzuk fel. Ez viszont azzal jár, hogy az egyes mérések során lehetségesek eltérések. Például ilyen lehet, hogy a Prometheus még nem tudta lekérdezni az összes konténer utolsó erőforrás-használatait. A probléma orvoslására jelenleg biztonsági időket iktattunk be a mérés során, hogy minimalizáljuk ennek az esélyét. A szebb megoldás viszont az lenne, ha több mérést végeznénk azonos feltételek mellett és ezeknek az átlagát vennénk figyelembe.
 
 Illetve érdemes elgondolkodni, hogyan kellene kezelni az esetet, ha a rendszer nem tudja kiszolgálni az elvárt lekérdezéseket. Több megoldás is szóba jöhet. Egyik, hogy már a mérések végzése folyamán figyeljük és ha nem tudja teljesíteni, akkor idő előtt leállítjuk a terheléseket. Másik, hogy az $X$ tengelyen a valódi, kiszolgált QPS értéket jelenítjük meg. Ezzel annyi gond lehet, hogy elveszítjük az információt, hogy az adott mérésnél a rendszer már túlterhelt állapotban volt és emiatt vagy alapból ennyi kéréssel terheltünk. Harmadik megoldás, hogy az $X$ tengelyen lévő értékeket addig ábrázoljuk, amíg elvárt módon futottak a mérések.
@@ -174,9 +175,116 @@ Jelenleg a Fortio az alapbeállításokkal indul el, ami 4 felhasználót szimul
 A projektmunka jelentős részét tette ki, hogy méréseket kellett végezni a korábban bemutatott rendszerelelmekkel rendelkező környezetben.
 A mérések darabszámát szemlélteti \aref{python_drawer} kódrészlet. Beépített Linux parancsok segítségével könnyen megkaphatjuk a projekt során készített és a kiértékeléshez használt \textit{json} dokumentumok darabszáma. Ahogy a kódrészlet is mutatja először rekurzívan lekérdezzük az adott mappán és almappákon belül található adott kiterjesztéssel rendelkező fájlokat \textit{(find)}. 
 Majd az így kapott eredményt csővezeték segítségével hozzákötjük egy szintén beépített parancs \textit{(wc)} bemenetére, ami megszámolja a kiírt sorok számát. 
-Ahogy az a kódrészleten is látszik, hogy ennek a kimenete TODO $1445$, ami azt jelenti, hogy a projekt jelenlegi állapotához kapcsolódóan ennyi mérés született. 
+Ahogy az a kódrészleten is látszik, hogy ennek a kimenete $1445$, ami azt jelenti, hogy a projekt jelenlegi állapotához kapcsolódóan ennyi mérés született. %TODO konkrét mérési számot frissíteni
 Az egyes mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb Prometheus-ból kapott eredményeket jelenti.
 
 % Rajzoló program indítása --------------------------------------------------
 \lstset{caption=Elvégzett mérések száma, label=number_of_measurements}
 \lstinputlisting{figures/get_number_of_measuremnts.sh}
+
+\subsection{Költséghatékony frontendek és költséges backend láncban}
+\label{subsec:3FE_1BE_chain}
+%----------------------------------------------------------------------------
+A konkrét mérése előtt is kíváncsiak voltunk, hogyan viselkedik a rendeszer abban a helyzetben, ha több költséghatékony alkalmazáson keresztül jut el egy erőforrásigényes hátsó alkalmazáshoz.
+A szinumlált szolgáltatáshálót alkotó elemek \aref{tab:3FE_1BE_chain} táblázatban bemutatott specifikációkkal rendelkeznek.
+Látható, hogy a három költséghatékony frontend, egymásnak továbbítják a beérkező kéréseket.
+Jelen állásban a könyebbség nevében mindegyikből egy darab replika fut, azonos paraméterekkel. 
+Egy-egy kérés kiszolgálása nagyjából 10mCPU processzort igényel, és 1000mCPU volt a lefoglalt és a frontendek által felhasználható erőforrás mennyisége is. Ezek alapján $\frac{1000 mCPU}{10 mCPU/kérés} = 100 kérés$ kiszolgálására elegendő erőforrás van számukra allokálva.
+Ezzel szemben, a sor végén álló, költséges backend maximum 2vCPU-t használhat, és az egyes beérkező lekérdezések kiszolgálására 100 mCPU processzorra van szükségük. Ebből kifolyólag maximum $\frac{2000 mCPU}{20 mCPU/kérés} = 20 kérés$ kiszolgálására van lehetőség másodpercenként. 
+
+Minden kérés a \textit{front-end-1}-hez érkezik be és innen kerül továbbításra. Mivel a sor elején lévő egységek ötször több kérést tudnak kiszolgálni, ezért a szűk keresztmetszet a sor hátulján lévő \textit{back-end-1} lesz. Emiatt minden kérésnek el kell jusson a sor végére, miközben az előtte lévő egységek miatt használja az erőforrásokat és mire a sor végére eljut és feldolgozásra kerül, addig a beérkező \textit{http} kapcsolat eldobásra is kerül a beállított öt másodperces időkorlát miatt.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l|llll}
+Név                                                            & front-end-1    & front-end-2    & front-end-3   & back-end-1 \\ \hline
+Replikák száma                                                 & 1              & 1              & 1             & 1          \\
+\begin{tabular}[c]{@{}l@{}}CPU használat\\ (mCPU)\end{tabular} & 10             & 10             & 10            & 100        \\
+\begin{tabular}[c]{@{}l@{}}CPU limit\\ (mCPU)\end{tabular}     & 1000           & 1000           & 1000          & 2000       \\
+\begin{tabular}[c]{@{}l@{}}Memória limit\\ (kB)\end{tabular}   & 1000           & 1000           & 1000          & 1000       \\
+Továbbhívás                                                    & front-end-2:80 & front-end-3:80 & back-end-1:80 & -         
+\end{tabular}
+  	\caption{Három költséghatékony frontend után egy költséges backend}
+	\label{tab:3FE_1BE_chain}
+\end{table}
+
+Az ismertetett környezetben elvégzett mérésről készített grafikon látható \aref{fig:3FE_1BE_chain} ábrán.
+Megfigyelhető, hogy az egyre nagyobb beérkezett terhelés hatására folyamatosan növekszik a rendszer által felhasznált erőforrások mennyisége.
+Különösen érdekes, hogy a \textit{back-end-1} által használt processzor mennyisége, a várt módon, 20 lekérdezés / másodperc érték környékén eléri a maximumot, onnan már nem emelkedik továss, csak stagnál. 
+Ezzel ellentétben az egyes frontend alkalmazások erőforrásigénye folyamatosan növekszik a mérés végéig.
+
+Ezzel párhuzamosan a memória használata is érdekesen alakul.
+18 QPS értékig látszólag nem változik éredmben, alacsonyan marad.
+Azonban a backend telítése után, minden egységnél elkezd növekedni.
+Ez azzal magyarázható, hogy a rendszerben lévő várakozási sorok, bufferek folyamatosan telnek meg, mivel a láncolat végén lévő költséges backend nem képes a beérkezések számával tartani a kiszolgálási számot. 
+%TODO: Markow láncok / tömegkiszolgálással magyarázni.  http://www.szit.bme.hu/~gyorfi/tomkisz.pdf
+
+Az alsó sorban látható grafikonok segítségével leolvasható, hogy az átlagos válaszidők 20 QPS környékén elérik az 5 másodperces felső korlátot, amivel szinkronban az időben kiszolgálásra kerülő kérések száma is drasztikusan elkezd visszaesni, majd utána a beérkező kérések elhanyagolható részét tudjuk csak időn belül kiszolgálni. 
+Összeségében megállapítható, hogy létezik egy olyan pont a szimulációban, aminél több beérkező kérés esetén csak az erőforrásokat használjuk és az érdemi kiszolgálás is hirtelen és drasztikus mértékben visszaesik.
+Ilyenkor elszállnak a késleltetések és memória használat, valamint folyamatosan nő a processzor használata is.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=150mm, keepaspectratio]{figures/taildrop-chain-3FE-1BE_requestedQPS.png}
+	\caption{Három költséghatékony frontend után egy költséges backend mérés ábrázolása}
+	\label{fig:3FE_1BE_chain}
+\end{figure}
+
+\subsection{Költséghatékony frontendek egymás mellett és költséges backend mögöttük}
+%----------------------------------------------------------------------------
+\Aref{subsec:3FE_1BE_chain} fejezetben bemutatott tapasztalatokat igazoló, készítettem egy következő mérést is. Ebben az esetben kicsit egyszerűbb architektúrával végeztem el a mérést. A megkonstruált erőforráshasználatok és a rendszer felépítését táblázatos formában \aref{tab:3FE_1BE_new} táblázat tartalmazza.
+
+Fontos különbség, hogy ebben a mérésben nem hozunk létre egy hosszú láncot az egyes frontend alkalmazások egymás mögé kötésével, hanem ennél sokkal rövidebb lesz egy-egy kérés kiszolgálásának folyamata. 
+A költséghatékony frontend után rögtön a költséges backendhez kerül továbbításra a beérkező kérés.
+Ezen kívül még egy fontos módosítás, hogy három darab frontend fog futni és továbbra is egy backend lesz hátul.
+A megadott alapján kiszámolható az egyes egységek által körülbelül kiszolgálható kérések száma másodpercenként.
+\refstruc{eq:3FEsumqps} alapján leolvasható, hogy a \textit{front-end-1} áteresztő képessége 120 kérés, míg a \textit{back-end-1} ennél jóval szerényebb 20 beérkező kérést tud kiszolgálni másodpercenként, mint ahogy az következik \aref{eq:1BEsumqps} egyenletből.
+
+\begin{equation}
+\label{eq:3FEsumqps}
+3(replika)\times\frac{1000 mCPU}{25 mCPU/kérés} = 120 kérés/másodperc
+\end{equation}
+
+\begin{equation}
+\label{eq:1BEsumqps}
+1(replika)\times\frac{2000 mCPU}{100 mCPU/kérés} = 20 kérés/másodperc
+\end{equation}
+
+\begin{table}[]
+\centering
+\begin{tabular}{l|ll}
+Név                                                            & front-end-1   & back-end-1 \\ \hline
+Replikák száma                                                 & 3             & 1          \\
+\begin{tabular}[c]{@{}l@{}}CPU használat\\ (mCPU)\end{tabular} & 25            & 100        \\
+\begin{tabular}[c]{@{}l@{}}CPU limit\\ (mCPU)\end{tabular}     & 1000          & 2000       \\
+\begin{tabular}[c]{@{}l@{}}Memória limit\\ (kB)\end{tabular}   & 1000          & 1000       \\
+Továbbhívás                                                    & back-end-2:80 & -          \\
+HPA                                                            & -             & -         
+\end{tabular}
+  	\caption{Költséghatékony frontend több replikával és utána egy költséges backend}
+	\label{tab:3FE_1BE_new}
+\end{table}
+
+Jelen mérésben nincsen megadva semmilyen automatikus skálázó, ezért amikor az operátor az indításkor létrehozza adott replikaszámmal az egyes Kubernetes Deploymenteket, azok nem is fognak változni, függetlenül a beérkező kérések mennyiségétől.
+A korábban bemutatott környezeten is elvégeztem a szimulált terheléssel történő mérést.
+Ezen eredményeket mutatja be \aref{fig:3FE_stack_1BE} ábra.
+A korábbi méréssel szinkronban, hasonló megállapításokat tudunk leolvasni.
+Látható, hogy a \textit{back-end-1} telítése az elvárt 20 QPS körül megtörténik (illetve kicsit még előtte). 
+Azonban ettől függetlenül a \textit{front-end-1} által elhasznált processzor mennyisége folyamatosan nőtt. A legmagasabb terhelésnél már olyan szintre emelkedett a három példány által összesen használt processzor erőforrása, mint a backend maximuma, tehát mintha 2 teljes virtuális CPU magot is allokáltunk volna számukra.
+
+A költséges backend telítése után jelentősen megugrik a beérkező kérések kiszolgálásához szükséges késleltetések és az egyes egységek által használt memória mennyiségek is.
+A jobb alsó grafikonon látszik, hogy 20 QPS-nél már vissza is zuhant a sikeres kiszolgálások száma, amivel szinkronban a kiszolgálások átlagos válaszideje is felurik a maximumra, ami jelenleg 5 másodperc, mert a beállítások szerint ennyi idő után bontjuk a \textit{http} kapcsolatokat.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE.png}
+	\caption{Költséghatékony frontend három példányban és utána egy költséges backend mérés ábrázolása}
+	\label{fig:3FE_stack_1BE}
+\end{figure}
+
+Röviden elmondható, hogy a beérkező kérések növekedésével együtt fokozatosan nő az elhasznált processzor mennyisége és a sikeres kiszolgálások száma is.
+Azonban van egy pont, amikor a hálózatban lévő szűk keresztmetszet nem képes tartani a lépést a beérkező kérések mennyiségével. 
+Ebben az esetben hirtelen visszaesik a kiszolgálás minősége, drasztikusan megugrik a várható kiszolgálási idő és ezzel együtt csökken a sikeres kiszolgálások aránya.
+
+Az elvégzett mérések esetén látható, hogy valódi problémáról van szó, abban az esetben, ha a rendszer az előre definiált erőforráshasználatokkal fut és nem képes azokat automatikusan állítani.
+Ha a beállítások dinamikusabbak lennének, akkor például a frontend által lefoglalt és használt erőforrásokat át lehetne csoportosítani a backend részére, amivel növelhető lenne a rendszer globális maximum kiszolgálása.
