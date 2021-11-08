@@ -178,7 +178,7 @@ Majd az így kapott eredményt csővezeték segítségével hozzákötjük egy s
 Ahogy az a kódrészleten is látszik, hogy ennek a kimenete $1445$, ami azt jelenti, hogy a projekt jelenlegi állapotához kapcsolódóan ennyi mérés született. %TODO konkrét mérési számot frissíteni
 Az egyes mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb Prometheus-ból kapott eredményeket jelenti.
 
-% Rajzoló program indítása --------------------------------------------------
+% Mérések számának meghatározása --------------------------------------------
 \lstset{caption=Elvégzett mérések száma, label=number_of_measurements}
 \lstinputlisting{figures/get_number_of_measuremnts.sh}
 
@@ -288,3 +288,41 @@ Ebben az esetben hirtelen visszaesik a kiszolgálás minősége, drasztikusan me
 
 Az elvégzett mérések esetén látható, hogy valódi problémáról van szó, abban az esetben, ha a rendszer az előre definiált erőforráshasználatokkal fut és nem képes azokat automatikusan állítani.
 Ha a beállítások dinamikusabbak lennének, akkor például a frontend által lefoglalt és használt erőforrásokat át lehetne csoportosítani a backend részére, amivel növelhető lenne a rendszer globális maximum kiszolgálása.
+
+%----------------------------------------------------------------------------
+\section{Mérések automatikus horizontális skálázóval}
+%----------------------------------------------------------------------------
+
+A korábban végzett mérések alapján ki lehet jelenteni, hogy a podok statikus konfigurálásával nem mindig találjuk meg a rendszer ideális állapotát,  sőt a jövőbeli terhelés pontos információja nélkül nagyon valószínű, hogy szuboptimális állapotban maradunk.
+A Kubernetes beépítetten támogatja a podok automatikus horizontális skálázását, mint ahogy azt \aref{subsec:hpa} alfejezetben bemutatásra került.
+A további haladás részeként szerettem volna megnézni, hogy milyen megoldást kínál beépített skálázó és mik a limitációi.
+A fő cél az volt, hogy bizonyítást nyerjen, hogy a skálázó algoritmusa miatt nem képes minden esetben egy ideális állapotba jutni.
+
+\subsection{Áttérés nehézségei}
+%----------------------------------------------------------------------------
+
+Az új fajta mérés több gondot is okozott, tekintve hogy az eddigre bejáratott ábrázoló alkalmazást teljesen át kellett variálni, ugyanis ezen mérések jelentősen mások.
+Ebben az esetben az egyes értékek az időtől változóan függnek, ellentétben a HPA nélküli méréseknél, amikor minden a beérkező terheléstől változott. Valamint a kezdeti méréseknél kiderült, hogy az elkészített operátor logikai működésében is hiba van. 
+A jelenség onnan fakadt, hogy minden egyes alkalommal, amikor az operátorunk futásra került, ellenőrizte a ServiceGraph konfigurációban megadott replika számot és ha nem stimmelt, akkor módosította azt.
+Ezen logika miatt, amikor a skálázó szeretett volna több azonos podot elindítani egy adott alkalmazásból, akkor ezt észrevette az operátor és visszaállította a kezdeti értéket.
+A következmény pedig az lett, hogy a rendszer sosem került stabil állapotba és skálázó döntései nem tudtak érvényre jutni.
+
+A fenti probléma ideálisan példaként tud szolgálni az operátorok egy kevésbé kutatott és ritkán tárgyalt kihívására.
+Amennyiben több kezelő alá esik egy-egy Kubernetes erőforrás, akkor nagyon körültekintően kell eljárni az egyes feladatkörök elosztásában.
+Nem triviális észrevenni, ha direkt vagy indirekt módon, egymás döntéseire reagáltan futnak le az operátorok algoritmusai.
+Ezzel a rendszer egésze könnyen instabil vagy holtponti (deadlock) állapotba tud kerülni.
+
+Egy-egy ilyen helyzetet felismerni aránylag körülményes, alapértelmezetten nincsen erre külön logika implementálva az orkesztrációs platformba.
+Emiatt ezen esetek detektálása, újabb operátor bevonása nélkül nem lehetséges.
+Azonban újabb logika bevonása, ami azonos erőforrások kezelését teszi lehetővé, tovább növelheti az indirekt egymásrahatások valószínűségét.
+
+Természetesen a fenti probléma könnyen javíthatónak bizonyult és csak egy kisebb módosításra volt szükség.
+Végleges implementációban a megadott replikaszám ellenőrzése az egyes deploymentekben csak akkor kerül ellenőrzésre, ha autómatikus skálázó nem került definiálásra a megadott konfiguráció alapján.
+
+\subsection{Lokálisan mohó, globálisan nem optimális}
+%----------------------------------------------------------------------------
+%TODO 
+
+% HPA bekapcsolva, nem ideális eredmény ----------------------------------------
+\lstset{caption=Horizontális skálázóval történő mérés, label=hpa_measurement_pending}
+\lstinputlisting{figures/HPA-pending-pods.sh}

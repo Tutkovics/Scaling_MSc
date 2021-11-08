@@ -112,6 +112,7 @@ A két skálázási mód közötti különbséget mutatja a \refstruc{fig:scalin
 A megoldás egyik legnagyobb előnye, hogy elég könnyű alkalmazni, a Kubernetes rendszere is alapértelmezettként támogatja. Hátrányánál meg lehet említeni, hogy több egység között oszlanak meg a beérkező kérések így nem biztos, hogy azonos egységnél köt ki egy felhasználó két különböző kérése. 
 
 \subsubsection{Automatikus horizontális skálázás}
+\label{subsec:hpa}
 %----------------------------------------------------------------------------
 Egy egyszerű példán keresztül szeretném bemutatni a Kubernetes beépített, automatikus horizontális skálázóját (HPA). Az automatikus skálázónak meg lehet adni, hogy milyen célértéket szeretnénk kapni. Például, hogy a futtatott \textit{Pod} által felhasználható CPU mennyiség milyen szinten legyen kihasználva. Jelenleg ilyen megkötést a memória és processzor felhasználásra lehet tenni, de tetszőlegesen létrehozhatunk saját metrikát. 
 
