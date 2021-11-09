@@ -258,7 +258,7 @@ Replikák száma                                                 & 3            
 \begin{tabular}[c]{@{}l@{}}CPU használat\\ (mCPU)\end{tabular} & 25            & 100        \\
 \begin{tabular}[c]{@{}l@{}}CPU limit\\ (mCPU)\end{tabular}     & 1000          & 2000       \\
 \begin{tabular}[c]{@{}l@{}}Memória limit\\ (kB)\end{tabular}   & 1000          & 1000       \\
-Továbbhívás                                                    & back-end-2:80 & -          \\
+Továbbhívás                                                    & back-end-1:80 & -          \\
 HPA                                                            & -             & -         
 \end{tabular}
   	\caption{Költséghatékony frontend több replikával és utána egy költséges backend}
@@ -321,8 +321,82 @@ Végleges implementációban a megadott replikaszám ellenőrzése az egyes depl
 
 \subsection{Lokálisan mohó, globálisan nem optimális}
 %----------------------------------------------------------------------------
-%TODO 
+
+% TODO: x. fejezetben bemutatott
+A HPA skálázó döntési mechanizmusát ismerve, sejthető volt, hogy milyen szituációkra viselkedhet érzékenyen.
+Maga az algoritmus, ami meghatározza az egyes podokból aktuálisan szükséges darabszámot egyedül az ő feleőssége alá tartozó konténereket veszi számításba.
+Ezen kívül nem rendelkezik egyéb ismerettel a többi szolgáltatást illetően.
+Például nem tudja, hogy milyen más alklamazás komponensekkel van kapcsolatba az alá tartozó komponens se azt, hogy mennyi erőforrás érhető el összesen a klaszterben.
+
+A fenti tulajdonságok alapján a jelenlegi skálázó csak lokálisan optimális döntéseket tud hozni egy-egy alkalmazás egység számára.
+Azt kellett bebizonyítani, hogy ezen tulajdonsága miatt a rendszer összeségét érintő, globális optimumot nem fogja megtalálni.
+Ehhez létrehoztam egy egyszerű szolgáltatás hálót és az egyes elemekhez tartozó horizontális skálázót. 
+A konkrét értékeket \aref{tab:1FE_1BE_chain_with_HPA} táblázat tartalmazza.
+Látható, hogy a korábbi mérésekhez hasonlóan itt is egy Frontend és egy Backend alkalmazás szerepel. 
+A kérések a frontendhez érkeznek be, ami mindegyiket továbbítja a backend felé. 
+Az egyes komponens podok által lefoglalt és maximálisan használható erőforrások mennyisége megegyezik.
+Egy virtuális CPU magot használhatnak illetve egy megabájt memóriát.
+Annyi különbség van, hogy a frontend a beérkező kérésenként negyed annyi CPU használatot fog generálni, mint a backend.
+
+A korábbi mérésektől eltérően ebben az esetben az operátorunk a konfiguráció alapján fog létrehozni automatikus horizontális skálázót is.
+Azonos szabályok kerültek alkalmazásra a két egységhez kapcsolódóan.
+Legalább egy podnak futnia kell de legfeljebb öt futhat egyszerre, illetve a processzor használtságot figyelembe véve fogjuk meghozni a skálázási döntést.
+Ebben az esetben a HPA törekedni fog a 70 százalékos foglaltságra. 
+Tehát a maximálisan elérhető proszeszor használat 70 százaléknál magasabb használata esetén fogjuk megkezdeni a felskálázást.
+
+\begin{table}[]
+\centering
+\begin{tabular}{ll|ll}
+\multicolumn{2}{l|}{Név}                                                                      & front-end-1   & back-end-1 \\ \hline
+\multicolumn{2}{l|}{Kezdeti replika szám}                                                     & 1             & 1          \\
+\multicolumn{2}{l|}{\begin{tabular}[c]{@{}l@{}}CPU használat\\ (mCPU)\end{tabular}}           & 25            & 100        \\
+\multicolumn{2}{l|}{\begin{tabular}[c]{@{}l@{}}CPU foglalás és limit\\ (mCPU)\end{tabular}}   & 1000          & 1000       \\
+\multicolumn{2}{l|}{\begin{tabular}[c]{@{}l@{}}Memória foglalás és limit\\ (kB)\end{tabular}} & 1000          & 1000       \\
+\multicolumn{2}{l|}{Továbbhívás}                                                              & back-end-1:80 & -          \\
+\multirow{3}{*}{HPA}                            & Minimum replika                             & 1             & 1          \\
+                                                & Maximum replika                             & 5             & 5          \\
+                                                & Cél CPU használat                           & 70\%          & 70\%      
+\end{tabular}
+\caption{Három költséghatékony frontend után egy költséges backend}
+\label{tab:1FE_1BE_chain_with_HPA}
+\end{table}
+
+A generált terhelés hatására a rendszernek másodpercenként hetven beérkező kérést kellett kiszolgálnia. 
+Az egyes http kapcsolatokra a megszokott módon öt másodperces időkorlát volt, amin belül ha nem érkezett válasz, akkor az adott kérést sikertelennek tekintjük.
+A teljes szimuláció a szolgáltatásháló létrehozásától számított tíz percig, azaz hatszáz másodpercig tartott.
+
+Mérés során parancssorból is jól látható a skálázó működése. 
+Ezt mutatja be \aref{hpa_measurement_pending} kódrészlet, amin belül két paranccs kimenetét is láthatjuk a mérés kezdetét követő bő öt és feledik percben.
+Első sorban lekérdezzük az éppen működésben lévő horizontális skálázókat. 
+A parancs kimenetének második oszlopából kiderül, hogy az egyes skálázók az azonos névvel rendelkező deployment erőforráshoz vannak kapcsolva.
+Leolvasható, hogy skálázó döntései alapján öt és négy replikának kellene futni ebben az időpillanatban illetve, hogy mind a frontend mind pedig a backend túl lépte a számára előirányzott processor fogyasztást.
+
+A kódrészlet második parancsán láthatjuk, hogy milyen podok és milyen állapotban léteztek ilyenkor.
+Megfigyelhető, hogy valóban szerepel a korábban a skálázó által meghatározásra kerülő négy darab frontend és az öt darab backend kapszula.
+Viszont, ami tanulságos, hogy közüllük nem mindegyiknek sikerült az elvárt módon elindulnia.
+Erre abból lehet következtetni, hogy egyes podok állapot mezője nem az elvárt \textit{Running}, hanem \textit{Pending} állapotban vannak.
+Amiatt van ez, mert ugyan a skálázó döntése alapján el kellene induljon az elvárt számú kapszula, azonban a Kubernetes ütemezője nem tudja őket elindítani.
+Látható, hogy három plusz három kapszula tudott rendesen elindulni, így rögtön hat virtuális cpu magot le is foglaltunk a klaszterben és nem tud új egységet lehelyezni.
+Ez a magyarázata, hogy míg a korábban elindított egységek (magasabb \textit{AGE} értékkel) sikeresen elindultak, azonban a későbbieknél ez már nem mondható el.
 
 % HPA bekapcsolva, nem ideális eredmény ----------------------------------------
 \lstset{caption=Horizontális skálázóval történő mérés, label=hpa_measurement_pending}
 \lstinputlisting{figures/HPA-pending-pods.sh}
+
+A mérés eredményeit ábrázolva előkerült egy érdekesség is, amit \aref{fig:HPA-scaling-same-time} ábrán láthatunk.
+A grafikonon egyszerre van ábázolva a frontendből és a backendből futó egységek száma is.
+Erre utal a bal felső sarokban szereplő jelmagyarázat is, viszont a kék színnel rajzolt költségesebb backend nem is látszik.
+Ez amiatt van, mert a Prometheus adatai szerint egyszerre történtek meg a skálázások és ez az oka, hogy mindkét alkalmazásegységből három, három darab került elindításra.
+Értelemszerűen ez az erőforrások nem ideális elosztását vonja magával, hiszen azonos erőforrás került lefoglalásra és használatra a költségesebb illetve könyebb alkalmazásrész részére is.
+Ha a skálázó rendelkezne a környezetéről több inforációval, akkor ennél ideálisabb arányban tudna erőforrásokat allokálni.
+Például, ha feltesszük, hogy összesen hat pod indítható, akkor előnyösebb lenne egy 2-4 vagy 1-5 megosztás a költségesebb backend javára.
+Viszont a tapasztalható megosztással nem tudjuk maximálisan kihasználni a rendszerben lévő erőforrásokat.
+Pontosabban mondva kihasználjuk, mert a lefoglalt processzor mennyiségét jelentősen kihasználjuk, azoban a kiszolgálás minősőgén és mennyiségén ez nem látszódik.
+
+\begin{figure}[!ht]
+	\centering
+	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-in-the-same-time.png}
+	\caption{HPA skálázóval történő mérés}
+	\label{fig:HPA-scaling-same-time}
+\end{figure}
+
