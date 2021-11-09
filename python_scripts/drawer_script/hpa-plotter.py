@@ -119,7 +119,7 @@ def readFileAndGetValues(fileName):
 
     #print(values)
     #values=()
-    print(values)
+    # print(values)
     return values
 
 def getRunningPodsFromJson(obj):
@@ -244,11 +244,29 @@ def draw(datas, args):
 
     # Right upper
     print("#"*100)
-    print(datas[0][:][:][:][0])
-    axs[0, 1].plot(datas[:]["time"], datas[:]["time"])
+    # Please dont read, black magic is comming
+    print("times: {}".format(len([record["time"] for record in datas[0] ])))# datas[0][:].items())
+    print("runningPods: {}".format(len([record["runningPods"] for record in datas[0] ])))# datas[0][:].items())
+    runningPodsRawData = [record["runningPods"] for record in datas[0] ]
+    runningPodsClearData = {}
+    for key in runningPodsRawData[0]:
+        runningPodsClearData[key] = [time[key] for time in runningPodsRawData]
+    print(runningPodsClearData)
+
+    time = [record["time"]-datas[0][0]["time"] for record in datas[0] ]
+
+    axs[0, 1].plot([record["time"] for record in datas[0] ], [record["time"] for record in datas[0] ])
     min_x, max_x = axs[0, 1].get_xlim()
     axs[0, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     axs[0, 1].set_title("Sum Memory / requested QPS")
+
+    for container in runningPodsClearData:
+        axs[1, 1].plot(time, runningPodsClearData[container], label=str(container))
+    axs[1, 1].set_title("Number of Running Pods During the Measurement")
+    min_x, max_x = axs[1, 1].get_xlim()
+    # axs[1, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    axs[1, 1].legend(loc=0)
+    #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # CPU usage per container
     # for container in y:
