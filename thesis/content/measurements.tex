@@ -319,11 +319,10 @@ Azonban újabb logika bevonása, ami azonos erőforrások kezelését teszi lehe
 Természetesen a fenti probléma könnyen javíthatónak bizonyult és csak egy kisebb módosításra volt szükség.
 Végleges implementációban a megadott replikaszám ellenőrzése az egyes deploymentekben csak akkor kerül ellenőrzésre, ha autómatikus skálázó nem került definiálásra a megadott konfiguráció alapján.
 
-\subsection{Lokálisan mohó, globálisan nem optimális}
+\subsection{Lokálisan mohó, globálisan szuboptimális}
 %----------------------------------------------------------------------------
 
-% TODO: x. fejezetben bemutatott
-A HPA skálázó döntési mechanizmusát ismerve, sejthető volt, hogy milyen szituációkra viselkedhet érzékenyen.
+A korábban \aref{subsec:hpa} alfejezetben bemutatott HPA skálázó döntési mechanizmusát ismerve, sejthető volt, hogy milyen szituációkra viselkedhet érzékenyen.
 Maga az algoritmus, ami meghatározza az egyes podokból aktuálisan szükséges darabszámot egyedül az ő feleőssége alá tartozó konténereket veszi számításba.
 Ezen kívül nem rendelkezik egyéb ismerettel a többi szolgáltatást illetően.
 Például nem tudja, hogy milyen más alklamazás komponensekkel van kapcsolatba az alá tartozó komponens se azt, hogy mennyi erőforrás érhető el összesen a klaszterben.
@@ -396,7 +395,11 @@ Pontosabban mondva kihasználjuk, mert a lefoglalt processzor mennyiségét jele
 \begin{figure}[!ht]
 	\centering
 	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-in-the-same-time.png}
-	\caption{HPA skálázóval történő mérés}
+	\caption{HPA skálázóval történő mérés - 70\% cél CPU használat mellett}
 	\label{fig:HPA-scaling-same-time}
 \end{figure}
+
+A bemutatott eredményekből adódik a kérdés, hogy mennyire általános jelenségről van szó, vagy csak a rosszul konfigurált skálázó a jelnség okozója.
+A megérzés szerint az előirányzott 70 százalékos processzorhasználattal lehetnek problémák, hogy túl alacsony szintre lettek beállítva.
+Emiatt a újabb szimulációkon kellett megnézni és értelmezni a jelenséget. 
 
