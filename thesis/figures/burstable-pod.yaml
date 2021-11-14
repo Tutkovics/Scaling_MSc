@@ -1,0 +1,19 @@
+$ kubectl get  pod -n kube-system coredns-558bd4d5db-h8l7z -o yaml
+
+apiVersion: v1
+kind: Pod
+...
+spec:
+  containers:
+  - ...
+    resources:
+      limits:
+        memory: 170Mi
+      requests:
+        cpu: 100m
+        memory: 70Mi
+    ...
+status:
+  ...
+  qosClass: Burstable
+  ...
