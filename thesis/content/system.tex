@@ -78,15 +78,50 @@ servicegraph.dipterv.my.domain/servicegraph created
 
 
 %----------------------------------------------------------------------------
-\section{Go konténer}
+\section{Alkalmazás konténer készítése}
 %----------------------------------------------------------------------------
 A korábban látott módon lehetőségünk van tetszőleges szolgáltatásokat elindítani, azonban hogy az adott szolgáltatásoknak további paraméterek tudjunk átadni, olyan alkalmazás kell ami tudja kezelni őket. Például: milyen végpontokra figyeljenek, milyen kiszolgálási idővel dolgozzanak, mennyi erőforrást használjanak fel.
 A feladat megoldására létrehoztam egy Go alapú webalkalmazást, mely induláskor átveszi a szükséges paramétereket. A webszerverhez beérkező kérések pedig a megadott paraméterek által specifikált módon fognak végrehajtódni. 
 
-Az alkalmazás elkészítéséhez szintén rendelkezésre állt egy kódbázis, amit tovább kellett fejleszteni. Korábban egy \textit{http} alapú üzenetet küldött vissza az alkalmazás, ami számunkra könnyebben olvasható, azonban a gépek nehezebben kezelik. Így kicsit változtatni kellett a kódon és jelenleg \textit{json} üzenetet kapunk vissza.
+A teljes kódbázis és annak működésének részletekbe menő bemutatását nem érzem releváns részének a végső rendszer felépítését tekinve. 
+A mérések során használt kódok és a Docker képfájl készítéséhez szükséges minden forrás és erőforrás és instrukció megtalálható a diplomamunkához tartozó verziókövető rendszerben\citep{gitRepo}. 
+Mindössze a számomra izgalmasabb vélt részeket, említésre méltó megoldásokat szeretném tárgyalni.
+
+Az alkalmazás elkészítéséhez fel tudtam használni a korábbi egyetemi projekt tárgyak alatt elkészített forráskódot, amit tovább kellett fejleszteni. Korábban egy \textit{http} alapú üzenetet küldött vissza az alkalmazás, ami számunkra könnyebben olvasható, azonban a gépek nehezebben kezelik. Így kicsit változtatni kellett a kódon és jelenleg \textit{json} üzenetet kapunk vissza.
 
 Lehetőségünk van a \textit{http} kérés kiszolgálása közben további webalkalmazások felé továbbkérdezni. Ez a funkció ad lehetőséget, hogy a klaszteren belül tetszőleges szolgáltatáshálókat valósítsunk meg. Ezt a funkciót is kicsit fejleszteni kellett és az egyes lekérdezéseket aszinkron hívásra cseréltem le. Ezáltal miközben várunk a kint meghívott rendszerek válaszára közben végezhetjük a saját csomópontban a konfigurációban megadott számításokat. 
 
+\subsection{Processzor-használat skálázása}
+%----------------------------------------------------------------------------
+Egyik legfontosabb feladata az egyes podokban elindított alkalmazásnak, hogy fel tudja dolgozni a számára átadott paramétereket.
+Kintről kell átadni minden olyan értéket, ami meghatározza a működési módját.
+Többek között meg lehet adni, hogy az egyes végpontokra érkező kérések esetén mekkora processzeszor igényt generáljon.
+Ezen funkció implementálása bizonyult a legérdekesebb feladatnak.
+
+Az alkalmazás első funkcióiban nem kapott még jelentős figyelmet, mert a nagy rendszer összeállítása volt a prioros feladat.
+Emiatt egy egyszerű processzor igényes algoritmust implementáltam, ami a feladtát tökéletesen ellátta.
+Az általam válaszott algoritmus az Eratoszthenész szitája volt, ami képes megkeresni egy bizonyos számig létező prímszámokat.
+Az algoritmusban szereplő lépések nem nehezek, azonban több egymásba ágyazott \textit{for} ciklust tartalmaz, ami így beláthatatlan ideig de használja a rendelkezésre álló processzort.
+További érdekesség, hogy amikor a végeredményt nem irattuk ki vagy használtuk fel, akkor a fordító valószinűleg figyelmen kívül hagyta a számára feleslegesnek tűnű műveletsort és nem került bele a végleges alkalmazásba.
+Ez a tulajdonsága a fordítónak egyszerre barátságos, mert már fordítás közben is próbál javítani a kódminőségen és kiszámíthatalanná teszi a kész programunkat, mert hiába írtuk meg nem került meghívásra a függvény.
+
+A megoldás gyengeségét az adta, hogy nem lehet finomhangolni és a Kubernetesben létező mCPU mértékegység szerint konfigurálni az alkalmazás egységünket.
+Amikor a rendszer fejlesztésének előrehaladott szakaszában ez a probléma ismét előkerült, megoldási javaslatot kellett keresni.
+
+A megoldás alapját az úgynevezett szoros ciklusok (\textit{tight loop}\citep{tightLoop}) adta.
+
+A mögöttes elgondolás, hogy 1000 mCPU felhasználást akkor kapunk, ha a megfigyelt konténer egy teljes másodpercig birtokolja és ezidő alatt folyamatosan használja is az erőforrást.
+Viszont előre meghatározni, nem lehet, hogy mennyi műveletet végezzünk, hiszen ezt befolyásolja a Kubernetes klaszter mögötti infrastruktúra.
+Tehát elképezlhető, hogy azonos algoritmus futása eltérő terhelésként jelenik meg az adott rendszerben értelmezett 1 CPU egység miatt.
+
+A fenti következménye, hogy ha a Kubernetes mCPU mértékegységét akarjuk használni, akkor kötelező lesz az alkalmazás tényleges működése előtt egy kalibrációs tesztet végezni.
+
+Az alkalmazás indításakor futtatott függvényében egy másodpercig egy egyszerű tight loop algoritmust futtat és figyeljük, hogy ezidő alatt hány iterációt tud megtenni.
+Amennyiben az ez információ adott könnyen tudunk generálni megadott terhelést bármilyen környezetben.
+Ehhez az kell, hogy a beérkező kérés esetén a korábban kiszámolt iterációk számához arányosan az igényelt processzor-fogyasztással megegyező iterációt tegyen meg.
+
+\subsection{Elkészült alkalmazás használata}
+%----------------------------------------------------------------------------
 Az elkészült alkalmazást fel kellett készíteni, hogy a Kubernetesben tudjuk futtatni. Ehhez Docker képfájlt készítettem belőle és miután elláttam a megfelelő címkékkel feltöltöttem\citep{dockerContainer} a Docker Hub oldalra, ami egy ingyenes és publikus konténer adattár. \\
 
 \lstset{caption=Kénténer futtatása és válasza, label=describe_pod}
