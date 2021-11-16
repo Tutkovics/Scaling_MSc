@@ -2,7 +2,7 @@
 \chapter{Rendszer felépítése}
 \label{sec:system}
 %----------------------------------------------------------------------------
-Ebben a fejezetben szeretném bemutatni az általam elkészített rendszert és az azt alkotó egyes részeket.
+Ebben a fejezetben szeretném bemutatni az általam elkészített rendszert és az azt alkotó egyes részeket. A
 
 
 %----------------------------------------------------------------------------
@@ -178,3 +178,76 @@ A \verb+Prometheus+ egészen kiterjeszthető rendszer így közel tetszőleges m
 
 
 A mérés végén miután összegyűjtöttük az összes keletkező adatokat, beleértve a \verb+Prometheus+ és \verb+Fortio+ rendszereket is és az eredeti konfigurációt is azokat perzisztálni kell. Erre a legkézenfekvőbb módszer az adatok kiírása \verb+json+ fájlba. Ez azért is előnyös, mert könnyen olvasható és feldolgozható a formátum. 
+
+%----------------------------------------------------------------------------
+\section{A mérés és az eredmények feldolgozásának elemei}
+\label{sec:measure_steps}
+%----------------------------------------------------------------------------
+
+A következő alfejezetben szeretném a korábban bemutatott alkotóelemeket egymás utáni sorba tenni és az általuk végrehajtott egy-egy lépést részletesebben bemutatni.
+A fő célja, hogy egy szimulációt teljes egészében bemutasson a mérés indításától kezdődően a kapott eredmények feldolgozásáig.
+
+Fontosnak tartom megemlíteni, hogy a bemutatott lépések inkább az elkészült rendszer működésének használatát tárgyalja.
+Emiatt a Kubernetes operátor működése nem szerepel fajsúlyos mértékben a leírt lépésekben.
+Az operátor működését ebben az esetben tekintsük egy beépített szolgáltatásként.
+
+A lépések könnyebb követhetőségét segíti \aref{fig:measurement_and_draw_workflow} ábra.
+A mérés elindításához szükségünk van egy konfigurációs fájlra, amiben definiálva a kívánt szimulációhoz szükséges paraméterek.
+Ebben a konfigurációs fájlban kell megadni azt vagy azokat a szolgáltatáshálót leíró \textit{ServiceGraph} erőforrás \textit{yaml} fájlokat, amiken a szimulációkat futtatni szeretnénk.
+Több ilyen szolgáltatás háló is megadható, ebben az esetben többször fog lefutni a szimulációnk azonos paraméterekkel.
+
+Az elindított Python alkalmazás előszőr ellenőrzi, hogy létezik-e parancssorban megadott konfigurációs állomány.
+Amennyiben nem volt megadva, a program futása közben is lehetőségünk van azt behivatkozni, ráadásul ebben egy automatikus kiegészítő funkciói is segítségünkre van.
+Ha ez megtörtént, akkor egy segédmodul segítségével beolvassuk a paramétereket és eltároljuk egy Python szótárba, hogy később könnyebb legyen az adott értéket felhasználni.
+
+Ezután minden, megadott szolgáltatásháló esetén el kell végezni a következő terheléseket.
+Először ki kell számolni, hogy milyen QPS értékű terheléseket fog generálni.
+Ha van még ilyen ilyen QPS érték, amire nem lett elvégezve a terhelés, akkor megigényli az éppen aktuálisan vizsgált szolgáltatáshálót a Kubernetes klaszterben.
+Ez alapján az operátor elkezdi létrehozni a szükséges erőforrásokat. 
+Eközben az alkalmazásunk folyamatosan figyelemmel követi, hogy az igényelt kapszulák állapota futó legyen, hiszen csak a rendszer teljes elindulása után lehet a méréseket elkezdeni.
+
+Miután elindultak a podok bizonyos előmelegítést végez a rendszer, ha a konfigurációs fájl alapján szükséges.
+Ez a funkció akkor lehet hasznos, ha nem szeretnénk rögtön a friss rendszeren méréseket végezni, hanem adunk neki egy kis időt és terhelést, hogy felvegyen egy alap állapotot.
+Ebben az esetben viszont figyelni kell arra, hogy a Prometheusban megjelenő adatok nem valósidejűek és ez befolyásolhatja a mért eredményeket.
+Emiatt a dolgozatban bemutatott méréseknél ezzel a lehetőséggel nem éltem.
+A funkció hiba nélküli alkalmazásához további fejlesztések szükségesek.
+
+Az előmelegítési fázis után következhet a valódi terhelés generálása.
+Ehhez jelenleg a parancssoros alkalmazást, a Vegetát használom.
+Mután a konfigurációaban beállított ideig a megadott QPS értékkel történő terhelés befejeződött, szükséges egy kicsit várni.
+Erre amiatt van szükség, hogy a Prometheushoz is megérkezzenek a mérés során generált statisztikák.
+
+A mesterséges késleltetés után le kell futtatni az egyes Prometheus lekérdezésket.
+Itt megaddható, hogy milyen felbontással, mettől-meddig és milyen értékeket kérdezzen le.
+A rendszerből érkező egyes \textit{json} válaszokat össze kell fűzni, illetve a mérő eszköz által generált statisztikákat is érdemes kezelni.
+
+A különböző forrásokból összeállított kimeneteket egy nagy fájlba kell kimenteni, hogy a későbbiekben is fel tudjuk azokat használni.
+A fájl mentése után törölhető a szolgáltatás háló, hogy a következő QPS értékkel történő mérésnél ne zavarjon be a korábbi rendszer és az azon végzett  mérések, így a lehető legtisztább eredményeket kapjuk.
+Tehát ezt minden terhelési értékre és szolgáltatási hálón végig kell járni és az egyes kimeredményeket letárolni.
+
+Eddig tart a mérést vezényő Python alkalmazás hatásköre és feladata.
+Amikor előálltak a kimenetek, akkor készen állnak a további feldolgozásra, azonban ezt már egy következő alkalmazás fogja végezni.
+Ezért is szerepel más színnel \aref{fig:measurement_and_draw_workflow} ábrán, ahogy azt a bal alsó sarokban található jelmagyarázat is tartalmazza.
+
+Az ábrázolás folyamata a korábban bemutatott lépésekhez képest lineárisabb, emiatt könnyebben is értelmezhető.
+Az ábrázoló szkript indításakor szintén bizonyos paraméterek megadása kötelező, hiszen meg kell adni, hogy melyik mappában szereplő mérési eredményeket szeretnénk grafikonra vinni.
+A megadott mappában található és értelmezhető \textit{json} típusú fájlokat fogja az alkalmazás egymás után beolvasni.
+
+A beolvasott fájl igazán nagyméretű és rendezetlen adathalmazt tartalmaz.
+Emiatt szükséges a nyers adatokat tisztítani és csak a számunkra értelmezhető információkat megtartani.
+Az így kapott adatokat transzormálni kell, hogy a későbbiekben az alkalmazás könnyebben tudja ábrázolni.
+
+Az kinyert és előkészített adatokat el kell tárolni, amíg minden mérési eredményt tartalmazó fájlon megtörténik ez a lépés. 
+Ennek a folyamatnak a végére előállnak az ábrázolható adatok együttese.
+Ezeket különböző módon tudjuk ábrázolni és megjeleníteni.
+A kész grafikonokat lehetőségünk van lementeni, de ez csak egy opcionális lépés, emiatt szerepel az ábrán szaggatott vonalas nyillal.
+A megjelenített ablak bezárása után végére is értünk a folyamatnak.
+
+% Mérés lépései -------------------------------------------------------------
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/measurement_and_draw_workflow.png}
+\caption{Szimuláció futtatásának és kiértékelésének lépései}
+\label{fig:measurement_and_draw_workflow}
+\end{figure}
+
