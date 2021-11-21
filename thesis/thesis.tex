@@ -3,6 +3,7 @@
 % !TeX program = xelatex
 \documentclass[11pt,a4paper,oneside]{report}             % Single-side
 %\documentclass[11pt,a4paper,twoside,openright]{report}  % Duplex
+\usepackage{graphicx}
 
 \input{include/packages}
 
@@ -41,7 +42,6 @@
 \renewcommand{\lstlistingname}{kódrészlet}% Listing -> "kódrészlet"
 \usepackage{indentfirst}		% az első bekezdés is behúzott legyen, ne csak a 2-tól
 \usepackage{pdfpages}
-\usepackage{graphicx}
 \usepackage{multirow} 			% multi line row merge for tables 
 %\usepackage{xcolor}
 
@@ -133,7 +133,8 @@
 % Bibliography
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 \addcontentsline{toc}{chapter}{Irodalomjegyzék}
-\bibliographystyle{acm}
+%\bibliographystyle{acm}
+%\bibliography{bibliography}
 \bibliography{bib/thesis}
 
 % Appendix

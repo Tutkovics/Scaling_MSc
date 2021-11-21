@@ -147,14 +147,25 @@ Mérés megkezdése előtt készíteni kell egy konfigurációs fájlt. Erre egy
 \lstset{caption=Mérés konfigurációja, label=measurement_config}
 \lstinputlisting{figures/measurement_config.yaml}
 
-A forgalom generálását egy külön alkalmazás végzi, a \verb+Fortio+. Egyre szélesebb körben elterjedt forgalom generáló alkalmazást azért választottuk, mert elég sok statisztikát képes gyűjteni és könnyen kezelhető, ezáltal könnyen integrálható a rendszerünkbe. Egy valódi indítást mutat be a  \ref{fortio_command} kódrészlet. 
-Látható, hogy meg kell adni az aktuális QPS értéket, amit szeretnénk elérni, hogy mennyi ideig fusson a mérés, hogy hova és milyen néven mentse a kapott eredményeket, és a legfontosabb, hogy hova küldje a kéréseket.
+A forgalom generálását egy külön alkalmazás végzi, a \verb+Vegeta+\citep{vegetaGithub}. 
+Természetesen nagyon sok forgalom generáló alkalmazást tudunk felhasznélni és a kész rendszer korábbi verziójában mást használtunk.
+A korábbi döntés a \verb+Fortio+ generátorra esett, mert egyre szélesebb körben használják és ideális döntésnek tűnt a méréseinkhez.
+Azonban a folyamatos mérések közben számos  nehezen értelmezhető jelenséget produkált, ezért került sor a váltásra. 
+
+Számos alkalmazást megnéztem, hogy minél körültekintőbb döntést tudjak hozni. 
+Ebben nagy segítségemre volt egy összegyűjtött alklamazás lista\citep{benchmarkToolsList} így megkeresni már nem csak össze kellett hasonlítani őket.
+Végül a döntés a \textit{Vegetára} esett, mert hasonló funkcionalitásokkal rendelkezik, mint a korábbi eszközünk, ami jelentősen megkönnyítette a komponens cseréjét.
+
+Egy-egy terhelés szimulációjához meg kell adnunk pár paramétert az alklamazás indításához. 
+
+%Egy valódi indítást mutat be a  \ref{vegeta_command} kódrészlet. 
+Például meg kell adni az aktuális QPS értéket, amit szeretnénk elérni, hogy mennyi ideig fusson a mérés, hogy hova és milyen néven mentse a kapott eredményeket, és a legfontosabb, hogy hova küldje a kéréseket.
 Ezeket a paramétereket ugye a korábban ismertetett konfigurációs fájl alapján állítjuk össze. \\
 
-\lstset{caption=Példa a \textit{Fortio} indítására, label=fortio_command}
-\lstinputlisting[language=Bash]{figures/fortio_command.sh}
+%\lstset{caption=Példa a \textit{Vegeta} indítására, label=vegeta_command}
+%\lstinputlisting[language=Bash]{figures/vegeta_command.sh}
 
-Miután megterheltük a rendszert és megkaptuk a kérések kiszolgálásával kapcsolatos statisztikákat a \verb+Fortio+-ból, szükséges még a rendszer erőforrás-felhasználását célzó metrikákat is begyűjteni. 
+Miután megterheltük a rendszert és megkaptuk a kérések kiszolgálásával kapcsolatos statisztikákat a \textit{Vegetából}, szükséges még a rendszer erőforrás-felhasználását célzó metrikákat is begyűjteni. 
 Erre a \verb+Prometheus+ rendszerén keresztül van lehetőségünk.
 A szoftver támogatja az API hívásokat, így lehetőségünk nyílik könnyen lekérdezni az általa gyűjtött statisztikákat. 
 
@@ -177,7 +188,7 @@ A korábban látott megoldással egyéb adatokat is metrikákat is lekérdezhet�
 A \verb+Prometheus+ egészen kiterjeszthető rendszer így közel tetszőleges metrikákat lehet gyűjteni. 
 
 
-A mérés végén miután összegyűjtöttük az összes keletkező adatokat, beleértve a \verb+Prometheus+ és \verb+Fortio+ rendszereket is és az eredeti konfigurációt is azokat perzisztálni kell. Erre a legkézenfekvőbb módszer az adatok kiírása \verb+json+ fájlba. Ez azért is előnyös, mert könnyen olvasható és feldolgozható a formátum. 
+A mérés végén miután összegyűjtöttük az összes keletkező adatokat, beleértve a \verb+Prometheus+ és \verb+Vegeta+ rendszereket is és az eredeti konfigurációt is azokat perzisztálni kell. Erre a legkézenfekvőbb módszer az adatok kiírása \verb+json+ fájlba. Ez azért is előnyös, mert könnyen olvasható és feldolgozható a formátum. 
 
 %----------------------------------------------------------------------------
 \section{A mérés és az eredmények feldolgozásának elemei}
