@@ -10,12 +10,78 @@ Természetesen minden bemutatott megoldásnak megvan a saját erőssége és gye
 \section{Feltárt probléma rövid összefoglalása}
 %----------------------------------------------------------------------------
 
+A megoldási lehetőségek bemutatása előtt szeretném röviden összefoglani a problémát és felvetést, amire keressük a megoldást.
+A mérési eredmények alapján arra jutottam, hogy léteznek olyan skálázási helyzetek, amikor a Kubernetes jelenlegi skálázója nem tud ideálisan lekezelni.
+Ez a működés onnan fakad, hogy a futó alkalmazásról nem rendelkezik globális ismerettel, csak az egyes független szolgáltatásokat kezeli a többitől függetlenül.
+
+A látott mérésekből kiderült, hogy a jelenlegi rendszerben létezik egy átbukási pont, amikor a beérkező kéréseket az össz alkalmazás már nem képes időben kiszolgálni, mert az egyik szolgáltatási komponens túlterhelt állapotba kerül.
+Ilyenkor a beérkező kérések továbbra is fogadásra kerülnek és elkezdődnek a bufferek megtöltései a rendszerben.
+Ez egy öngerjesztő folyamatot indít meg, ahol a hosszabb sorbanállás, a folyamatos túlterheltség miatt aránylag egyre kisebb lesz a sikeres kiszolgálások száma. 
+
+A hatékonytalan működésen az sem segít, hogy az előre beállított idő túllépése után bontjuk a kapcsolatot, azonban ezt az alklamazás nem tudja lekezelni.
+Nem létezik implementált megoldás arra az esetre, hogy az ilyen kérések által keltett az egyéb alkalmazás egységek terhelését megszüntesse.
+Értelemszerűen ebben az esetben felesleges még a back-end oldalán elvégezni az erőforrás intenzív feladatot, amikor az azt kiváltó eredeti kérés eldobásra került.
+
+A feltárt problémát két részre lehet osztani, amik egymás hatását tudják erősíteni vagy gyengíteni.
+
+ 
+
 %----------------------------------------------------------------------------
 \section{Lehetséges eszközök}
 %----------------------------------------------------------------------------
 
-\subsection{Readyness probe}
+A kiírásban megfogalmazott feladatom volt, hogy keressek olyan kiegészítést vagy javaslatot, ami a jelenlegi HPA működését javítani tudná.
+A feladatom elvégzése és források keresése közben számos megoldási lehetőség felmerült.
+A bemutatott eszközök elemzése során látni fogjuk, hogy kicsit más megközelítésből és a probléma más aspektusát célozva próbálja a feltárt hatásokat csökkenteni.
+
+Az egyes eszközök értékelésénél az is fontos szempont volt, hogy a lehető legkevesebb módosítást kelljen végrehajtani az alkalmazás oldalán.
+Ez fontos, mert a megvalósítani kívánt feladat nem tartozik szorosan az alkalmazáshoz és ideális esetben teljesen transzparens módon működne.
+Természetesen több dolgot is mérlegelni kell az adott helyzetben ideálisnak itélt megoldás kiválasztása közben.
+
+Fontos azt is megfontolni, hogy egy az infrastruktúrális részekre hatást gyakorló eszköz milyen információk alapján engedjük, hogy dolgozzon.
+Természetesen minél több információval rendelkezünk az adott alkalmazást illetően, annál optimálisabb megoldásokat tudunk adni.
+Például, ha egy okos skálázónak rálátást adunk az alkalmazás hálózatára, az egyes egységek által használt erőforrásokra, a köztük lévő kapcsolatra és esetleg saját metrikákat is kivezetünk, akkor a skálázási döntés meghozatalában ezeket mind számításba tudjuk venni.
+Másik oldaról viszont aggályos lehet, ha ilyen szintű monitorozást és belelátást biztosítunk, mert ezáltal következtetéseket tudunk levonni a futtatott alkalmazásról.
+Ez pedig bizonyos esetekben az ügyfél érdekeit sértheti.
+
+
+\subsection{Beépített állapotjelzők}
 %----------------------------------------------------------------------------
+A Kubernetes kapszulák létrehozása közben, beépített módon lehetőségünk van a kapszula állapotáról jelzési pontokat meghatározni.
+Ezzel a megoldással sokrétűen használható funkciókat kapunk, amivel közvetetten több dolog befolyásolására nyílik lehetőségünk.
+Három jelzési módszerünk van, amit három különböző esetre találtak ki.
+Az alapvető felvetés onnan fakad, hogy különböző, gyakran előforduló helyzetekre adnak megoldási lehetőségeket különálló működésük által.
+Az egyes állapotjelzők ideális használati módját az alábbi szituációkkal szeretném szemléltetni.
+
+\begin{enumerate}
+    \item \textbf{(Liveness probe - életteli próba)} Előfordulhat, hogy az alkalmazásunk valamilyen bemenetek következtében holtponti állapotba kerül, amit nehéz lenne kívülről észrevenni, viszont külső behatás nélkül nem tudna továbblépni belőle. 
+    Illetve egyéb okok miatt is kerülhet olyan állapotban, amikor a vizsgált alkalmazás nem képes ellátni a működését, mindezt különösebb hiba és kilépés nélkül teszi.
+    Szerencsére az ilyen esetek nem számítanak különösnek és hamar fel is lehet oldani az egység újraindításával, amit az életteli próbával tudunk kezelni.
+    Ez egy teljesen ideális implementció esetén nem fog gondot okozni, hiszen a kapszulák nem tartalmaznak, tárolnak fontos adatokat és állapotokat.
+    Egy újraindítás sokkal idő- és költséghatékonyabb megoldás, mintha az egész rendszer funkcionális működését veszélyeztetnénk.
+
+    \item \textbf{(Startup probe - indítási próba)} Eshetőség, hogy az alkalmazás elindítása után még el kell végezni pár inicializációt, mielőtt a külső kérések kiszolgálását elkezdhetné.
+    Ebben az esetben is tudatni kell az infrastruktúra részére, hogy a jelenlegi állapotába még nem áll készen a működésre.
+    Nagy hibázási lehetőséget rejtene magába, ha erre a korábban látott  életteli próbát használjuk, mert nehéz kiszámítani mennyi időt fog igénybevenni a komponens elindulása.
+    Külön emiatt létezik az indítási próba, ami csak akkor fogja az adott kapszula állapotát készenléti státuszba sorolni, ha sikeresen lefutott a próba.
+
+    \item \textbf{(Readiness probe - készenléti próba)} Tegyük fel, hogy van egy szolgáltatásunk, ahol nagy fájlok feltöltésére van lehetőségünk.
+    A megvalósított funkció szám
+    Ez egy időigényesebb feladat lesz, miközben az alkalmazásunkat nem szeretnénk további kérésekkel terhelni.
+    Ebben az esetben meg kell várni a korábban érkező kérés kiszolgálását és csak utána van lehetőségünk fogadni a többit.
+    Ilyen helyzetben tudjuk használni a készenléti próba jelzést. 
+    Amennyiben a próba sikertelen vol, tehát jelenleg nem engedhetünk új kiszolgálást, akkor a kapszula IP címe ki fog kerülni erre az időszakra a hozzá tartozó \textit{Service} alól, így forgalom se fog eljutni hozzá. 
+    
+\end{enumerate}
+
+A fentebb bemutatott eszközök nagymértékben megkönnyítik, hogy robosztus rendszereket építsünk.
+A működésük közben kihasználják azt az újfajta paradigmát, amit a Kubernetes támogat és egyre népszerűbb és kezd terjedni.
+
+Robosztusabb és megbízhatóbb működés
+
+Kétélű fegyver
+Holtponti állapotot nem tud kezelni
+ 
 
 \subsection{Konténer specifikus metrikák alapján}
 %----------------------------------------------------------------------------
