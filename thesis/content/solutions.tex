@@ -24,8 +24,6 @@ Nem létezik implementált megoldás arra az esetre, hogy az ilyen kérések ál
 
 A feltárt problémát két részre lehet osztani, amik egymás hatását tudják erősíteni vagy gyengíteni.
 
- 
-
 %----------------------------------------------------------------------------
 \section{Lehetséges eszközök}
 %----------------------------------------------------------------------------
@@ -74,17 +72,28 @@ Az egyes állapotjelzők ideális használati módját az alábbi szituációkka
     
 \end{enumerate}
 
-A fentebb bemutatott eszközök nagymértékben megkönnyítik, hogy robosztus rendszereket építsünk.
-A működésük közben kihasználják azt az újfajta paradigmát, amit a Kubernetes támogat és egyre népszerűbb és kezd terjedni.
+A fentebb bemutatott eszközök megkönnyítik a robosztus rendszerek építését.
+Segítségükkel kihasználhatjuk, hogy inkább az előforduló hiba gyors észrevételét és nem annak az elkerülését részesíti előnyben.
+Erre lehetőség is van, mert az új konténerek elindítása általában pár másodperc alatt megtörténik és ezáltal egy öngyógyító tulajdonsággal is fog bírni a kész rendszer.
+Így pedig a rendszer megbízhatósága is javulni fog. 
 
-Robosztusabb és megbízhatóbb működés
-
-Kétélű fegyver
-Holtponti állapotot nem tud kezelni
- 
+Ennek ellenére körültekintően kell ezeket az eszközöket is használni, hiszen rossz konfiguráció esetén mi magunk tehetjük működésképtelenné a rendszert.
+Például, hibás beállítás esetén az életteli próba hajlamos állandóan újraindítani az alkalmazást. Vagy a készenléti próba miatt egyes komponens egységek nem fognak annyi kérést kapni, amit azok valóban képesek lennének kiszolgálni.
 
 \subsection{Konténer specifikus metrikák alapján}
+\label{subsec:container_metric_scaling}
 %----------------------------------------------------------------------------
+Következőnek ismertetett megoldási javaslat szintén a beépített Kubernetes erőforrásokat és azok funkcióit kívánja felhasználni.
+Ezen megoldásoknak előnye, hogy a klaszter oldaláról nem igényelnek nagy mértékű többlet fejlesztést és támogatást, hiszen ezek a funkciók valószínűleg rendelkezésre állnak már a rendszerben vagy pedig könnyen telepíthetőek.
+A mérleg másik oldalán ezen megoldások az alkalmazás oldalán igényelnek fejlesztéseket vagy pedig a helyes konfiguráció okozhet kihívást.
+
+Még korábban, \aref{subsec:hpa} alfejezetben bemutatott HPA skálázás esetén említésre került, hogy tetszőleges metrikák alapján is lehetőségünk van skálázni.
+Alapértelmezetten és leginkább a mérések által általunk is használt processzor erőforrás igény alapján történő skálázás a legelterjedtebb forgatókönyv.
+Ezen metrikákat a klaszter automatikusan tudja gyűjteni, így a skálázók konfigurációja és elindítása egyszerű folyamattá tud válni.
+Illetve a legtöbb esetben, ha a klaszterünkben nincsenek szűkös erőforráshatárok aránylag jó működést eredményez.
+
+
+
 
 \subsection{Service Mesh}
 %----------------------------------------------------------------------------
@@ -95,7 +104,22 @@ Holtponti állapotot nem tud kezelni
 \subsection{Okos skálázó}
 %----------------------------------------------------------------------------
 
+A korábban bemutatott megoldási lehetőségeknél, \ref{subsec:container_metric_scaling} alfejezetben látottat leszámítva, a fő motiváció a beérkező terhelés szabályozása volt.
+Az eredeti problémánkat viszont több irányból is meg lehet fogni.
+Másik megközelítésben az erőforrások globálisan optimális elosztása a fő szempont a megoldandó kihívás.
+
+A következő megoldási javaslat ezt a megközelítést veszi alapul és bővíti ki a korábban látott javaslatokkal.
+A javaslat egy központi skálázó alkalmazás, ami folyamatosan monitorozza a klaszter teljes állapotát és az éppen futtatott alkalmazásokat is.
+A skálázási javaslatokat pedig ezen információk összeségéből tudja meghatározni.
+Így figyelembe tudja venni az egyes kapszulák minőségi osztály besorolásuktól kezdve az egyes komponensek közti forgalmak megosztásán keresztül az esetlegesen exportált alkalmazás metrikákig.
+
+
+
+Namespacek között
+
+fejlesztés, tesztelés
+
 pl: nyomon követi milyen arányban használják az erőforrásokat
 
 Amdahl's törvényt is figyelembe  veszi
-VPA és HPA együtt működikN
+VPA és HPA együtt működik
