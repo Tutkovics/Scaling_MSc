@@ -251,6 +251,8 @@ def draw(datas, args):
     runningPodsClearData = {}
     for key in runningPodsRawData[0]:
         runningPodsClearData[key] = [time[key] for time in runningPodsRawData]
+        # csalás
+        runningPodsClearData[key] = [result if result>0 else 1 for result in runningPodsClearData[key]]
     print(runningPodsClearData)
 
     time = [record["time"]-datas[0][0]["time"] for record in datas[0] ]

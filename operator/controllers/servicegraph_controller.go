@@ -29,6 +29,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -217,6 +218,16 @@ func (r *ServicegraphReconciler) deploymentForNode(node *diptervv1beta1.Node, sg
 									strconv.FormatUint(uint64(node.Resources.CPU), 10) + "m"),
 								corev1.ResourceMemory: resource.MustParse(
 									strconv.FormatUint(uint64(node.Resources.Memory), 10) + "Mi"),
+							},
+						},
+
+						// Readiness probe
+						ReadinessProbe: &corev1.Probe{
+							Handler: corev1.Handler{
+								HTTPGet: &corev1.HTTPGetAction{
+									Path: "/ready",
+									Port: intstr.FromInt(80), //int32(node.ContainerPort)),
+								},
 							},
 						},
 					}},

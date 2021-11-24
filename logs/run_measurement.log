@@ -168,3 +168,121 @@ front-end-1-6677c56849-mvlnt   845m         426Mi
 F1Help  F2Setup F3SearchF4FilterF5Tree  F6SortByF7Nice -F8Nice +F9Kill  F10Quit                       │F1Help  F2Setup F3SearchF4FilterF5Tree  F6SortByF7Nice -F8Nice +F9Kill  F10Quit                               
 
 Worker nodes went to unresponsive
+
+
+## Readiness probe
+Every 2.0s: kubectl get all                                                                                                                                                        dipterv1: Wed Nov 24 12:53:46 2021
+
+NAME                               READY   STATUS    RESTARTS   AGE
+pod/back-end-1-66755f5ff9-88vx9    0/1     Running   0          85s
+pod/front-end-1-75778db55c-j2szc   1/1     Running   0          85s
+pod/front-end-1-75778db55c-p52bd   1/1     Running   0          85s
+pod/front-end-1-75778db55c-rhfw4   1/1     Running   0          85s
+
+NAME                  TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+service/back-end-1    ClusterIP   10.97.118.130   <none>        80/TCP         85s
+service/front-end-1   NodePort    10.107.77.215   <none>        80:30000/TCP   85s
+service/kubernetes    ClusterIP   10.96.0.1       <none>        443/TCP        225d
+
+NAME                          READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/back-end-1    0/1     1            0           85s
+deployment.apps/front-end-1   3/3     3            3           85s
+
+NAME                                     DESIRED   CURRENT   READY   AGE
+replicaset.apps/back-end-1-66755f5ff9    1         1         0       85s
+replicaset.apps/front-end-1-75778db55c   3         3         3       85s
+
+--------------
+tutkovics@dipterv1:~$ kubectl describe pod back-end-1-66755f5ff9-88vx9                                                                                                                                               
+Name:         back-end-1-66755f5ff9-88vx9                                                                                                                                                                            
+Namespace:    default                                                                                                                                                                                                
+Priority:     0                                                                                                                                                                                                      
+Node:         dipterv2/10.151.103.2                                                                                                                                                                                  
+Start Time:   Wed, 24 Nov 2021 12:52:59 +0100                                                                                                                                                                        
+Labels:       app=servicegraph                                                                                                                                                                                       
+              node=back-end-1                                                                                                                                                                                        
+              pod-template-hash=66755f5ff9                                                                                                                                                                           
+Annotations:  <none>                                                                                                                                                                                                 
+Status:       Running                                                                                                                                                                                                
+IP:           10.0.1.247                                                                                                                                                                                             
+IPs:                                                                                                                                                                                                                 
+  IP:           10.0.1.247                                                                                                                                                                                           
+Controlled By:  ReplicaSet/back-end-1-66755f5ff9                                                                                                                                                                     
+Containers:                                                                                                                                                                                                          
+  back-end-1:                                                                                                                                                                                                        
+    Container ID:  docker://c4986aba9ed68b274ca8424ea211dc5d2df60513c3b400c2bc30cae5261a5e36                                                                                                                         
+    Image:         tuti/service-graph-simulator:latest                                                                                                                                                               
+    Image ID:      docker-pullable://tuti/service-graph-simulator@sha256:30586209e963d4be0797d5321e3625c0a4cff78c2f16baf14e2c4dd405ddf2f4                                                                            
+    Port:          80/TCP                                                                                                                                                                                            
+    Host Port:     0/TCP  
+    Command:
+      /app/main
+      -name=back-end-1
+      -port=80
+      -cpu=2000
+      -memory=1000
+      -endpoint-url=/heavy
+      -endpoint-delay=0
+      -endpoint-call=''
+      -endpoint-cpu=100
+    State:          Running
+      Started:      Wed, 24 Nov 2021 12:53:03 +0100
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     2
+      memory:  1000Mi
+    Requests:
+      cpu:        2
+      memory:     1000Mi
+    Readiness:    http-get http://:80/ready delay=0s timeout=1s period=10s #success=1 #failure=3
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-wthx5 (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             False
+  ContainersReady   False
+  PodScheduled      True
+Volumes:
+  kube-api-access-wthx5:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   Guaranteed
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age                      From               Message
+  ----     ------     ----                     ----               -------
+  Normal   Scheduled  2m9s                     default-scheduler  Successfully assigned default/back-end-1-66755f5ff9-88vx9 to dipterv2                                                                             
+  Normal   Pulling    89s                      kubelet            Pulling image "tuti/service-graph-simulator:latest"
+  Normal   Pulled     87s                      kubelet            Successfully pulled image "tuti/service-graph-simulator:latest" in 1.552964165s                                                                   
+  Normal   Created    87s                      kubelet            Created container back-end-1
+  Normal   Started    87s                      kubelet            Started container back-end-1
+  Warning  Unhealthy  87s                      kubelet            Readiness probe failed: Get "http://10.0.1.247:80/ready": dial tcp 10.0.1.247:80: connect: connection refused                                     
+  Warning  Unhealthy  40s (x2 over 70s)        kubelet            Readiness probe failed: Get "http://10.0.1.247:80/ready": dial tcp 10.0.1.247:80: i/o timeout (Client.Timeout exceeded while awaiting headers)    
+  Warning  Unhealthy  <invalid> (x9 over 60s)  kubelet            Readiness probe failed: Get "http://10.0.1.247:80/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)  
+
+  # BE service
+
+tutkovics@dipterv1:~$ kubectl describe service back-end-1 
+Name:              back-end-1
+Namespace:         default
+Labels:            <none>
+Annotations:       <none>
+Selector:          app=servicegraph,node=back-end-1
+Type:              ClusterIP
+IP Family Policy:  SingleStack
+IP Families:       IPv4
+IP:                10.97.118.130
+IPs:               10.97.118.130
+Port:              <unset>  80/TCP
+TargetPort:        80/TCP
+Endpoints:         
+Session Affinity:  None
+Events:            <none>
