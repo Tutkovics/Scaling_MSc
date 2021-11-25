@@ -80,6 +80,15 @@ Erre lehetőség is van, mert az új konténerek elindítása általában pár m
 Ennek ellenére körültekintően kell ezeket az eszközöket is használni, hiszen rossz konfiguráció esetén mi magunk tehetjük működésképtelenné a rendszert.
 Például, hibás beállítás esetén az életteli próba hajlamos állandóan újraindítani az alkalmazást. Vagy a készenléti próba miatt egyes komponens egységek nem fognak annyi kérést kapni, amit azok valóban képesek lennének kiszolgálni.
 
+\subsubsection{Módszer tesztelése}
+A következő feladat az volt, hogy a bemutatott állapotjelzők használatával ismét el kellett végezni a korábbi mérést és megnézni az elért hatását.
+Számomra a készenléti probléma volt a legérdekesebb, hiszen ez a megoldás ad lehetőséget arra, hogy addig ne érkezzen kiszolgálandó kérés az adott alkalmazás egységhez, amíg egy bizonyos állapot teljesül.
+
+A mérés elvégzéséhez fel kellett készíteni a korábban megírt operátort, hogy a \textit{Deployment} léterehozása közben tegyen bele egy ilyen próbát. 
+Valamint minden egyes alkalmazásegységnek rendelkeznie kell egy olyan végponttal, ami nem jelent számottevő többlet terhelést, és az ide érkező kérések kiszolgálása alapján tudja megmondani a rendszer jelenlegi terheltségét. 
+Amennyiben a próba sikertelen, tehát a rendszer túlterhelt állapotban van, akkor nem szabad számára több kérést továbbítani, amíg nem csökken a kiszolgálásra váró kérések sora.
+
+
 \subsection{Konténer specifikus metrikák alapján}
 \label{subsec:container_metric_scaling}
 %----------------------------------------------------------------------------
@@ -91,8 +100,6 @@ Még korábban, \aref{subsec:hpa} alfejezetben bemutatott HPA skálázás eseté
 Alapértelmezetten és leginkább a mérések által általunk is használt processzor erőforrás igény alapján történő skálázás a legelterjedtebb forgatókönyv.
 Ezen metrikákat a klaszter automatikusan tudja gyűjteni, így a skálázók konfigurációja és elindítása egyszerű folyamattá tud válni.
 Illetve a legtöbb esetben, ha a klaszterünkben nincsenek szűkös erőforráshatárok aránylag jó működést eredményez.
-
-
 
 
 \subsection{Service Mesh}
