@@ -18,6 +18,9 @@ spec:
           delay: 0
           callouts:
             - url: back-end-1:80/heavy
+        - path: /ready
+          cpuLoad: 1
+          delay: 0
 
     - name: back-end-1
       replicas: 1
@@ -28,4 +31,7 @@ spec:
       endpoints:
         - path: /heavy
           cpuLoad: 100
+          delay: 0
+        - path: /ready
+          cpuLoad: 1
           delay: 0
