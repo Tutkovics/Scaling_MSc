@@ -61,3 +61,6 @@ thesis/thesis.pdf
 *.synctex.gz
 *.synctex.gz(busy)
 *.pdfsync
+
+## Windows environment
+desktop.ini
