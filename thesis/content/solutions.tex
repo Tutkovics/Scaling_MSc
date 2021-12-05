@@ -84,9 +84,44 @@ Például, hibás beállítás esetén az életteli próba hajlamos állandóan 
 A következő feladat az volt, hogy a bemutatott állapotjelzők használatával ismét el kellett végezni a korábbi mérést és megnézni az elért hatását.
 Számomra a készenléti probléma volt a legérdekesebb, hiszen ez a megoldás ad lehetőséget arra, hogy addig ne érkezzen kiszolgálandó kérés az adott alkalmazás egységhez, amíg egy bizonyos állapot teljesül.
 
-A mérés elvégzéséhez fel kellett készíteni a korábban megírt operátort, hogy a \textit{Deployment} léterehozása közben tegyen bele egy ilyen próbát. 
+A mérés elvégzéséhez fel kellett készíteni a korábban megírt operátort, hogy a \textit{Deployment} léterehozása közben egy készenléti próba definiciót is építsen bele. 
 Valamint minden egyes alkalmazásegységnek rendelkeznie kell egy olyan végponttal, ami nem jelent számottevő többlet terhelést, és az ide érkező kérések kiszolgálása alapján tudja megmondani a rendszer jelenlegi terheltségét. 
 Amennyiben a próba sikertelen, tehát a rendszer túlterhelt állapotban van, akkor nem szabad számára több kérést továbbítani, amíg nem csökken a kiszolgálásra váró kérések sora.
+
+% MultiFE & SingleBE with Readiness probe -------------------------------------------------------
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE-readinessprobe.png}
+\caption{Korábbi szimuláció megismétlése készenléti próbával}
+\label{fig:readiness-probe-measurement}
+\end{figure}
+
+A módszer hatékonyságának vizsgálata érdekében arra gondoltam, hogy egy korábban már bemutatott mérést fogok megismételni, csak kibővítve az állapotjelzővel.
+Ehhez \aref{fig:todo} mérést választottam.
+A szimuláció elvégzését követően kapott eredmények sajnos nem váltották be a hozzájuk fűzött reményeket, és nem javultak számottevő mértékben a kiszolgálási paraméterek.
+Összességben hasonló tendenciát lehetett megfigyelni, mint a korábbi, próba nélküli mérés esetén. 
+A mérés elején folyamatosan emelkedett a kiszolgált kérések száma, azonban az eredeti méréssel azonos időben és helyen megindult a meredek visszaesés is.
+Ez amiatt lehetett, mert a beérkező kérések kiszolgálása továbbra sem tudott megtörténni az öt másodperces időkorláton belül.
+Emiatt nem szeretném részletekbe menően elemezni minden korábbi eredményt, egyedül az említésre-méltó processzorfelhasználást.
+A kapott értékeket \aref{fig:readiness-probe-measurement} ábra tartalmazza.
+Az eredeti méréssel azonos tendenciát figyelhetünk meg. 
+Ebben az esetben is azt látjuk, hogy a backend CPU felhasználása hamar egy plafonba ütközik, amin túl kitörni már nem tud.
+Illetve ezzel párhuzamosan a költséghatékony frontend továbbra is fogadja a beérkező kéréseket, ami miatt további erőforrásokat fog elhasználni.
+Emlékezzünk, hogy a korábbi méréseknél a backend részére 2000 mCPU és a frontend kapszuláknak pedig 1000 mCPU limitáció volt beállítva.
+Ezen limitek a mostani méréseknél sem változtak, azonban az ábráról tisztán leolvasható, hogy a felhasznált erőforrás mennyisége a korábbitól jelentősen elmaradt.
+Azt láthatjuk, hogy a beállított próba hatására a backend és a frontend által elhasznált erőforrások mennyisége lecsökkent.
+Az lehet erre a magyarázat, hogy a backend, amikor érzékelte, hogy kezd túlterhelődni, akkor egy kisebb időszakra szüneteltette a kérések fogadását, ami miatt arányaiban csökkent a mérések során elhasznált processzor mennyisége.
+
+Sajnos azonban a beállított próbával sem sikerült elérni, hogy a kiszolgálási mutatók megfelelő mértékben javuljanak, hiszen a megismételt mérésben is egy megadott pont után visszaesett a sikeres kiszolgálások száma. Jelen állásban minden alkalmazás egység saját magának a terheltségét tudja monitorozni, ami miatt hiába van a sor végén lévő backend komponens leterhelve, ezt a frontend még nem érzékeli és továbbra is fogadni fogja a felé irányított kéréseket.
+Esetleg érdemes lehet további finomításokat bevezetni és egy saját szkripttel ellenőrizni a láncolat végén elhelyezkedő backend állapotát a frontend oldaláról is.
+Ezzel megoldhatóvá válna, hogy a lassú komponenshez igazodva tudjuk a kéréseket fogadni már a kiszolgálási lánc elején.
+
+Természetesen a vázolt megoldás is tartalmaz néhány kifogásolható aspektust. 
+Az ilyen módon összeállított rendszer egy másik komponens állapotát monitorozza és ez alapján tudja a saját készenléti állapotjelzőjét állítani. 
+Statikusan kell ezen próbákat beállítani és a terhelés változásával változhat a szűk keresztmetszet is.
+Például egy valódi forgalmat elemezve rendszeresen megjelenik, hogy periodikusan lesznek terhelve a komponensek.
+Nap elején elképzelhető, hogy a bejelentkeztető komponens lesz túlterhelt és szűk keresztmetszet, míg nap közben pedig az adatok validációjáért felelős szolgáltatás.
+Ezen változásokat pedig nehéz lehet lekezelni, egy egyszerűbb szkripttel.
 
 
 \subsection{Konténer specifikus metrikák alapján}
@@ -94,19 +129,67 @@ Amennyiben a próba sikertelen, tehát a rendszer túlterhelt állapotban van, a
 %----------------------------------------------------------------------------
 Következőnek ismertetett megoldási javaslat szintén a beépített Kubernetes erőforrásokat és azok funkcióit kívánja felhasználni.
 Ezen megoldásoknak előnye, hogy a klaszter oldaláról nem igényelnek nagy mértékű többlet fejlesztést és támogatást, hiszen ezek a funkciók valószínűleg rendelkezésre állnak már a rendszerben vagy pedig könnyen telepíthetőek.
-A mérleg másik oldalán ezen megoldások az alkalmazás oldalán igényelnek fejlesztéseket vagy pedig a helyes konfiguráció okozhet kihívást.
+A mérleg másik oldalán ezen megoldások az alkalmazás oldalán igényelnek fejlesztéseket vagy pedig a helyes konfiguráció okozhat kihívást.
 
 Még korábban, \aref{subsec:hpa} alfejezetben bemutatott HPA skálázás esetén említésre került, hogy tetszőleges metrikák alapján is lehetőségünk van skálázni.
 Alapértelmezetten és leginkább a mérések által általunk is használt processzor erőforrás igény alapján történő skálázás a legelterjedtebb forgatókönyv.
 Ezen metrikákat a klaszter automatikusan tudja gyűjteni, így a skálázók konfigurációja és elindítása egyszerű folyamattá tud válni.
 Illetve a legtöbb esetben, ha a klaszterünkben nincsenek szűkös erőforráshatárok aránylag jó működést eredményez.
 
+A megoldási lehetőség hátránya, hogy ezen implementáció is lokálisan az egyes alkalmazásegységek skálázását fogja végezni.
+Így pedig, amikor az erőforrások allokációja nagymértékű nem képes a rendszer áteresztőképességét figyelembe venni.
 
-\subsection{Service Mesh}
-%----------------------------------------------------------------------------
+Továbbá nincs a skálázás mögött egy dinamikus algoritmus.
+Továbbra is az indítás pillanatában beállított konfigurációk alapján fogja meghozni a skálázó a döntéseit.
+Emiatt a kezdeti konfigurációnál nagyon alaposan végig kell gondolni, hogy milyen szabályokat szeretnénk alkalmazni.
+Esetlegesen rosszul felmért metrikák alapján többlet erőforrásokat is lefoglalhatunk a kiszolgálási metrikák javulása nélkül.
 
-\subsection{Gloo Edge}
+A megoldás felvetése, hogy az alkalmazás logikai rétegében legyenek követve, mentve és exportálva olyan metrikák, amik az alsóbb-szintű infrastruktúra réteg döntéseinek lesz az alapja.
+Ezt szintén mérlegelni kell, hiszen nem tartozik szorosan az alkalmazás logikai részéhez illetve bizonyos mértékű többlet fejlesztést is igényel.
+
+\subsection{Szolgáltatás hálók által nyújtott lehetőségek}
 %----------------------------------------------------------------------------
+Több új kihívás is megjelent a mikroszolgáltatások elterjedésével, amivel szembe kellett nézni a fejlesztőknek és az üzemeltetőknek is.
+Ezen kihívások mentén született meg a szolgáltatás hálók (\textit{service mesh}) fogalma. 
+Fontos megjegyezni, hogy a fejezetben tárgyalt szolgáltatás háló kifejezés a dolgozatban szereplő többi előfordulásán túl egyéb megkötéseket is tartalmaz.
+Emiatt szeretném tisztázni, hogy a következőkben használt szolgáltatás háló alatt mit értünk.
+
+A szolgáltatás háló egy lehetséges módja, hogy szabályozzuk az alkalmazásrészek közti kommunikációt. 
+Általa egy külön infrastruktúra réteget tudunk létrehozni, amin keresztül láthatjuk és szabályozhatjuk a komponensek közti kommunikációt.
+Ezzel ígéretet kapunk a kommunikáció optimalizációjára, amivel együtt az esetleges kieséseket is csökkenthetjük\citep{serviceMeshDefinition}.
+
+Az egyes alkalmazás komponenseket nevezzük egy-egy szolgáltatásnak, és az ő kommunikációjuk által alkothatunk belőlük hálózatot.
+Több megvalósítás is létezik, azonban a felépítésük nagyon hasonlít.
+Egy ilyen architektúra bemutatása látható \aref{fig:serviceMesh-topology} ábrán.
+
+Az ábrán \textit{Instance A/B/C} névvel ellátott alkalmazás egységek valósítanak meg egy-egy szolgáltatást az elképzelt mikroszolgáltatás architektúrában. 
+Jól látható, hogy köztük nem történik semmilyen közvetlen kommunikáció, csak a mellettük lévő oldalkocsival (\textit{sidecar}) vannak kapcsolatban.
+Ezek az oldalkocsik tipikusan egy konfigurálható proxyt tartalmaznak és az adott szolgáltatás mellett üzemelnek.
+Ezt a mintát nevezik a oldalkocsis mintának (\textit{sidecar pattern})\citep{sidecarPattern}.
+
+
+
+% Service Mesh Topology -------------------------------------------------------
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/service-mesh-generic-topology.png}
+\caption{Szolgáltatás hálót alkotó komponensek és működésük\citep{serviceMeshTopology}}
+\label{fig:serviceMesh-topology}
+\end{figure}
+
+
+
+- Definíció - hivatkozás
+- Komponensek közti kommunikáció szabályozására 
+- új réteg az infrastruktúra és alkalmazás között
+- új komplexitást vezet be
+- Többlet erőforrást igényel
+- Oldalkocsi minta - Sidecar pattern
+
+\subsubsection{Gloo Edge}
+%----------------------------------------------------------------------------
+- Ingress controller - hivetkozás
+- Mivel tud kevesebbet, mint a service mesh
 
 \subsection{Okos skálázó}
 %----------------------------------------------------------------------------
@@ -120,7 +203,18 @@ A javaslat egy központi skálázó alkalmazás, ami folyamatosan monitorozza a 
 A skálázási javaslatokat pedig ezen információk összeségéből tudja meghatározni.
 Így figyelembe tudja venni az egyes kapszulák minőségi osztály besorolásuktól kezdve az egyes komponensek közti forgalmak megosztásán keresztül az esetlegesen exportált alkalmazás metrikákig.
 
+Ezzel a megoldással lehetőségünk lenne az alkalmazás egységek kezelése helyett a teljes rendszer számára ideális döntéseket meghozni.
+Akár több névtérben futó rendszerek erőforrás allokációit is össze lehet hangolni, ami további optimalizálást jelentene.
 
+A bemutatott javaslatok közül ez a megoldás a legkomplexebb is. 
+Ez egyértelműen a Kubernetes platform nyílt forráskódjának bővítésével járna.
+Egy ilyen projekt jelentős szakmai erőforrás ráfordításával járna, hiszen az újfajta skálázóhoz új erőforrásokat is létre kell hozni illetve a kezeléshez szükséges logikát implementálni is kell.
+
+Nem elhanyagolható felvetés, hogy a skálázási algoritmus logikájának bonyolítása jelentős kockázatokkal járhat, ha annak paraméterezését a felhasználóra bízzuk.
+
+\subsection{HPA és VPA skálázó}
+%----------------------------------------------------------------------------
+Az okosított skálázó hátrányainál is szerepel, hogy igazán specifikus működést csak kellően nagyszámú konfigurációval lehet elérni.
 
 Namespacek között
 
@@ -130,3 +224,4 @@ pl: nyomon követi milyen arányban használják az erőforrásokat
 
 Amdahl's törvényt is figyelembe  veszi
 VPA és HPA együtt működik
+Szimulációk futtatására is ideális a rendsezr
