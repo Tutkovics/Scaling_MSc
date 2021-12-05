@@ -4,7 +4,8 @@
 %----------------------------------------------------------------------------
 \chapter{Kubernetes}
 \label{sec:Kubernetes}
-A félévben végzett munka jelentős mértékben támaszkodik a Kubernetes (K8s) rendszerre, így annak ismertetése szükségszerű. 
+A diplomamunka keretén belül végzett feladataim jelentős részben támaszkodnak a Kubernetes (K8s) rendszerre, így annak alapvető ismertetése szükségszerű a dolgozat további megértéséhez.
+Egy kellően széleskörűen elterjedt platformról van szó, szerteágazó felhasználási területekkel, emiatt a rendszer teljes körű ismertetésére nem vállalkoztam és próbáltam a ténylegesen szükséges információk körére szorítkozni.
 
 %----------------------------------------------------------------------------
 \section{Motivációja}
@@ -167,12 +168,12 @@ Tehát, csak az egyes podoknak ilyen jellegű attribútumok illetve csak implici
 Az ütemező számára fog hasznos információt nyújtani, amikor dönteni kell az egyes podok csomópontra történő rendelésénél vagy megszüntetéséről.
 
 A kapszulán belüli konkrét osztály meghatározása \aref{get_qos_example} kódrészlet kimenetén látható módon lehet megtenni.
-Le lehet kérdezni a \textit{get} és a \textit{describe} paranccsal is, és az előbbit választottam, mert legtöbb esetben bővebb kimenetet kaphatunk, mint a \textit{describe} paranccsal, ugyanis ilyenkor megkapunk minden információt, amit az adott erőfororással kapcsolatban a Kubernetes az \textit{etcd}-ben tárol.
+Le lehet kérdezni a \textit{get} és a \textit{describe} paranccsal is, és az előbbit választottam, mert legtöbb esetben bővebb kimenetet kaphatunk, mint a \textit{describe} paranccsal, ugyanis ilyenkor megkapunk minden információt, amit az adott erőforrással kapcsolatban a Kubernetes az \textit{etcd}-ben tárol.
 
-A kimeneten látszik, hogy az érintett erőforrás egy pod, amiben a könyebbség kedvéért egy darab konténer fut.
+A kimeneten látszik, hogy az érintett erőforrás egy pod, amiben egy darab konténer fut.
 A kimenet szükségtelen részét töröltem és csak a számunkra releváns részt hagytam meg.
 Látható, hogy egyedül a memória értékre van megkötés, hogy mi legyen a konténer számára maximálisan használható memória mennyiség, ami a példában 170 megabájt. 
-Ezzel szemben a pod létrehozásánál létezik megkötés, hogy milyen processzor és memória mennyiségeket szeretne közvetlenül allokálni és fixen saját használat alatt tartani.
+Ezzel szemben a pod létrehozásánál létezik megkötés, hogy milyen processzor és memória mennyiségeket szeretne közvetlenül lefoglalni és fixen saját használat alatt tartani.
 Könnyen leolvasható, hogy ez a memória esetén 70 megabájt és 100 mCPU processzort jelent.
 A számunkra másik fontos részlet már a \textit{status} alatt található.
 Itt azok az információk szerepelnek, amiket nem mi definiáltunk és adtunk meg a létrehozás előtt, hanem az erőforrás működése közben változtak.
@@ -191,9 +192,9 @@ Mindezzel együtt érthetővé válik a korábbi példán látott besorolás is.
 %----------------------------------------------------------------------------
 
 A garantált (\textit{quaranteed}) minőségű szolgáltatás osztály élvezi a legtöbb előnyét a Kubernetes ütemezőnek.
-Akkor kerülhet ebbe az osztályba egy adott pod, ha több kritériumnak is megfelelel.
+Akkor kerülhet ebbe az osztályba egy adott pod, ha több kritériumnak is megfelel.
 A kapszulán belül, minden egyes konténerre érvényesnek kell legyenek, az alábbi megkötések. 
-Ezek vonatkoznak a rendes alkalmazás konténeerre és az init konténerekre is.
+Ezek vonatkoznak a rendes alkalmazás konténerre és az init konténerekre is.
 
 \begin{itemize}
     \item Konténeren belül meg van adva az igényelt és maximálisan használható processzor mennyisége.
@@ -205,15 +206,15 @@ A fenti kritériumokhoz kapcsolódóan fontos megjegyezni, azt az érdekes esete
 Ebben az esetben automatikusan kerül beállításra az igényelt erőforrás értéke, ami megegyezik a limitációval.
 Emiatt hiába nem adunk meg expliciten értéket az igényelt erőforrásokhoz, de kitöltjük a limit értékeket, akkor is garantált szolgáltatás osztályba fog kerülni az adott pod.
 
-Ezen kapszulák olyan csomópontokra kerülnek ütemezésre, amik rendelkeznek elegendő erőforrásokkal és a bennük futtatot alkalmazások lesznek a kevés erőforrás miatt utoljára leállítva.
+Ezen kapszulák olyan csomópontokra kerülnek ütemezésre, amik rendelkeznek elegendő erőforrásokkal és a bennük futtatott alkalmazások lesznek a kevés erőforrás miatt utoljára leállítva.
 
 \section{Börsztölhető minőségű osztály}
 %----------------------------------------------------------------------------
 % ToDo: börsztölhető lehet nem a legjobb kifejezés
 A börsztölhető (\textit{burstable}) kapszulák besorolását elég széleskörűen lehet meghatározni.
-Leginkább azt lehet mondani, hogy ide tartoznak azok a podok, amik valami miatt nem teljesítik a garantált szolgáltatás osztályba tartozó kritérumokat, azonban valamilyen erőforrás foglalás megvan adva.
+Leginkább azt lehet mondani, hogy ide tartoznak azok a podok, amik valami miatt nem teljesítik a garantált szolgáltatás osztályba tartozó kritériumokat, azonban valamilyen erőforrás foglalás megvan adva.
 Tipikusan ilyen szituáció, amikor különböző értékek vannak megadva az igényelt és a maximálisan használható erőforrások mennyisége között.
-Akkor is ide kerül besorolosára egy kapszula, ha több konténer közül valamelyik nem teljesíti a garantált osztály elvárásait.
+Akkor is ide kerül besorolásra egy kapszula, ha több konténer közül valamelyik nem teljesíti a garantált osztály elvárásait.
 
 Ezen podokat igyekszik az ütemező a rendelkezésre álló információi alapján a számukra legjobb csomópontra osztani, de nem garantálható ennek a sikere.
 Ez abból fakad, hogy legtöbb esetben kevesebb információval rendelkezik róluk, mint a garantált osztályban, ahol minden érték adott volt.
@@ -226,14 +227,14 @@ Ezzel is védve a garantált osztályú podokat.
 
 A minőségi osztályok közül legkevésbé prioros osztály a legjobb szándék minőségi osztály (\textit{best effort}).
 Már az osztály neve is elég beszédes lehet.
-Ide kerülnek az olyan kapszulák, ahol semmelyik konténernek nincsen beállítva erőforrásra vonatkozó információ.
+Ide kerülnek az olyan kapszulák, ahol semelyik konténernek nincsen beállítva erőforrásra vonatkozó információ.
 Tehát nincs megkötés a maximális használatra és nincs megkötés a minimálisan szükséges erőforrásra se.
 
 Ebben az esetben rendelkezik az ütemező a legkevesebb információval a kapszuláról, ami miatt nem is garantálható, hogy olyan csomóponton kerül elindításra, ahol elegendő erőforrás áll az alkalmazás rendelkezésére.
 
 Ebbe a kategóriába tartozó podok annyi erőforrást használhatnak, amennyi rendelkezésre áll az adott csomóponton.
 Ez felveti a kérdést, hogy nehogy elhasználja a többi alkalmazás elől a szükséges erőforrásokat.
-Emiatt ezen osztályba tartozó podok lesznek előszőr leállítva, ha fogytán van a csomóponton elérhető erőforrások mennyisége.
+Emiatt ezen osztályba tartozó podok lesznek először leállítva, ha fogytán van a csomóponton elérhető erőforrások mennyisége.
 \\
 \\
-A fentebb leírtak miatt körültekintőnek kell maradni, hogyan sorojuk be minőség osztályok alá az egyes alkalmazás részeinket és hogyan priorizáljuk ezzel együtt őket. 
+A fentebb leírtak miatt körültekintőnek kell maradni, hogyan soroljuk be minőség osztályok alá az egyes alkalmazás részeinket és hogyan priorizáljuk ezzel együtt őket. 

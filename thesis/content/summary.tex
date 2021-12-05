@@ -29,25 +29,38 @@ Pár extra lépéssel javítható lenne.
 Vagy nagyon komplex lehetőség vezetne csak sikerre.
 
 
-
-%----------------------------------------------------------------------------
-\section{Továbbhaladás}
-%----------------------------------------------------------------------------
-Megítélésem szerint a félévben egyenletesen sikerült hétről-hétre haladni, azonban folyamatosan bontakozott ki a feladat komplexitása.
-A diplomaterv hátralevő részében ezeket még tisztázni kell, ezt leginkább sok méréssel és a velük szerzett tapasztalattal lehet megtenni. 
-A nyár folyamán elég idő lesz a mérések elvégzésére különböző szolgáltatáshálókkal illetve a beépített skálázóval. 
-Ezek alapján ki kell alakítani egy analitikus modellt, ami fedi a mérési eredményeket. 
-
-Érdemes lenne kipróbálni egy saját skálázót is, ami a modellünk szerint az eredetinél optimálisabb erőforrás-elosztást tesz lehetővé.
-Implementáció után szintén méréseket kell rajta végezni és akkor megállapítható, hogy a felállított modellünk a valóságban is helytálló-e és milyen hatékonysággal működik a már meglévő rendszerekkel összehasonlítva. 
-
 %----------------------------------------------------------------------------
 \section{Dolgozatban nem vizsgált kérdések}
 %----------------------------------------------------------------------------
-A diplomamunka során nagyon sok feladatot sikerült megvalósítani és több kérdésre is választ kaptunk vagy sikerült a hipotéziseknek alátámasztást nyerni.
+Megítélésem szerint a két félévben egyenletesen sikerült haladni, amivel egyidejűleg folyamatosan bontakozott ki a feladat komplexitása.
+Sok feladatot sikerült megvalósítani és a legtöbb vizsgált kérdésre sikerült választ is kapni.
 Ettől függetlenül a tanulmányok során tetemes számban előkerültek olyan kérdések, amik a rendelkezésre álló idő miatt nem sikerült felderíteni.
 Ezen kérdéskörök további vizsgálatot és kutatást igényelnének.
 
-Még a korábbi tanulmányaim alatt foglalkoztam a horizontális és vertikális skálázás közti különbségekkel, mely szerint egyes alkalmazások optimálisabban tudnak működni vertikális skálázás esetén.
+Az elvégzett mérések során bizonyos egyszerűsítésekkel éltem, hogy értelmezhető maradjon a kapott eredmény.
+Ilyen egyszerűsítés például az a megkötés, hogy a beérkező kérések száma egyenletes az időben, azonban ez nem minden rendszer esetén van így.
+Jól megfigyelhető periódusok jelentkezhet egy napon, hónapon vagy éven belül is.
+Több projekt is foglalkozik ezzel a jelenséggel és próbálják szintén keresni az erőforrások ideális használatát a historikus adatok elemzésével.
+Létezik egy fejlesztés, ami a horizontális pod skálázót szeretné ilyen irányba továbbfejleszteni\citep{predictiveHPAGithub}.
 
-Amd
+A dolgozatban elkészített mérések mögötti szolgáltatás hálók a leggyakoribb, egyszerű eseteket fedték le.
+Egy valódi mikroszolgáltatás architektúra ennél nagyságrendekkel több komponenssel rendelkezik, melyek közti kapcsolatok is összetettebbek.
+Jelenlegi keretrendszert tovább lehetne fejleszteni, hogy a komponensekhez érkező kérések megadott arányok mellett kerüljenek egyik- vagy másik további komponenshez továbbküldésre.
+Ezzel kicsit dinamikusabbá lehetne tenni a mostani rendszert, ami minden beérkező kérés esetén azonos kérés-válasz folyamatokat fogja elindítani.
+
+További vizsgálandó kérdés, hogy a kapott eredmények más környezetben hogyan változnak meg.
+Például, más eredmény jöhet ki, ha több csomóponttal, nagyobb terhelés mellett, nagyobb erőforrás felhasználással történnek a tesztek.
+Az a gond, hogy az ilyen klaszterek bérlése drága különösen, hogy a méréseink szándékosan a magas számban használják a processzort, ami alapja szokott lenni a bérelt infrastruktúra utáni számlázásnak.
+
+
+\subsection{Keretrendszer további használata}
+%----------------------------------------------------------------------------
+Az elvégzett munka jelentős részét kitevő keretrendszer lehetőséget biztosít további felhasználásra is.
+A diplomamunkán belül a feladata az volt, hogy fiktív paraméterekkel rendelkező szolgáltatás hálókat tudjunk elindítani és létrehozni.
+Ezen kívül egy igazán hasznos felhasználási mód lehet, ha már létező, üzemelő hálózatokat szeretnénk klónozni.
+Tehát létre tudunk hozni kisebb másolatokat az eredeti rendszerről, ami közel azonos kiszolgálási és erőforrás felhasználási paraméterekkel fog rendelkezni, mint a valódi.
+Ezután lehetőségünk van fiktív fejlesztéseket végezni az egyes komponensek átkonfigurálásával és az így kapott rendszert tesztelni.
+Ezáltal könnyebben és megalapozott döntéseket lehet hozni, hogy az aktuális környezetben melyik szolgáltatást érdemes fejleszteni, melyikkel lehet érdemben befolyásolni az eredő nyereséget.
+
+Továbbá az előzőleg bemutatott példán keresztül ki tudjuk próbálni az aktuális rendszerünket egy új környezetben is.
+Mindezt úgy tudjuk megtenni, hogy az alkalmazás egységeket alkotó képfájlok mozgatása nem szükséges, ezáltal nem csak gyorsabb lesz a tesztelés, hanem nem kell újabb felek számára elérhetővé tenni a megírt állományokat.

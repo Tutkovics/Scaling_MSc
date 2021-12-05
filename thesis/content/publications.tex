@@ -15,7 +15,7 @@ Az alkalmazás mélyebb megismerésével lehetőségünk van előrejelzéseket a
 Ötleteket is tudunk meríteni, hogy milyen értékeke érdemes a mérések során figyelembe venni.
 Példaként említi  a processzor, memória, I/O lemez késleltetések, válaszidő, áteresztő képesség mérését.
 Utóbbi kettő rendszeresen előfordul a szolgáltatási szint megállapodásokban (SLA), aminek a következményei a felhasználó által érzékelhető szolgáltatási szintben (QoE) is megjelenhet.
-Erre jó példa lehet, hogy ha egy online beszélgetés közben gyakran és nagyméretben változik a beszélgető felek közötti késleltetés az a szolgáltatás megítélésére is ki fog hatni.
+Erre jó példa lehet, hogy ha egy online beszélgetés közben gyakran és nagy méretben változik a beszélgető felek közötti késleltetés az a szolgáltatás megítélésére is ki fog hatni.
 Ezek a tulajdonságok vannak összefoglalva a \ref{fig:applicationprofiling} ábrán, ami szintén a cikkben jelent meg.
 
 Gyakran elfelejtődik, de a cikkben hangsúlyozva van, hogy a rendszer monitorozása, döntéshozás és közbeavatkozás önmagukban is jelentenek valamekkora plusz költséget. \\
@@ -37,12 +37,12 @@ Több cikk\cite{AdaptiveScalingOfPods}\citep{PredictingUsageAndProactiveScaling}
 arról, hogy a jelenlegi módszertan alapján nehéz eltalálni az optimális erőforrás értékeket és ezzel
 együtt a skálázást. Ez főként onnan jön, hogy jelenleg a skálázók kevés logikával és metrikával
 működnek, ezért indításukkor, kézzel kell megadni a szükséges értékeket. Ez igaz az erőforrás
-felhasználásra is. Ebben az esetben is az alkalmazás üzemeltetőja adja meg indítás idejében a
+felhasználásra is. Ebben az esetben is az alkalmazás üzemeltetője adja meg indítás idejében a
 paramétereket, amik befolyásolják a kiszolgálás minőségét is. 
 
 Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó minél optimálisabb döntéséhez minél több adatra van szükség. Ez bizonyos alkalmazási területek körében problémás lehet. Hogyha az alkalmazás tulajdonosa nem szeretné, hogy megfigyeljék, hogy milyen egyéb szolgáltatásokkal van kapcsolatban, mennyi lekérdezés, felhasználó használja, milyen arányban oszlik meg a terhelés a rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete alapján lesz meghozva. Érdekes kérdéskör ez is, hogy hol van a határa a személyes adatoknak és mennyire lehet ezeket figyelembe venni az optimálisabb erőforrás elosztáshoz.
 
-Több megoldás bontakozott ki a tanulmányozott cikkekből. Vannak olyan megoldások, amik a rendszert fehér dobozként kezelik, amiben minden paraméter kiolvasható és befolyásolható, míg vannak olyanok, amik feketedobozként modellezik az alkalmazásokat és a belső működésük számunkra teljesen fedett.\citep{TowardsAnAdaptive}. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni, javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számontarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve javítható a modell bizonyossága\citep{TowardsAnAdaptive}.
+Több megoldás bontakozott ki a tanulmányozott cikkekből. Vannak olyan megoldások, amik a rendszert fehér dobozként kezelik, amiben minden paraméter kiolvasható és befolyásolható, míg vannak olyanok, amik feketedobozként modellezik az alkalmazásokat és a belső működésük számunkra teljesen fedett.\citep{TowardsAnAdaptive}. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni, javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számon tarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve javítható a modell bizonyossága\citep{TowardsAnAdaptive}.
 
 Elterjedt kutatási terület, hogyan lehet ilyen jellegű feladatok megoldásában segítségül hívni a neurális-hálózatokat, illetve egyéb gépi-tanulásos modelleket. Ilyen modell lehet például a Markov-láncok, ami képesek a valós rendszerekben megfigyelhető periodicitásokat figyelembe venni\citep{CloudScale}. Ilyen ismétlődés több nagyságrendben is elképzelhető, például egy napon belül is létezik, de létezhet nagyobb távlatban, például az évszakkal összefüggően is\citep{PredictingUsageAndProactiveScaling}.
 

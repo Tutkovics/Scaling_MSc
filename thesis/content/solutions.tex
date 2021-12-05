@@ -10,15 +10,15 @@ Természetesen minden bemutatott megoldásnak megvan a saját erőssége és gye
 \section{Feltárt probléma rövid összefoglalása}
 %----------------------------------------------------------------------------
 
-A megoldási lehetőségek bemutatása előtt szeretném röviden összefoglani a problémát és felvetést, amire keressük a megoldást.
+A megoldási lehetőségek bemutatása előtt szeretném röviden  a problémát és felvetést, amire keressük a megoldást.
 A mérési eredmények alapján arra jutottam, hogy léteznek olyan skálázási helyzetek, amikor a Kubernetes jelenlegi skálázója nem tud ideálisan lekezelni.
 Ez a működés onnan fakad, hogy a futó alkalmazásról nem rendelkezik globális ismerettel, csak az egyes független szolgáltatásokat kezeli a többitől függetlenül.
 
 A látott mérésekből kiderült, hogy a jelenlegi rendszerben létezik egy átbukási pont, amikor a beérkező kéréseket az össz alkalmazás már nem képes időben kiszolgálni, mert az egyik szolgáltatási komponens túlterhelt állapotba kerül.
-Ilyenkor a beérkező kérések továbbra is fogadásra kerülnek és elkezdődnek a bufferek megtöltései a rendszerben.
-Ez egy öngerjesztő folyamatot indít meg, ahol a hosszabb sorbanállás, a folyamatos túlterheltség miatt aránylag egyre kisebb lesz a sikeres kiszolgálások száma. 
+Ilyenkor a beérkező kérések továbbra is fogadásra kerülnek és elkezdődnek a pufferek megtöltései a rendszerben.
+Ez egy öngerjesztő folyamatot indít meg, ahol a hosszabb sorbaállás, a folyamatos túlterheltség miatt aránylag egyre kisebb lesz a sikeres kiszolgálások száma. 
 
-A hatékonytalan működésen az sem segít, hogy az előre beállított idő túllépése után bontjuk a kapcsolatot, azonban ezt az alklamazás nem tudja lekezelni.
+A hatékonytalan működésen az sem segít, hogy az előre beállított idő túllépése után bontjuk a kapcsolatot, azonban ezt az alkalmazás nem tudja lekezelni.
 Nem létezik implementált megoldás arra az esetre, hogy az ilyen kérések által keltett az egyéb alkalmazás egységek terhelését megszüntesse.
 Értelemszerűen ebben az esetben felesleges még a back-end oldalán elvégezni az erőforrás intenzív feladatot, amikor az azt kiváltó eredeti kérés eldobásra került.
 
@@ -34,9 +34,9 @@ A bemutatott eszközök elemzése során látni fogjuk, hogy kicsit más megköz
 
 Az egyes eszközök értékelésénél az is fontos szempont volt, hogy a lehető legkevesebb módosítást kelljen végrehajtani az alkalmazás oldalán.
 Ez fontos, mert a megvalósítani kívánt feladat nem tartozik szorosan az alkalmazáshoz és ideális esetben teljesen transzparens módon működne.
-Természetesen több dolgot is mérlegelni kell az adott helyzetben ideálisnak itélt megoldás kiválasztása közben.
+Természetesen több dolgot is mérlegelni kell az adott helyzetben ideálisnak ítélt megoldás kiválasztása közben.
 
-Fontos azt is megfontolni, hogy egy az infrastruktúrális részekre hatást gyakorló eszköz milyen információk alapján engedjük, hogy dolgozzon.
+Fontos azt is megfontolni, hogy egy az infrastrukturális részekre hatást gyakorló eszköz milyen információk alapján engedjük, hogy dolgozzon.
 Természetesen minél több információval rendelkezünk az adott alkalmazást illetően, annál optimálisabb megoldásokat tudunk adni.
 Például, ha egy okos skálázónak rálátást adunk az alkalmazás hálózatára, az egyes egységek által használt erőforrásokra, a köztük lévő kapcsolatra és esetleg saját metrikákat is kivezetünk, akkor a skálázási döntés meghozatalában ezeket mind számításba tudjuk venni.
 Másik oldaról viszont aggályos lehet, ha ilyen szintű monitorozást és belelátást biztosítunk, mert ezáltal következtetéseket tudunk levonni a futtatott alkalmazásról.
@@ -55,12 +55,12 @@ Az egyes állapotjelzők ideális használati módját az alábbi szituációkka
     \item \textbf{(Liveness probe - életteli próba)} Előfordulhat, hogy az alkalmazásunk valamilyen bemenetek következtében holtponti állapotba kerül, amit nehéz lenne kívülről észrevenni, viszont külső behatás nélkül nem tudna továbblépni belőle. 
     Illetve egyéb okok miatt is kerülhet olyan állapotban, amikor a vizsgált alkalmazás nem képes ellátni a működését, mindezt különösebb hiba és kilépés nélkül teszi.
     Szerencsére az ilyen esetek nem számítanak különösnek és hamar fel is lehet oldani az egység újraindításával, amit az életteli próbával tudunk kezelni.
-    Ez egy teljesen ideális implementció esetén nem fog gondot okozni, hiszen a kapszulák nem tartalmaznak, tárolnak fontos adatokat és állapotokat.
+    Ez egy teljesen ideális implementáció esetén nem fog gondot okozni, hiszen a kapszulák nem tartalmaznak, tárolnak fontos adatokat és állapotokat.
     Egy újraindítás sokkal idő- és költséghatékonyabb megoldás, mintha az egész rendszer funkcionális működését veszélyeztetnénk.
 
     \item \textbf{(Startup probe - indítási próba)} Eshetőség, hogy az alkalmazás elindítása után még el kell végezni pár inicializációt, mielőtt a külső kérések kiszolgálását elkezdhetné.
     Ebben az esetben is tudatni kell az infrastruktúra részére, hogy a jelenlegi állapotába még nem áll készen a működésre.
-    Nagy hibázási lehetőséget rejtene magába, ha erre a korábban látott  életteli próbát használjuk, mert nehéz kiszámítani mennyi időt fog igénybevenni a komponens elindulása.
+    Nagy hibázási lehetőséget rejtene magába, ha erre a korábban látott  életteli próbát használjuk, mert nehéz kiszámítani mennyi időt fog igénybe venni a komponens elindulása.
     Külön emiatt létezik az indítási próba, ami csak akkor fogja az adott kapszula állapotát készenléti státuszba sorolni, ha sikeresen lefutott a próba.
 
     \item \textbf{(Readiness probe - készenléti próba)} Tegyük fel, hogy van egy szolgáltatásunk, ahol nagy fájlok feltöltésére van lehetőségünk.
@@ -72,7 +72,7 @@ Az egyes állapotjelzők ideális használati módját az alábbi szituációkka
     
 \end{enumerate}
 
-A fentebb bemutatott eszközök megkönnyítik a robosztus rendszerek építését.
+A fentebb bemutatott eszközök megkönnyítik a robusztus rendszerek építését.
 Segítségükkel kihasználhatjuk, hogy inkább az előforduló hiba gyors észrevételét és nem annak az elkerülését részesíti előnyben.
 Erre lehetőség is van, mert az új konténerek elindítása általában pár másodperc alatt megtörténik és ezáltal egy öngyógyító tulajdonsággal is fog bírni a kész rendszer.
 Így pedig a rendszer megbízhatósága is javulni fog. 
@@ -84,7 +84,7 @@ Például, hibás beállítás esetén az életteli próba hajlamos állandóan 
 A következő feladat az volt, hogy a bemutatott állapotjelzők használatával ismét el kellett végezni a korábbi mérést és megnézni az elért hatását.
 Számomra a készenléti probléma volt a legérdekesebb, hiszen ez a megoldás ad lehetőséget arra, hogy addig ne érkezzen kiszolgálandó kérés az adott alkalmazás egységhez, amíg egy bizonyos állapot teljesül.
 
-A mérés elvégzéséhez fel kellett készíteni a korábban megírt operátort, hogy a \textit{Deployment} léterehozása közben egy készenléti próba definiciót is építsen bele. 
+A mérés elvégzéséhez fel kellett készíteni a korábban megírt operátort, hogy a \textit{Deployment} létrehozása közben egy készenléti próba definíciót is építsen bele. 
 Valamint minden egyes alkalmazásegységnek rendelkeznie kell egy olyan végponttal, ami nem jelent számottevő többlet terhelést, és az ide érkező kérések kiszolgálása alapján tudja megmondani a rendszer jelenlegi terheltségét. 
 Amennyiben a próba sikertelen, tehát a rendszer túlterhelt állapotban van, akkor nem szabad számára több kérést továbbítani, amíg nem csökken a kiszolgálásra váró kérések sora.
 
@@ -166,7 +166,10 @@ Az ábrán \textit{Instance A/B/C} névvel ellátott alkalmazás egységek való
 Jól látható, hogy köztük nem történik semmilyen közvetlen kommunikáció, csak a mellettük lévő oldalkocsival (\textit{sidecar}) vannak kapcsolatban.
 Ezek az oldalkocsik tipikusan egy konfigurálható proxyt tartalmaznak és az adott szolgáltatás mellett üzemelnek.
 Ezt a mintát nevezik a oldalkocsis mintának (\textit{sidecar pattern})\citep{sidecarPattern}.
-
+Minden, a szolgáltatások által küldött és fogadott kérésnek keresztül kell menni ezen a proxyn, ami pedig így belelátást kap a csomagokba illetve azok továbbítására is ráhatása van.
+Ezáltal nyomon követhető és megfigyelhető lesz a komponensek közti kommunikáció.
+Ez önmagában is előnyös, hiszen könnyebben meg lehet tudni, hogy az egyes szolgáltatáshálók milyen kiszolgálást tudnak nyújtani, könnyebb kideríteni az aktuálisan legszűkebb keresztmetszetet.
+Természetesen a rendszerbe kötött proxykat kezelni is kell, amire egy külön réteg van, azonban ez már nagyobb mértékben specifikus az egyes megvalósításokra.
 
 
 % Service Mesh Topology -------------------------------------------------------
@@ -177,14 +180,13 @@ Ezt a mintát nevezik a oldalkocsis mintának (\textit{sidecar pattern})\citep{s
 \label{fig:serviceMesh-topology}
 \end{figure}
 
+Az új architektúra is rendelkezik bizonyos megkötésekkel, amit az alkalmazása előtt figyelembe kell venni.
+Mivel új komponenseket hozunk be a kommunikációba, ezért a késleltetések is meg fognak nőni.
+Valamint a proxyk működtetése is többlet erőforrásokkal fog járni. 
+Természetesen növelni fogja a processzor foglaltságot és használtságot, valamint az alkalmazás futtatásához memóriára lesz szükség.
+További hátránya, ami egyben az előnye is, hogy egy új komplexitást hoz be az amúgy is összetett alkalmazás üzemeltetésbe. 
+Ezért az architekturális döntés meghozatalában körültekintően kell eljárni.
 
-
-- Definíció - hivatkozás
-- Komponensek közti kommunikáció szabályozására 
-- új réteg az infrastruktúra és alkalmazás között
-- új komplexitást vezet be
-- Többlet erőforrást igényel
-- Oldalkocsi minta - Sidecar pattern
 
 \subsubsection{Gloo Edge}
 %----------------------------------------------------------------------------
@@ -200,7 +202,7 @@ Másik megközelítésben az erőforrások globálisan optimális elosztása a f
 
 A következő megoldási javaslat ezt a megközelítést veszi alapul és bővíti ki a korábban látott javaslatokkal.
 A javaslat egy központi skálázó alkalmazás, ami folyamatosan monitorozza a klaszter teljes állapotát és az éppen futtatott alkalmazásokat is.
-A skálázási javaslatokat pedig ezen információk összeségéből tudja meghatározni.
+A skálázási javaslatokat pedig ezen információk összességéből tudja meghatározni.
 Így figyelembe tudja venni az egyes kapszulák minőségi osztály besorolásuktól kezdve az egyes komponensek közti forgalmak megosztásán keresztül az esetlegesen exportált alkalmazás metrikákig.
 
 Ezzel a megoldással lehetőségünk lenne az alkalmazás egységek kezelése helyett a teljes rendszer számára ideális döntéseket meghozni.
@@ -212,16 +214,19 @@ Egy ilyen projekt jelentős szakmai erőforrás ráfordításával járna, hisze
 
 Nem elhanyagolható felvetés, hogy a skálázási algoritmus logikájának bonyolítása jelentős kockázatokkal járhat, ha annak paraméterezését a felhasználóra bízzuk.
 
+
 \subsection{HPA és VPA skálázó}
 %----------------------------------------------------------------------------
-Az okosított skálázó hátrányainál is szerepel, hogy igazán specifikus működést csak kellően nagyszámú konfigurációval lehet elérni.
+%Az alapképzés végén készített szakdolgozatom 
 
-Namespacek között
+%Az okosított skálázó hátrányainál is szerepel, hogy igazán specifikus működést csak kellően nagyszámú konfigurációval lehet elérni, ami vis
 
-fejlesztés, tesztelés
+%Namespacek között
 
-pl: nyomon követi milyen arányban használják az erőforrásokat
+%fejlesztés, tesztelés
 
-Amdahl's törvényt is figyelembe  veszi
-VPA és HPA együtt működik
-Szimulációk futtatására is ideális a rendsezr
+%pl: nyomon követi milyen arányban használják az erőforrásokat
+
+%Amdahl's törvényt is figyelembe  veszi
+%VPA és HPA együtt működik
+%Szimulációk futtatására is ideális a rendsezr

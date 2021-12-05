@@ -13,18 +13,18 @@ Egyre több informatikai szereplő ismeri fel, hogy milyen előnyöket tud nyúj
 Az új trenddel párhuzamosan, illetve egymást erősítve folyamatosan kezd csökkenni az alkalmazásfejlesztő és üzemeltető feladatkörök távolsága.
 
 A frissen készülő alkalmazások egyre nagyobb része direkt konténerizálva, a felhőre optimalizáltan készül.
-Sokak számára vonzó alternatívát kínál a könnyű és kölcséghatékony belépésének és a skálázhatóságának köszönhetően.
-Az így elkészített alklamazások üzemeltetése is új kihívásokkal szembesül és erre az igényre jelent meg az azóta folyamatosan fejlődő és növekvő Kubernetes konténer orkesztrációs platform.
+Sokak számára vonzó alternatívát kínál a könnyű és költséghatékony belépésének és a skálázhatóságának köszönhetően.
+Az így elkészített alkalmazások üzemeltetése is új kihívásokkal szembesül és erre az igényre jelent meg az azóta folyamatosan fejlődő és növekvő Kubernetes konténer orkesztrációs platform.
 
 A Kubernetes platform lehetőséget kínál számunkra több metódus alapján skálázni az adott alkalmazásunkat a beérkező terheléstől függően.
-A diplomamunkában azzal a kérdéskörrel foglalkozopruim, hogyan viselkedik a rendszer, ha a rendelkezésre álló erőforrások limitáltak vagy pedig minél költséghatékonyabban szeretnénk üzemeltetni az alkalmazást. 
+A diplomamunkában azzal a kérdéskörrel foglalkoztam, hogyan viselkedik a rendszer, ha a rendelkezésre álló erőforrások limitáltak illetve minél költséghatékonyabban szeretnénk üzemeltetni az alkalmazást. 
 
-Keressük a jelenelgi implementációban létező limitációkat, hogy milyen helyezetek adódhatnak, amikor ideálistól eltérő erőforrás elosztás és használat figyelhető meg.
+Keressük a jelenlegi implementációban létező limitációkat, hogy milyen helyeztek adódhatnak, amikor ideálistól eltérő erőforrás elosztás és használat figyelhető meg.
 
-Ehhez a feladathoz készítettem egy mikroszolgáltatás architektúrájú alkalmazás szimulációjához szükséges környezetet. Ezzel lehetőségünk van tetszőleges konfigurációval Kubernetes felett elindíteni egy szimulált környezetet, ahol személyre szabhatjuk a válaszidőket és processzor használatot.
+Ehhez a feladathoz készítettem egy mikroszolgáltatás architektúrájú alkalmazás szimulációjához szükséges környezetet. Ezzel lehetőségünk van tetszőleges konfigurációval Kubernetes felett elindítani egy szimulált környezetet, ahol személyre szabhatjuk a válaszidőket és processzor használatot.
 A környezeten előállított alkalmazásokat pedig meg kellett figyelni, hogyan viselkednek a nagy számú külső terhelés hatására.
 
-A mérések során felderített, előnytelen működési esetekre megoldást javaslunk, amivel kiegészítve az alap infrastruktúrát csökkenthető az erőforrások pazarlása, így környezet- és pénztárcabarát megoldás is egyben.
+A mérések során felderített, előnytelen működési esetekre megoldást javaslok, amivel kiegészítve az alap infrastruktúrát csökkenthető az erőforrások pazarlása, így környezet- és pénztárcabarát megoldás is egyben.
 
 \vfill
 \selectenglish
