@@ -27,14 +27,14 @@ Kubernetes alatt általában egy teljes klasztert szoktak érteni. Ennek a rends
 \subsubsection{Csomópontok}
 A legtöbb klaszter több csomópontot (node) tartalmaz. Ezek lehetnek akár egy egész szerver vagy egy szerveren futtatott virtuális gép is. Itt fognak futni a később részletesen tárgyalt kapszulák, amik az alkalmazásunkat valósítják meg. Ezért itt futniuk kell azoknak a szolgáltatásoknak, amik ezt lehetővé fogják tenni. A csomópontok konfigurációját a vezérlő sík (control plane) végzi. A \ref{k8s_nodes} sorszámmal ellátott kódrészleten láthatjuk, hogy az általunk későbbiekben használt klaszter esetében milyen csomópontok vannak. Fontos, hogy az egyes node nevek  különbözőek legyenek. 
 
-Feladatkörét tekintve két különböző típusú node lehet. Egyik, ami a vezérlő síkot biztosítja, ő az úgynevezett \textit{master} illetve a másik, ahol csak kapszulák futhatnak, ezek a \textit{worker} típusú csomópontok. Látható, hogy a példaként hozott kódrészletben a \verb+dipterv1+ névvel ellátott node van mester szerepben. Az utóbbi időben egyre jobban elmosódott a határvonal a két típus között és több csomóponton van megvalósítva a vezérlő sík, illetve ezeken is lehet kapszulákat futtatni. Valamint a hivatalos dokumentációból fokozatosan tűnik el a master/worker megnevezés.\\
+Feladatkörét tekintve két különböző típusú node lehet. Egyik, ami a vezérlő síkot biztosítja, ő az úgynevezett \textit{master} illetve a másik, ahol csak kapszulák futhatnak, ezek a \textit{worker} típusú csomópontok. Látható, hogy a példaként hozott kódrészletben a \verb+dipterv1+ névvel ellátott node van mester szerepben. Az utóbbi időben egyre jobban elmosódott a határvonal a két típus között és több csomóponton van megvalósítva a vezérlő sík, illetve ezeken is lehet kapszulákat futtatni.
 
 \lstset{caption=Később használt klaszter csomópontjai, label=k8s_nodes}
 \lstinputlisting{figures/kubectl_get_nodes.sh}
 
 Az egyes csomópontoknak biztosítani kell, hogy futhassanak rajtuk kapszulák. Ezért minden egyes node rendelkezik az alábbi komponsensekkel:
 
-\paragraph{Kubelet} Minden node rendelkezik egy \textit{kublet} nevű ügynökkel, akinek a feladat, hogy az adott csomópontra ütemezett konténerek rendesen, az elvárt módon fussanak. Ezt úgy tudja megtenni, hogy az API szerveren keresztül kap egy pod leírót és az abban leírtak alapján kezeli a konténereket. Ezen felül feladata, hogy az általa összegyűjtött információkat jelentse a vezérlő sík felé, ezzel lehetővé téve az új konténerek ütemezését csomópontokra. 
+\paragraph{Kubelet} Minden node rendelkezik egy \textit{kublet} nevű ügynökkel (\textit{agent}), mely feladata az adott csomópontra ütemezett konténerek rendszerint futtatása. Ezt úgy tudja megtenni, hogy az API szerveren keresztül kap egy pod leírót és az abban leírtak alapján kezeli a konténereket. Ezen felül feladata, hogy az általa összegyűjtött információkat jelentse a vezérlő sík felé, ezzel lehetővé téve az új konténerek ütemezését csomópontokra. 
 
 \paragraph{Kube-proxy} A \textit{kube-proxy} szintén része minden csomópontnak, ahogy az a \ref{fig:k8s_components} ábrán is látszik. Ezen komponens feladata az adott node hálózatát karban tartani. Ezt úgy tudja megtenni, hogy operációs rendszer szintjén hoz létre és tartja karban a hálózati csomagokra vonatkozó szabályokat.
 
@@ -59,17 +59,16 @@ A Kubernetesen belül a vezérlő sík felelős a klaszteren belüli döntések�
 
 \subsection{Erőforrások}
 %----------------------------------------------------------------------------
-Lehetőségünk van a konténerek erőforrás használatához különféle megkötéseket tenni. Megadhatunk olyan
-szabályokat, amik maximalizálják a konténer számára használható erőforrásokat. Ebben az esetben
-elérhető, hogy hibás működés esetén sem veszélyezteti a klaszter többi részét. Másik eset, amikor
-olyan szabályt adunk meg, ami előre lefoglalja a kellő mennyiségű erőforrást a konténer számára. Ez
-akkor lehet segítség, ha valami kritikus alkalmazást szeretnénk erőforrással ellátni, így nem
-veszélyezteti, hogy a rendszer többi része miatt nem tudja ellátni a saját feladatát. Ezeket 
-\verb+request+  és \verb+limit+ értékeknek nevezzük. Az igényelt erőforrásnál használhat a futó
-konténer többet is, azonban ez már függ a többi konténertől is. Limitáció esetén viszont csak a
-megadott mennyiség állhat a rendelkezésére. Fontos jól megválasztani az értékét, mert például, ha
-kevés memóriahasználatot engedélyezünk az egyik konténernek, akkor lehet hogy el sem tud majd
-indulni és hibát fog jelezni.
+Lehetőségünk van a konténerek erőforrás használatához különféle megkötéseket tenni. 
+Megadhatunk olyan szabályokat, amik maximalizálják a konténer számára használható erőforrásokat.
+Ezen szabályokkal elérhetjük, hogy egy esetlegesen hibásan implementált vagy kártékony alkalmazás a klaszter működésére nagymértékben kihasson az erőforrások mohó használatával.
+Másik eset, amikor olyan szabályt adunk meg, ami előre lefoglalja a kellő mennyiségű erőforrást a konténer számára.
+Másik jellegű szabályozás, amikor előre lefoglaljuk az alkalmazás által igényelt minimális erőforrásokat.
+Kritikus alkalmazások esetében hasznos lehet, mivel ebben az esetben garantálni tudjuk az erőforrások rendelkezésre állását a rendszer többi részétől függetlenül.
+Ezeket \verb+request+  és \verb+limit+ értékeknek nevezzük.
+Az igényelt erőforrásnál használhat a futó konténer többet is, azonban ez már függ a többi konténertől is.
+Limitáció esetén viszont csak a megadott mennyiség állhat a rendelkezésére.
+Fontos jól megválasztani az értékét, mert például, ha kevés memóriahasználatot engedélyezünk az egyik konténernek, akkor lehet hogy el sem tud majd indulni és hibát fog jelezni.
 
 Leginkább a processzor- és memóriahasználatra szoktak ilyen megkötéseket létrehozni, de lehetőség
 van más erőforrásokat is kezelni.
@@ -82,10 +81,12 @@ A Kubernetes egyik erőssége, hogy az átlagos felhasználás esetében nem kel
   
 \paragraph{Pod (kapszula)}
 %\label{par:pod}
-A Kubernetesben megjelenő legkisebb egység. Általában egy konténert futtat, de lehetőségünk van több konténer futtatására is. Általánosságban elmondható, hogy rendszeresen létrejönnek és rendszeresen törölve is lesznek ezek az objektumok, tehát nem tartós életűek. Ez az egész rendszernek tud adni egy 
+A Kubernetesben megjelenő legkisebb logikai egység.
+Általában egy konténert futtat, de lehetőségünk van több konténer futtatására is. Általánosságban elmondható, hogy rendszeresen létrejönnek és rendszeresen törölve is lesznek ezek az objektumok, tehát nem tartós életűek.
+Ezen tulajdonság miatt a rendszer egészére is célszerű egy dinamikusan változó környezetként tekinteni.
 
 \paragraph{ReplicaSet} 
-Az ő feladata, hogy bizonyos \textit{Podból} megfelelő számú egység fusson. Ennek értelmében, ha az egyik \textit{Pod} meghibásodik és megáll, akkor helyette egy újat fog létrehozni. Ezáltal biztosított, hogy mindig a megfelelő számú egység fogja fogadni a beérkező kéréseket és nem kell manuálisan monitorozni a státuszukat.
+ReplicaSet felelős az általa kezelt kapszulák számának monitorozásáért. Ennek értelmében, ha az egyik \textit{pod} meghibásodik és megáll, akkor helyette egy újat fog létrehozni. Ezáltal biztosított, hogy mindig a megfelelő számú egység fogja fogadni a beérkező kéréseket és nem kell manuálisan monitorozni a státuszukat.
 
 \paragraph{Deployment}
 Mivel \textit{kapszulák} túl kicsi részei a teljes alkalmazásnak és életük sem kiszámítható ezért nem kifizetődő ilyen módon kezelni a rendszerünket. Erre találták ki a \textit{Deploment} objektumot, ahol meg tudjuk adni, hogy milyen \textit{Podok} jöjjenek létre, illetve beállíthatjuk a hozzájuk kapcsolódó \textit{ReplicaSet} értéket is. Ezáltal lehetőségünk van absztrakt szinten deklaratívan módon megadni a kívánt rendszer tulajdonságait.
@@ -124,9 +125,20 @@ Az algoritmus folyamatosan lekérdezi a metrikák aktuális értékét és \aref
 desiredReplicas = \left\lceil currentReplicas * \frac{currentMetricValue}{desiredMetricValue} \right\rceil
 \end{equation}
 
-A folyamat szemléletesebb, ha konkrét példán nézzük meg működését. Ehhez először létre kellett hozni egy alkalmazást, amit tudunk majd skálázni. Ehhez egy egyszerű webszervert használtam, ami minden beérkezett kérés esetén egy CPU intenzív műveletet hajt végre. Miután létrejött a szükséges \textit{Deployment} és \textit{Service} utána létre lehetett hozni az automatikus skálázót. Ennek a forráskódja látható a \ref{hpa_example} kódrészlet tetején. Be lehet állítani, hogy mi legyen a minimális és maximális replika, ami között tud skálázni. Illetve meg kell a szabályt is, hogy mire kell figyelni. A példában látható, hogy $50\%$-os CPU felhasználást szeretnénk elérni. Fontos, hogy alapvetően a metrikákat a skálázó egy úgynevezett metrika szervertől gyűjti be, amit külön el kell indítani, mert alapértelmezettként nem fut a Kubernetesben.
+A folyamat szemléletesebb, ha konkrét példán nézzük meg működését.
+Ehhez először létre kellett hozni egy alkalmazást, amit tudunk majd skálázni.
+Ehhez egy egyszerű webszervert használtam, ami minden beérkezett kérés esetén egy CPU intenzív műveletet hajt végre. 
+Miután létrejött a szükséges \textit{Deployment} és \textit{Service} utána létre lehetett hozni az automatikus skálázót.
+Ennek a forráskódja látható a \ref{hpa_example} kódrészlet tetején.
+Be lehet állítani, hogy mi legyen a minimális és maximális replika, ami között lehetősége van skálázni. 
+Továbbá definiálni kell egy célértéket is, ami alapján a skálázási döntéseket meg tudja hozni.
+A példában látható, hogy $50\%$-os CPU felhasználást szeretnénk elérni.
+Fontos, hogy alapvetően a metrikákat a skálázó egy úgynevezett metrika szervertől gyűjti be, amit külön el kell indítani, mert alapértelmezettként nem fut a Kubernetesben.
 
-Ha létrehoztuk a skálázót, ki is lehet próbálni. Ehhez egy \verb+bash+ szkript segítségével állandó forgalmat generálunk és figyeljük meg, hogyan változik a kapszulák száma és ezzel összefüggően az egyes egységek CPU felhasználása. Kezdetben $1$ darab \textit{Pod} végezte az összes beérkező kérés kiszolgálását, ami így a célértéknél 3-4-szer több processzort használt. A korábban mutatott képlet alapján, a felső egész részt vesszük és a jelenlegi replikaszám 4-szeresére skálázunk. \\
+Ha létrehoztuk a skálázót, ki is lehet próbálni.
+Ehhez egy \verb+bash+ szkript segítségével állandó forgalmat generálunk és figyeljük meg, hogyan változik a kapszulák száma és ezzel összefüggően az egyes egységek CPU felhasználása.
+Kezdetben $1$ darab \textit{Pod} végezte az összes beérkező kérés kiszolgálását, ami így a célértéknél 3-4-szer több processzort használt.
+A korábban mutatott képlet alapján, a felső egész részt vesszük és a jelenlegi replikaszám 4-szeresére skálázunk. \\
  
 \lstset{caption=Automatikus horizontális skálázás folyamata, label=hpa_example}
 \lstinputlisting{figures/hpa_example.sh}
@@ -224,17 +236,15 @@ Ezzel is védve a garantált osztályú podokat.
 
 \section{Legjobb szándék minőségű osztály}
 %----------------------------------------------------------------------------
-
-A minőségi osztályok közül legkevésbé prioros osztály a legjobb szándék minőségi osztály (\textit{best effort}).
-Már az osztály neve is elég beszédes lehet.
+Legalacsonyabb prioritási szinttel a legjobb szándék (\textit{best effort}) minőségi osztály rendelkezik a felsoroltak közül, amire már a neve is utal.
 Ide kerülnek az olyan kapszulák, ahol semelyik konténernek nincsen beállítva erőforrásra vonatkozó információ.
 Tehát nincs megkötés a maximális használatra és nincs megkötés a minimálisan szükséges erőforrásra se.
 
 Ebben az esetben rendelkezik az ütemező a legkevesebb információval a kapszuláról, ami miatt nem is garantálható, hogy olyan csomóponton kerül elindításra, ahol elegendő erőforrás áll az alkalmazás rendelkezésére.
 
 Ebbe a kategóriába tartozó podok annyi erőforrást használhatnak, amennyi rendelkezésre áll az adott csomóponton.
-Ez felveti a kérdést, hogy nehogy elhasználja a többi alkalmazás elől a szükséges erőforrásokat.
-Emiatt ezen osztályba tartozó podok lesznek először leállítva, ha fogytán van a csomóponton elérhető erőforrások mennyisége.
+Emiatt felmerül a veszélye, hogy a többi alkalmazás elől fogja elhasználni a szükséges erőforrásokat. 
+Ezzel magyarázható, hogy az osztályba tartozó podok lesznek először leállítva, amikor fogytán van a csomóponton elérhető erőforrások mennyisége.
 \\
 \\
-A fentebb leírtak miatt körültekintőnek kell maradni, hogyan soroljuk be minőség osztályok alá az egyes alkalmazás részeinket és hogyan priorizáljuk ezzel együtt őket. 
+A fentebb írtak miatt körültekintően kell eljárni az erőforrások szabályozása közben, hiszen ezáltal lehetőségünk van priorizálni az alkalmazásainkat.

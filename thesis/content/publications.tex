@@ -4,15 +4,16 @@
 %----------------------------------------------------------------------------
 \chapter{Irodalomkutatás}
 \label{sec:Publications}
-A félév során több publikációt is elolvastam, hogy tisztább legyen a kutatási terület. A következőben szeretném összefoglalni, hogy eddig milyen irányban történtek haladások.
+A diplomamunka során több publikációt is elolvastam, hogy tisztább legyen a kutatási terület. A következőben szeretném összefoglalva bemutatni az eddigi kutatások által vizsgált irányokat.
 
 Több oldalról meg lehet fogni a skálázás és szorosan hozzá köthető erőforrás elosztás területét. Minden kutatás kicsit más szempontból vizsgálja, más áll a középpontban.
 
 A legátfogóbb ismertető a témában \emph{Cloud resource management: A survey on forecasting and profiling models}\citep{CloudResourceManagement} című cikk. Szépen összegzi a téma megjelenésekor ismert kutatásokat és rendszerezi azokat. Strukturáltan összegyűjtötték, hogyan és miért lehet szükséges az egyes alkalmazások profilozása, milyen akadályokkal szembesülhetünk.
 
-Az alkalmazás mélyebb megismerésével lehetőségünk van előrejelzéseket adni a viselkedésére és ezáltal az erőforrás felhasználást is ügyesebben kezelni. Kritizálják, hogy a legtöbb kutatás elég szűk területet érint és nagyon specifikus kérdéskört vizsgál, miközben figyelmen kívül hagyja a felhős környezet változékonyságát és a valóságnál statikusabb rendszerként vannak kezelve. 
+Az alkalmazás mélyebb megismerésével lehetőségünk nyílik előrejelzéseket adni, amivel az erőforrások optimális használatát érhetjük el.
+Kritikaként megfogalmazódik meg, hogy a legtöbb kutatás elég szűk területet érint és nagyon specifikus kérdéskört vizsgál, miközben figyelmen kívül hagyja a felhős környezet változékonyságát és a valóságnál statikusabb rendszerként vannak kezelve. 
 
-Ötleteket is tudunk meríteni, hogy milyen értékeke érdemes a mérések során figyelembe venni.
+Ötleteket is tudunk meríteni, hogy milyen mutatókat érdemes a mérések során figyelembe venni.
 Példaként említi  a processzor, memória, I/O lemez késleltetések, válaszidő, áteresztő képesség mérését.
 Utóbbi kettő rendszeresen előfordul a szolgáltatási szint megállapodásokban (SLA), aminek a következményei a felhasználó által érzékelhető szolgáltatási szintben (QoE) is megjelenhet.
 Erre jó példa lehet, hogy ha egy online beszélgetés közben gyakran és nagy méretben változik a beszélgető felek közötti késleltetés az a szolgáltatás megítélésére is ki fog hatni.
@@ -40,9 +41,10 @@ működnek, ezért indításukkor, kézzel kell megadni a szükséges értékeke
 felhasználásra is. Ebben az esetben is az alkalmazás üzemeltetője adja meg indítás idejében a
 paramétereket, amik befolyásolják a kiszolgálás minőségét is. 
 
-Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó minél optimálisabb döntéséhez minél több adatra van szükség. Ez bizonyos alkalmazási területek körében problémás lehet. Hogyha az alkalmazás tulajdonosa nem szeretné, hogy megfigyeljék, hogy milyen egyéb szolgáltatásokkal van kapcsolatban, mennyi lekérdezés, felhasználó használja, milyen arányban oszlik meg a terhelés a rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete alapján lesz meghozva. Érdekes kérdéskör ez is, hogy hol van a határa a személyes adatoknak és mennyire lehet ezeket figyelembe venni az optimálisabb erőforrás elosztáshoz.
+Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó minél ideálisabb döntéséhez a lehető legtöbb adatra van szükség. Ez bizonyos alkalmazási területek körében problémás lehet. Hogyha az alkalmazás tulajdonosa nem szeretné, hogy megfigyeljék, hogy milyen egyéb szolgáltatásokkal van kapcsolatban, mennyi lekérdezés, felhasználó használja, milyen arányban oszlik meg a terhelés a rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete alapján lesz meghozva.
+Érdekes kérdéskör ez is, hogy hol van a határa a személyes adatoknak és mennyire lehet ezeket figyelembe venni az erőforrások elosztási döntésekben.
 
-Több megoldás bontakozott ki a tanulmányozott cikkekből. Vannak olyan megoldások, amik a rendszert fehér dobozként kezelik, amiben minden paraméter kiolvasható és befolyásolható, míg vannak olyanok, amik feketedobozként modellezik az alkalmazásokat és a belső működésük számunkra teljesen fedett.\citep{TowardsAnAdaptive}. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni, javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számon tarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve javítható a modell bizonyossága\citep{TowardsAnAdaptive}.
+Több megoldás bontakozott ki a tanulmányozott cikkek alapján. Léteznek olyan megoldások, amik a rendszert fehér dobozként (\textit{white box}) kezelik, amiben minden paraméter kiolvasható és befolyásolható, míg vannak olyanok, amik fekete dobozként (\textit{black box}) modellezik és az alkalmazás belső működése számunkra ismeretlen marad\citep{TowardsAnAdaptive}. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni, javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számon tarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve javítható a modell bizonyossága\citep{TowardsAnAdaptive}.
 
 Elterjedt kutatási terület, hogyan lehet ilyen jellegű feladatok megoldásában segítségül hívni a neurális-hálózatokat, illetve egyéb gépi-tanulásos modelleket. Ilyen modell lehet például a Markov-láncok, ami képesek a valós rendszerekben megfigyelhető periodicitásokat figyelembe venni\citep{CloudScale}. Ilyen ismétlődés több nagyságrendben is elképzelhető, például egy napon belül is létezik, de létezhet nagyobb távlatban, például az évszakkal összefüggően is\citep{PredictingUsageAndProactiveScaling}.
 

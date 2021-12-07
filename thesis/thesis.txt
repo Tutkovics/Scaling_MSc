@@ -1,0 +1,2623 @@
+Budapesti Műszaki és Gazdaságtudományi Egyetem
+Villamosmérnöki és Informatikai Kar
+Távközlési és Médiainformatikai Tanszék
+
+Felhő alapú alkalmazások
+automatikus horizontális
+skálázásának vizsgálata
+Diplomaterv
+
+Készítette
+Tutkovics András
+
+Konzulens
+dr. Rétvári Gábor Ferenc
+
+2021. december 5.
+
+DIPLOMATERVEZÉSI FELADAT
+Tutkovics András
+mérnök hallgató részére
+
+Felhő alapú alkalmazások automatikus horizontális
+skálázásának vizsgálata
+A korszerű alkalmazások és hálózati szolgáltatások terhelésfüggő skálázásának alapja a
+virtualizáció és a felhők. Ebben a megközelítésben az alkalmazást Linux konténerekbe
+telepített mikro-szolgáltatásokból építjük fel. Ha a terhelés, például a lekérdezések
+gyakorisága, megnő, akkor több, egymás mellett futó konténer példányt indítunk el, amelyek
+közt a rendszer automatikusan szétosztja a lekérdezéseket („automatikus horizontális
+skálázás”, HPA). Jelenleg nem ismert az, hogy az alapvetően egyedi szolgáltatások
+skálázására kitalált HPA módszer akkor is megfelelő skálázást biztosít-e, ha a mikroszolgáltatások egy ún. szolgáltatáshálózatba vannak szervezve, hiszen ekkor az egyes
+szolgáltatásokra eső terhelés függ a többi szolgáltatás terhelésétől és skálázásától is.
+A jelölt feladata a felhőbe telepített szolgáltatáshálózatok automatikus horizontális
+skálázásának vizsgálata, és esetlegesen modellezése illetve továbbfejlesztése. Munkája
+terjedjen ki az alábbi feladatokra:
+•
+
+Ismertesse Kubernetes konténer klaszter menedzsment rendszer felépítését, különös
+tekintettel az alkalmazások számára elérhető erőforrások mennyiségének
+konfigurálására és monitorozására, illetve az automatikus horizontális skálázás (HPA)
+támogatására. Mutassa be egy egyszerű példán a HPA skálázási stratégiát.
+
+•
+
+Készítsen tesztrendszert, amellyel tetszőleges szolgáltatáshálózat viselkedése
+emulálható. A tesztrendszer tegye lehetővé több mikro-szolgáltatás hálózatba
+kapcsolását és az egyes mikro-szolgáltatások számára elérhető erőforrások
+mennyiségének konfigurációját, illetve megfelelő teszt-terhelés generálását is.
+
+•
+
+Vizsgálja meg a tesztrendszer segítségével a HPA stratégia működését pár, a
+gyakorlatban előforduló egyszerű szolgáltatáshálózat példáján. Lehetőség szerint
+próbálja az elméleti optimális erőforrás allokációt is meghatározni. Eléri a HPA az
+optimumot? Mekkora időkorlátok léteznek a rendszerben? Eredményeit értékelje!
+
+•
+
+Amennyiben azt találja, hogy a HPA egyes esetekben nem eredményez optimális
+erőforrás-allokációt, úgy tegyen javaslatokat a skálázási módszer továbbfejlesztésére.
+Ha talál egyszerű megoldást, implementálja azt és hasonlítsa össze a HPA
+működésével. Törekedjen analitikus modell megalkotására. Munkáját értékelje!
+
+Tanszéki konzulens: Dr. Rétvári Gábor
+Budapest, 2021. február 20.
+
+/ Dr. Magyar Gábor /
+tanszékvezető
+
+Tartalomjegyzék
+Kivonat
+
+i
+
+Abstract
+
+ii
+
+1. Bevezetés
+1.1. Motiváció . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.2. Feladat meghatározása . . . . . . . . . . . . . . . . . . . . . . . . . .
+1.3. A dolgozat felépítése . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+1
+1
+2
+2
+
+2. Kubernetes
+2.1. Motivációja . . . . . . . . . . . . . . . . . . . .
+2.2. Felépítése . . . . . . . . . . . . . . . . . . . . .
+2.2.1. Klaszter elemei . . . . . . . . . . . . . .
+2.2.2. Erőforrások . . . . . . . . . . . . . . . .
+2.2.3. Objektumok . . . . . . . . . . . . . . . .
+2.3. Skálázás . . . . . . . . . . . . . . . . . . . . . .
+2.3.1. Horizontális skálázás . . . . . . . . . . .
+2.3.2. Vertikális skálázás . . . . . . . . . . . .
+2.4. Szolgáltatás minőségi osztályok Kubernetesben .
+2.5. Garantált minőségű osztály . . . . . . . . . . .
+2.6. Börsztölhető minőségű osztály . . . . . . . . . .
+2.7. Legjobb szándék minőségű osztály . . . . . . . .
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+3. Irodalomkutatás
+4. Rendszer felépítése
+4.1. Rendszer részei . . . . . . . . . . . . . . . . . . .
+4.2. Korábbi munkák . . . . . . . . . . . . . . . . . .
+4.3. Operátor . . . . . . . . . . . . . . . . . . . . . . .
+4.3.1. Megírása . . . . . . . . . . . . . . . . . . .
+4.3.2. Használata . . . . . . . . . . . . . . . . . .
+4.4. Alkalmazás konténer készítése . . . . . . . . . . .
+4.4.1. Processzor-használat skálázása . . . . . . .
+4.4.2. Elkészült alkalmazás használata . . . . . .
+4.5. Mérés vezénylése . . . . . . . . . . . . . . . . . .
+4.6. A mérés és az eredmények feldolgozásának elemei
+5. Mérések
+
+4
+4
+5
+5
+7
+7
+8
+8
+9
+10
+11
+12
+12
+14
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+17
+17
+17
+18
+19
+19
+21
+21
+22
+23
+26
+29
+
+5.1. Mérés környezete . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.1.1. Klaszter előkészítése . . . . . . . . . . . . . . . . . . . . . .
+5.1.2. Verziók . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.2. Eredmények kiértékelése . . . . . . . . . . . . . . . . . . . . . . . .
+5.3. Példa mérés . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.4. Finomhangolás . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.5. Tervezett mérések . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.6. Elvégzett mérések . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+5.6.1. Költséghatékony frontendek és költséges backend láncban . .
+5.6.2. Költséghatékony frontendek egymás mellett és költséges backend mögöttük . . . . . . . . . . . . . . . . . . . . . . . . .
+5.7. Mérések automatikus horizontális skálázóval . . . . . . . . . . . . .
+5.7.1. Áttérés nehézségei . . . . . . . . . . . . . . . . . . . . . . .
+5.7.2. Lokálisan mohó, globálisan szuboptimális . . . . . . . . . . .
+5.7.3. Skálázás során jelentkező időkorlátok . . . . . . . . . . . . .
+6. Megoldási lehetőségek
+6.1. Feltárt probléma rövid összefoglalása . . . . . . . .
+6.2. Lehetséges eszközök . . . . . . . . . . . . . . . . . .
+6.2.1. Beépített állapotjelzők . . . . . . . . . . . .
+6.2.2. Konténer specifikus metrikák alapján . . . .
+6.2.3. Szolgáltatás hálók által nyújtott lehetőségek
+6.2.4. Okos skálázó . . . . . . . . . . . . . . . . .
+6.2.5. HPA és VPA skálázó . . . . . . . . . . . . .
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+
+.
+.
+.
+.
+.
+.
+.
+.
+.
+
+29
+30
+31
+32
+33
+34
+35
+36
+36
+
+.
+.
+.
+.
+.
+
+37
+40
+40
+40
+43
+
+.
+.
+.
+.
+.
+.
+.
+
+44
+44
+44
+45
+47
+48
+49
+50
+
+7. Összefoglalás
+51
+7.1. Elvégzett munka . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+7.2. Dolgozatban nem vizsgált kérdések . . . . . . . . . . . . . . . . . . . 51
+7.2.1. Keretrendszer további használata . . . . . . . . . . . . . . . . 52
+Irodalomjegyzék
+
+53
+
+Rövidítések és fordítások
+
+56
+
+HALLGATÓI NYILATKOZAT
+Alulírott Tutkovics András, szigorló hallgató kijelentem, hogy ezt a diplomatervet meg nem engedett segítség nélkül, saját magam készítettem, csak a megadott
+forrásokat (szakirodalom, eszközök stb.) használtam fel. Minden olyan részt, melyet szó szerint, vagy azonos értelemben, de átfogalmazva más forrásból átvettem,
+egyértelműen, a forrás megadásával megjelöltem.
+Hozzájárulok, hogy a jelen munkám alapadatait (szerző(k), cím, angol és magyar nyelvű tartalmi kivonat, készítés éve, konzulens(ek) neve) a BME VIK nyilvánosan hozzáférhető elektronikus formában, a munka teljes szövegét pedig az egyetem
+belső hálózatán keresztül (vagy autentikált felhasználók számára) közzétegye. Kijelentem, hogy a benyújtott munka és annak elektronikus verziója megegyezik. Dékáni
+engedéllyel titkosított diplomatervek esetén a dolgozat szövege csak 3 év eltelte után
+válik hozzáférhetővé.
+
+Budapest, 2021. december 5.
+
+Tutkovics András
+hallgató
+
+Kivonat
+Az elmúlt években megfigyelhető egy jelentős szemléletmódváltás a fejlesztett
+és használt alkalmazások körében, illetve ezzel összefüggően a futtató környezetben
+is. Egyre több informatikai szereplő ismeri fel, hogy milyen előnyöket tud nyújtani a
+monolitikus alkalmazások cseréje mikroszolgáltatások architektúrára. Az új trenddel
+párhuzamosan, illetve egymást erősítve folyamatosan kezd csökkenni az alkalmazásfejlesztő és üzemeltető feladatkörök távolsága.
+A frissen készülő alkalmazások egyre nagyobb része direkt konténerizálva, a
+felhőre optimalizáltan készül. Sokak számára vonzó alternatívát kínál a könnyű és
+költséghatékony belépésének és a skálázhatóságának köszönhetően. Az így elkészített
+alkalmazások üzemeltetése is új kihívásokkal szembesül és erre az igényre jelent
+meg az azóta folyamatosan fejlődő és növekvő Kubernetes konténer orkesztrációs
+platform.
+A Kubernetes platform lehetőséget kínál számunkra több metódus alapján skálázni az adott alkalmazásunkat a beérkező terheléstől függően. A diplomamunkában
+azzal a kérdéskörrel foglalkoztam, hogyan viselkedik a rendszer, ha a rendelkezésre
+álló erőforrások limitáltak illetve minél költséghatékonyabban szeretnénk üzemeltetni az alkalmazást.
+Keressük a jelenlegi implementációban létező limitációkat, hogy milyen helyeztek adódhatnak, amikor ideálistól eltérő erőforrás elosztás és használat figyelhető
+meg.
+Ehhez a feladathoz készítettem egy mikroszolgáltatás architektúrájú alkalmazás szimulációjához szükséges környezetet. Ezzel lehetőségünk van tetszőleges konfigurációval Kubernetes felett elindítani egy szimulált környezetet, ahol személyre
+szabhatjuk a válaszidőket és processzor használatot. A környezeten előállított alkalmazásokat pedig meg kellett figyelni, hogyan viselkednek a nagy számú külső
+terhelés hatására.
+A mérések során felderített, előnytelen működési esetekre megoldást javaslok,
+amivel kiegészítve az alap infrastruktúrát csökkenthető az erőforrások pazarlása, így
+környezet- és pénztárcabarát megoldás is egyben.
+
+i
+
+Abstract
+
+ii
+
+1. fejezet
+Bevezetés
+1.1. Motiváció
+Nagyobb távlatól tekintve az informatikai rendszerekre számos tendenciát figyelhetünk meg a technológia változásával. Ilyen folyamat, hogy régebben jellemzően
+dedikált csapat, dedikált nyelven, dedikált alkalmazást, dedikált hardveres erőforrásra fejlesztett éveken keresztül. Ennek az eredménye, a mostanra megbonthatatlanul
+nagyra nőtt rendszerek, amelyeknek külön szervereket kell biztosítani, hogy azok
+hiba nélkül tudják kiszolgálni a beérkező igényeket. Több területen használnak még
+ilyen rendszert, mely megbízható de továbbfejlesztése bonyolult és emiatt költséges
+is.
+Ezután következett, a realizáció, hogy nem éri meg minden ilyen szolgáltatáshoz egy külön fizikai szervert fenntartani, hiszen a kihasználtsága nem feltétlen
+indokolja, és a drágán megvásárolt erőforrások feleslegesen állnak. Ehhez plusz egy
+katalizátor volt a folyamatosan megjelenő virtualizációs technológiák, amik lehetővé
+tették, hogy a fizikai rendszert absztrahálva, különböző virtuális környezetet hozzunk létre azok felett. A megoldásnak köszönhetően lehetőség nyílt előre definiált
+lépésekkel azonos tulajdonsággal bíró rendszereket létrehozni igény szerint. Természetesen mindezt úgy, hogy a fizikailag rendelkezésre álló erőforrások kihasználtsága
+is javult.
+A korábban vázolt lehetőséggel mai napig sokan élnek, azonban a fizikai életben
+is megjelenő rugalmasság és agilitás iránti vágy köszön vissza az informatikában
+is. Aki nem tud lépést tartani a gyors fejlődésben az rövid időn belül lemarad és
+hátrányba kerül a versenytársaihoz képest. Az érem másik oldala viszont az, hogy
+aki időben észreveszi a lehetőséget, az hirtelen nagy előnyt tud szerezni. Erre jó
+példa az Amazon[27] és a Netflix[17] is.
+Egyre szélesebb körben terjednek el a konténerizációs technológiák és vele együtt
+az úgynevezett mikro-szolgáltatások. A paradigma értelmében a korábbi nagyobb
+kódegységeket szét lehet bontani több kisebb kódbázisra, ami számtalan előnyt jelent az alkalmazás fejlesztéséhez. Mivel a kisebb egységeket könnyebb megérteni mint
+a teljes kódbázist, az új fejlesztők számára könnyebb becsatlakozni fejlesztésbe. A kisebb elemekre bontott kód lehetőséget biztosít arra is, hogy az egyes komponenseket
+több nyelven és többfajta keretrendszerben fejlesszük, minden komponens számára
+az optimális fejlesztési környezetet kiválasztva. Végül, ha egy komponenst szeret-
+
+1
+
+nénk teljesen elölről újraírni, akkor ez a rendszer többi részét nem érinti. Ezek által
+lehetőség nyílik egy agilis rendszer kialakítására.
+A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, ami
+lehetőséget biztosít a konténerizációs technológia széles körű és egyszerű használatára.
+
+1.2. Feladat meghatározása
+A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. Sokan választották az új megközelítést, mert ígérete
+szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
+Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal
+nem összefüggő részként kezeljük. Ezt megtehetjük és látszólag legtöbben meg is
+teszik komolyabb fennakadások nélkül. Azonban a valóság ennél jóval komplexebb.
+Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok
+milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel. Látható,
+hogy pár paramétert bevéve az egyenletbe már nem is könnyű feladat. Különösen
+megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor,
+memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető
+legjobb kiszolgálást tudja biztosítani a rendszer.
+A diplomatervezés során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. Első lépésben szeretném bemutatni a használt környezetet, a
+Kubernetes felépítését illetve, hogy milyen skálázási megoldások léteznek és melyiket
+hogyan támogatja. Konkrét példán keresztül bemutatom a HPA megoldását.
+Egy egyedi keretrendszert kellett összeállítani, ami képes tetszőleges szolgáltatáshálót létrehozni Kubernetesen belül és azt lekérdezésekkel terhelni. Ezáltal lehetőségünk nyílik szabadon konfigurálható körülmények között vizsgálni a Kubernetes
+beépített skálázóját, illetve az irodalomban javasolt egyéb megoldásokat is. Az így
+nyert eredményekből következtetéseket tudunk levonni az egyes implementációk dinamikáját, költségeit, hatékonyságát illetően.
+A feladat része a kapott mérési eredmények vizualizációja is, így könnyebben
+láthatóvá válnak a skálázási megoldások és a megoldások közötti különbségek is.
+Amennyiben a mérési eredmények alapján fejleszthető lenne egy új stratégia,
+akkor azt implementálás után szintén meg lehet vizsgálni és kiértékelni a hipotézist.
+
+1.3. A dolgozat felépítése
+A dolgozat fejezetei úgy lettek sorba állítva, hogy azok a lehető legérthetőbb
+módon mutassák be a kapott eredményeket. Ehhez viszont az általános részektől kell
+indulni és így mutatva be az egyre konkrétabb részeket. A 2. fejezetben szó lesz a
+Kubernetes architektúrájáról, illetve hogyan támogatja beépített módon az automatikus skálázást. A 3. fejezetben bemutatom, hogy milyen kutatások készültek ebben
+a témában, ki mire helyezte a hangsúlyt és hova sikerült eljutni. Ezután a 4 bemutatom az általam készített keretrendszert, annak építő elemeit a megvalósítás mérnöki
+döntéseit. Az 5. fejezetben lesz szó az elvégzett mérésekről, illetve a kapott eredmé2
+
+nyek elemzéséről. A mérési eredmények alapján pár megoldási javaslatot teszek a 6.
+fejezetben, vázolva az előnyeiket és hátrányaikat. Végül a 7. fejezetben összefoglalom
+a diplomamunkám eredményeit és kitérek az újonnan felmerült kérdésekre.
+
+3
+
+2. fejezet
+Kubernetes
+A diplomamunka keretén belül végzett feladataim jelentős részben támaszkodnak a Kubernetes (K8s) rendszerre, így annak alapvető ismertetése szükségszerű a
+dolgozat további megértéséhez. Egy kellően széleskörűen elterjedt platformról van
+szó, szerteágazó felhasználási területekkel, emiatt a rendszer teljes körű ismertetésére nem vállalkoztam és próbáltam a ténylegesen szükséges információk körére
+szorítkozni.
+
+2.1. Motivációja
+Ahogy egyre többen kezdték megismerni és használni a konténerizációs technikákat, mint például a Docker, úgy egyre tolódott át az üzemeltetési oldal is ilyen
+irányba. Ezek után nem az jelentette a kihívást, hogy az egyes alkalmazásokat egy
+dedikált virtuális gépen kellett beüzemelni és elindítani. Az új igények szerint az
+alkalmazásunk egyes részeit egymástól függetlenül kellett konténerekben futtatni.
+Ezáltal sokkal több kisebb részegységre kellett figyelni, ami jelentősen több feladattal jár, mint a korábbi gépek kezelése.
+Ezzel a problémával találkozott a Google is és kezdődött egy platform fejlesztése,
+ami képes a fenti feladatok megoldására. Eleinte ez a Borg[5] nevet viselte. Ezt 2014ben a Google nyílt forráskódúvá tette immáron Kubernetes néven. A projektet a
+Cloud Native Computing Foundation (CNCF)[6] vette gondozásába. Innentől kezdve
+bárki szabadon elérheti és bele is fejleszthet. Az elmúlt 6 év alatt hatalmas fejlődésen
+ment keresztül és már a 22.-ik kiadásánál tart.
+Egészen fiatal rendszerről van tehát szó, azonban a VMware kutatásából[28] is
+sok érdekes dolog bontakozik ki. Egyre többen térnek át a Kubrenetesre és futtatják
+benne a konténerizált infrastruktúrájukat. Látható, hogy nem egy rövidtávon elmúló
+trendről van szó és még mindig felívelő ágban van. A kutatásban résztvevők jelentős
+részére hozott könnyebbségeket főként az erőforrás gazdálkodásban és a fejlesztési
+ciklusok rövidítésében. Mindössze a megkérdezettek 5% nem számolt be érezhető
+előnyről.
+
+4
+
+2.2. Felépítése
+2.2.1. Klaszter elemei
+Kubernetes alatt általában egy teljes klasztert szoktak érteni. Ennek a rendszernek az egyes részeit és azok feladatát szeretném bemutatni.
+2.2.1.1. Csomópontok
+A legtöbb klaszter több csomópontot (node) tartalmaz. Ezek lehetnek akár egy
+egész szerver vagy egy szerveren futtatott virtuális gép is. Itt fognak futni a később
+részletesen tárgyalt kapszulák, amik az alkalmazásunkat valósítják meg. Ezért itt
+futniuk kell azoknak a szolgáltatásoknak, amik ezt lehetővé fogják tenni. A csomópontok konfigurációját a vezérlő sík (control plane) végzi. A 2.1 sorszámmal ellátott
+kódrészleten láthatjuk, hogy az általunk későbbiekben használt klaszter esetében
+milyen csomópontok vannak. Fontos, hogy az egyes node nevek különbözőek legyenek.
+Feladatkörét tekintve két különböző típusú node lehet. Egyik, ami a vezérlő
+síkot biztosítja, ő az úgynevezett master illetve a másik, ahol csak kapszulák
+futhatnak, ezek a worker típusú csomópontok. Látható, hogy a példaként hozott
+kódrészletben a dipterv1 névvel ellátott node van mester szerepben. Az utóbbi időben egyre jobban elmosódott a határvonal a két típus között és több csomóponton
+van megvalósítva a vezérlő sík, illetve ezeken is lehet kapszulákat futtatni. Valamint a hivatalos dokumentációból fokozatosan tűnik el a master/worker megnevezés.
+$ kubectl
+NAME
+dipterv1
+dipterv2
+dipterv3
+
+get nodes
+STATUS ROLES
+AGE VERSION
+Ready control−plane,master 236d v1.21.0
+Ready <none>
+236d v1.21.0
+Ready <none>
+236d v1.21.0
+
+2.1. kódrészlet. Később használt klaszter csomópontjai
+Az egyes csomópontoknak biztosítani kell, hogy futhassanak rajtuk kapszulák.
+Ezért minden egyes node rendelkezik az alábbi komponsensekkel:
+Kubelet Minden node rendelkezik egy kublet nevű ügynökkel, akinek a feladat,
+hogy az adott csomópontra ütemezett konténerek rendesen, az elvárt módon fussanak. Ezt úgy tudja megtenni, hogy az API szerveren keresztül kap egy pod leírót
+és az abban leírtak alapján kezeli a konténereket. Ezen felül feladata, hogy az általa összegyűjtött információkat jelentse a vezérlő sík felé, ezzel lehetővé téve az új
+konténerek ütemezését csomópontokra.
+Kube-proxy A kube-proxy szintén része minden csomópontnak, ahogy az a 2.1
+ábrán is látszik. Ezen komponens feladata az adott node hálózatát karban tartani.
+Ezt úgy tudja megtenni, hogy operációs rendszer szintjén hoz létre és tartja karban
+a hálózati csomagokra vonatkozó szabályokat.
+
+5
+
+Konténert futtató környezet Mivel az egyes kapszulák konténereket tartalmaznak ezért szükség van egy olyan környezetre, ami képes futtatni ezeket a konténereket. Mai napig a legelterjedtebb a Docker, de a Kubernetes ezen kívül még másokat
+is támogat.
+
+2.1. ábra. Kubernetes klaszter elemei[11]
+
+2.2.1.2. Vezérlő sík
+A Kubernetesen belül a vezérlő sík felelős a klaszteren belüli döntésekért. Feladata például meghatározni, hogy az újonnan létrehozandó kapszulák melyik csomóponton induljanak el. A 2.1 ábrán is láthatjuk a vezérlő síkot kék szaggatott
+vonallal keretezve.
+API szerver A klaszter központi egysége. Minden művelet rajta keresztül történik. Ő felelős a beérkező kérések hitelesítéséért és továbbításáért a megfelelő rendszerelemek felé. Például a kubectl parancs használatakor is az történik, hogy a
+kliensünk összeállít és elküld egy üzenetet az API szerverhez, ami megkapja és válaszol rá.
+Etcd Az etcd komponense a vezérlő síknak egy elosztott módon működő[8] kulcsérték párokat tartalmazó adatbázis. Itt tárolja a klaszter összes saját tulajdonságát, például az egyes objektumok állapotait is. Ezáltal a korábbi példaként említett
+kubectl lekérdezésünk is ebből az adatbázisból kiolvasott értékeket fogja megkapni.
+Ütemező Az ütemező (kube-scheduler) feladata, meghozni a döntést, hogy egy
+új pod melyik csomóponton kerüljön létrehozásra. Ez egy igazán izgalmas feladat,
+hiszen figyelembe kell vennie a rendszer jelenlegi foglaltságát, illetve a kapszula
+létrehozásakor külön meg lehet adni megkötéseket a node felé. Ilyen megkötés vonatkozhat a csomópont szoftverére vagy hardverére is.
+
+6
+
+2.2.2. Erőforrások
+Lehetőségünk van a konténerek erőforrás használatához különféle megkötéseket
+tenni. Megadhatunk olyan szabályokat, amik maximalizálják a konténer számára
+használható erőforrásokat. Ebben az esetben elérhető, hogy hibás működés esetén
+sem veszélyezteti a klaszter többi részét. Másik eset, amikor olyan szabályt adunk
+meg, ami előre lefoglalja a kellő mennyiségű erőforrást a konténer számára. Ez akkor
+lehet segítség, ha valami kritikus alkalmazást szeretnénk erőforrással ellátni, így nem
+veszélyezteti, hogy a rendszer többi része miatt nem tudja ellátni a saját feladatát.
+Ezeket request és limit értékeknek nevezzük. Az igényelt erőforrásnál használhat
+a futó konténer többet is, azonban ez már függ a többi konténertől is. Limitáció
+esetén viszont csak a megadott mennyiség állhat a rendelkezésére. Fontos jól megválasztani az értékét, mert például, ha kevés memóriahasználatot engedélyezünk az
+egyik konténernek, akkor lehet hogy el sem tud majd indulni és hibát fog jelezni.
+Leginkább a processzor- és memóriahasználatra szoktak ilyen megkötéseket létrehozni, de lehetőség van más erőforrásokat is kezelni. A konténerek és podok létrehozásakor a kubelet ütemezője figyelembe fogja venni a megadott paramétereket és
+ez alapján választja ki, hogy melyik csomóponton fog futni.
+
+2.2.3. Objektumok
+A Kubernetes egyik erőssége, hogy az átlagos felhasználás esetében nem kell
+törődni a rendszer felépítésével, hiszen nekünk csak deklaratív módon meg kell létrehozni és kezelni bizonyos erőforrásokat, objektumokat.
+Pod (kapszula) A Kubernetesben megjelenő legkisebb egység. Általában egy
+konténert futtat, de lehetőségünk van több konténer futtatására is. Általánosságban elmondható, hogy rendszeresen létrejönnek és rendszeresen törölve is lesznek
+ezek az objektumok, tehát nem tartós életűek. Ez az egész rendszernek tud adni egy
+ReplicaSet Az ő feladata, hogy bizonyos Podból megfelelő számú egység fusson.
+Ennek értelmében, ha az egyik Pod meghibásodik és megáll, akkor helyette egy
+újat fog létrehozni. Ezáltal biztosított, hogy mindig a megfelelő számú egység fogja
+fogadni a beérkező kéréseket és nem kell manuálisan monitorozni a státuszukat.
+Deployment Mivel kapszulák túl kicsi részei a teljes alkalmazásnak és életük sem
+kiszámítható ezért nem kifizetődő ilyen módon kezelni a rendszerünket. Erre találták ki a Deploment objektumot, ahol meg tudjuk adni, hogy milyen Podok jöjjenek
+létre, illetve beállíthatjuk a hozzájuk kapcsolódó ReplicaSet értéket is. Ezáltal lehetőségünk van absztrakt szinten deklaratívan módon megadni a kívánt rendszer
+tulajdonságait.
+Service A korábban említett objektumokkal már meg tudunk valósítani bizonyos
+funkciókat, viszont ezt szeretnénk a klaszteren belül és kívülre is elérhetővé tenni.
+Erre találták ki Service objektumot. Ezen keresztül könnyen el tudjuk érni az azonos
+szolgáltatást nyújtó kapszulákat és nem kell az alkalmazás logikában számontartani
+az ő elérhetőségeiket. Ez ugye különösen nehéz feladat lenne, hiszen a készenléti
+idejük is elég változó lehet, mivel folyamatosan jönnek létre és törlődnek.
+7
+
+Custom Resources (CR) A Kubernetes API lehetőséget biztosít számunkra,
+hogy tetszőlegesen kibővítsük. Így lehetőségünk van saját objektumokat is létrehozni, illetve azokat saját kontrollerrel kezelni. Ehhez először egy saját erőforrás leírót
+kell létrehozni (Custom Resource Definiton - CRD), ami tartalmazza az általunk
+kívánt erőforrás definícióját. Ezzel lehetőséget kapunk, hogy tetszőlegesen komplex
+leírásokat hozzunk létre és ezt egy logika deklaratív módon feldolgozza.
+
+2.3. Skálázás
+A felhő alapú infrastruktúra egyik legcsábítóbb előnye, hogy az alkalmazásunk
+képes adaptálódni a külvilág felől érkező kérésekhez. Ez azt jelenti, hogy ha több
+felhasználót kell egyszerre kiszolgálni, akkor a rendszer automatikusan növeli a kiszolgálásra fordított erőforrások mennyiségét. Ezzel a megoldással elérhetjük, hogy a
+végfelhasználó ne vegyen észre minőségbeli csökkenést és a kevésbé intenzív időkben
+pedig nem foglalunk feleslegesen erőforrást, ami az üzemeltetőnek is jól belátható
+anyagi érdeke.
+Alapvetően két különböző skálázási módszert lehet elkülöníteni. Az egyik a
+vertikális, míg a másik a horizontális skálázás. Ezekről a későbbiekben bővebben
+lesz szó.
+
+2.3.1. Horizontális skálázás
+A két skálázási mód közötti különbséget mutatja a 2.2. ábra. Jobb oldalon látható megoldás az úgynevezett horizontális skálázás (másik nevén: scaling out). Ebben
+az esetben arról van szó, hogy a megnövekedett igények kiszolgálásához több azonos
+egységet hozunk létre. Az összes egység azonos erőforrás felhasználással rendelkezik és a beérkező kérések köztük lesznek szétosztva. A megoldás egyik legnagyobb
+előnye, hogy elég könnyű alkalmazni, a Kubernetes rendszere is alapértelmezettként
+támogatja. Hátrányánál meg lehet említeni, hogy több egység között oszlanak meg
+a beérkező kérések így nem biztos, hogy azonos egységnél köt ki egy felhasználó két
+különböző kérése.
+2.3.1.1. Automatikus horizontális skálázás
+Egy egyszerű példán keresztül szeretném bemutatni a Kubernetes beépített,
+automatikus horizontális skálázóját (HPA). Az automatikus skálázónak meg lehet
+adni, hogy milyen célértéket szeretnénk kapni. Például, hogy a futtatott Pod által felhasználható CPU mennyiség milyen szinten legyen kihasználva. Jelenleg ilyen
+megkötést a memória és processzor felhasználásra lehet tenni, de tetszőlegesen létrehozhatunk saját metrikát.
+Az algoritmus folyamatosan lekérdezi a metrikák aktuális értékét és a 2.1 egyenlet alapján meghatározza az éppen szükséges replika számot. Ezzel a számított értékkel frissíti a Pod replika számát, amit így a replikációért felelős kontroller észlel
+és megpróbálja elérni a kívánt állapotot. Ezzel módszerrel megvalósítható fel- és
+leskálázás is.
+&
+
+currentM etricV alue
+desiredReplicas = currentReplicas ∗
+desiredM etricV alue
+8
+
+'
+
+(2.1)
+
+A folyamat szemléletesebb, ha konkrét példán nézzük meg működését. Ehhez
+először létre kellett hozni egy alkalmazást, amit tudunk majd skálázni. Ehhez egy
+egyszerű webszervert használtam, ami minden beérkezett kérés esetén egy CPU intenzív műveletet hajt végre. Miután létrejött a szükséges Deployment és Service
+utána létre lehetett hozni az automatikus skálázót. Ennek a forráskódja látható a
+2.2 kódrészlet tetején. Be lehet állítani, hogy mi legyen a minimális és maximális
+replika, ami között tud skálázni. Illetve meg kell a szabályt is, hogy mire kell figyelni. A példában látható, hogy 50%-os CPU felhasználást szeretnénk elérni. Fontos,
+hogy alapvetően a metrikákat a skálázó egy úgynevezett metrika szervertől gyűjti
+be, amit külön el kell indítani, mert alapértelmezettként nem fut a Kubernetesben.
+Ha létrehoztuk a skálázót, ki is lehet próbálni. Ehhez egy bash szkript segítségével állandó forgalmat generálunk és figyeljük meg, hogyan változik a kapszulák
+száma és ezzel összefüggően az egyes egységek CPU felhasználása. Kezdetben 1
+darab Pod végezte az összes beérkező kérés kiszolgálását, ami így a célértéknél
+3-4-szer több processzort használt. A korábban mutatott képlet alapján, a felső
+egész részt vesszük és a jelenlegi replikaszám 4-szeresére skálázunk.
+$ cat hpa/hpa.yaml
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+name: php−apache
+spec:
+scaleTargetRef:
+apiVersion: apps/v1
+kind: Deployment
+name: php−apache
+minReplicas: 1
+maxReplicas: 10
+targetCPUUtilizationPercentage: 50
+$ while sleep 0.01; do wget −q −O− http://localhost:30100; done
+$ kubectl get horizontalpodautoscalers
+NAME
+REFERENCE
+TARGETS MINPODS MAXPODS
+REPLICAS AGE
+php−apache Deployment/php−apache 179%/50% 1
+10
+1
+4m53s
+...
+php−apache Deployment/php−apache 81%/50% 1
+10
+4
+6m35s
+...
+php−apache Deployment/php−apache 42%/50% 1
+10
+7
+10m
+
+2.2. kódrészlet. Automatikus horizontális skálázás folyamata
+
+2.3.2. Vertikális skálázás
+A skálázási megoldások közül a másik megoldás a 2.2. ábra bal oldalán látható. Ezt vertikális skálázásnak (másik nevén: scaling up) hívnak. Ebben az esetben a
+kiszolgáló egységek számát nem módosítjuk, hanem az általuk felhasználható erőfor9
+
+rások mennyiségét növeljük. Ilyen példa, amikor plusz memóriát rakunk a számítógépbe, vagy erősebb processzorra cseréljük a meglévőt. Kubernetes jelenleg még nem
+támogatja alapértelmezettként ezt a funkciót, de egyszerűen használatra lehet bírni.
+Előnye a megoldásnak, hogy a korábbi félévek munkái alatt azt figyeltük meg, hogy
+a vizsgált alkalmazásaink ezzel a stratégiával azonos erőforrás felhasználás mellett
+jobb eredményeket értek el.[24] Hátránya, hogy a jelenlegi implementáció szerint a
+minden skálázásnál le kell állítani a futtatott egységet, ami bizonyos szolgáltatás
+esetén nem túl előnyös, hiszen ez idő alatt kevesebb egység végzi a beérkező kérések
+kiszolgálását.
+
+2.2. ábra. Vertikális és horizontális skálázás
+
+2.4. Szolgáltatás minőségi osztályok Kubernetesben
+Következőkben szeretném bemutatni a Kubernetes klaszteren belül megjelenő
+szolgáltatásminőségi osztályokat, illetve azok működését. Három különböző minőségi osztály létezik jelenleg a Kubernetes implementációjában[12]. Ezek osztályok
+ismerete és a kihatásuk az ütemező döntéseire hasznosak lesznek az egyes mérések
+megtervezéséhez és a kapott eredmények értelmezéséhez.
+A Kubernetes minden egyes kapszulához rendel egy minőségi osztályt, amit a
+beállított erőforrás specifikációkból fog következtetni. Tehát, csak az egyes podoknak ilyen jellegű attribútumok illetve csak impliciten lehet definiálni. Az ütemező
+számára fog hasznos információt nyújtani, amikor dönteni kell az egyes podok csomópontra történő rendelésénél vagy megszüntetéséről.
+A kapszulán belüli konkrét osztály meghatározása a 2.3 kódrészlet kimenetén
+látható módon lehet megtenni. Le lehet kérdezni a get és a describe paranccsal is, és
+az előbbit választottam, mert legtöbb esetben bővebb kimenetet kaphatunk, mint a
+describe paranccsal, ugyanis ilyenkor megkapunk minden információt, amit az adott
+erőforrással kapcsolatban a Kubernetes az etcd-ben tárol.
+A kimeneten látszik, hogy az érintett erőforrás egy pod, amiben egy darab
+konténer fut. A kimenet szükségtelen részét töröltem és csak a számunkra releváns
+részt hagytam meg. Látható, hogy egyedül a memória értékre van megkötés, hogy
+10
+
+mi legyen a konténer számára maximálisan használható memória mennyiség, ami a
+példában 170 megabájt. Ezzel szemben a pod létrehozásánál létezik megkötés, hogy
+milyen processzor és memória mennyiségeket szeretne közvetlenül lefoglalni és fixen
+saját használat alatt tartani. Könnyen leolvasható, hogy ez a memória esetén 70
+megabájt és 100 mCPU processzort jelent. A számunkra másik fontos részlet már
+a status alatt található. Itt azok az információk szerepelnek, amiket nem mi definiáltunk és adtunk meg a létrehozás előtt, hanem az erőforrás működése közben
+változtak. Többek között ilyenek például, hogy mikor indult el a kapszula, hányszor kellett újraindítani, milyen belső IP címen érhető el illetve a számunka fontos
+qosClass érték is. Látható, hogy a konkrét példán ez Burstable értéket kapott.
+$ kubectl get pod −n kube−system coredns−558bd4d5db−h8l7z −o yaml
+apiVersion: v1
+kind: Pod
+...
+spec:
+containers :
+− ...
+resources :
+limits :
+memory: 170Mi
+requests :
+cpu: 100m
+memory: 70Mi
+...
+status :
+...
+qosClass: Burstable
+...
+
+2.3. kódrészlet. Adott kapszula minőségosztályának vizsgálata
+A következő alfejezetekben részletesen bemutatom, az egyes osztályok tulajdonságait, és mi alapján lesznek a kapszulák osztályozva. Láthatjuk, hogy milyen módon
+van lehetőségünk az egyes alkalmazások között priorizálni, ezt a Kubernetes hogyan
+fogja kezelni. Mindezzel együtt érthetővé válik a korábbi példán látott besorolás is.
+
+2.5. Garantált minőségű osztály
+A garantált (quaranteed) minőségű szolgáltatás osztály élvezi a legtöbb előnyét
+a Kubernetes ütemezőnek. Akkor kerülhet ebbe az osztályba egy adott pod, ha több
+kritériumnak is megfelel. A kapszulán belül, minden egyes konténerre érvényesnek
+kell legyenek, az alábbi megkötések. Ezek vonatkoznak a rendes alkalmazás konténerre és az init konténerekre is.
+• Konténeren belül meg van adva az igényelt és maximálisan használható processzor mennyisége.
+• Konténeren belül meg van adva az igényelt és maximálisan használható memória mennyisége.
+11
+
+• Az igényelt erőforrások és a maximálisan használható erőforrások értékei megegyeznek.
+A fenti kritériumokhoz kapcsolódóan fontos megjegyezni, azt az érdekes esetet,
+ami akkor áll elő, ha egy konténerhez mindössze az erőforrások limitációját adjuk
+meg. Ebben az esetben automatikusan kerül beállításra az igényelt erőforrás értéke,
+ami megegyezik a limitációval. Emiatt hiába nem adunk meg expliciten értéket az
+igényelt erőforrásokhoz, de kitöltjük a limit értékeket, akkor is garantált szolgáltatás
+osztályba fog kerülni az adott pod.
+Ezen kapszulák olyan csomópontokra kerülnek ütemezésre, amik rendelkeznek
+elegendő erőforrásokkal és a bennük futtatott alkalmazások lesznek a kevés erőforrás
+miatt utoljára leállítva.
+
+2.6. Börsztölhető minőségű osztály
+A börsztölhető (burstable) kapszulák besorolását elég széleskörűen lehet meghatározni. Leginkább azt lehet mondani, hogy ide tartoznak azok a podok, amik
+valami miatt nem teljesítik a garantált szolgáltatás osztályba tartozó kritériumokat, azonban valamilyen erőforrás foglalás megvan adva. Tipikusan ilyen szituáció,
+amikor különböző értékek vannak megadva az igényelt és a maximálisan használható
+erőforrások mennyisége között. Akkor is ide kerül besorolásra egy kapszula, ha több
+konténer közül valamelyik nem teljesíti a garantált osztály elvárásait.
+Ezen podokat igyekszik az ütemező a rendelkezésre álló információi alapján
+a számukra legjobb csomópontra osztani, de nem garantálható ennek a sikere. Ez
+abból fakad, hogy legtöbb esetben kevesebb információval rendelkezik róluk, mint a
+garantált osztályban, ahol minden érték adott volt.
+Amikor elfogynak a csomópont által használható erőforrások és nincsen több
+legjobb szándék minőségű osztályba tartozó kapszula, akkor ezen podok kerülnek
+leállításra. Ezzel is védve a garantált osztályú podokat.
+
+2.7. Legjobb szándék minőségű osztály
+A minőségi osztályok közül legkevésbé prioros osztály a legjobb szándék minőségi osztály (best effort). Már az osztály neve is elég beszédes lehet. Ide kerülnek az
+olyan kapszulák, ahol semelyik konténernek nincsen beállítva erőforrásra vonatkozó információ. Tehát nincs megkötés a maximális használatra és nincs megkötés a
+minimálisan szükséges erőforrásra se.
+Ebben az esetben rendelkezik az ütemező a legkevesebb információval a kapszuláról, ami miatt nem is garantálható, hogy olyan csomóponton kerül elindításra,
+ahol elegendő erőforrás áll az alkalmazás rendelkezésére.
+Ebbe a kategóriába tartozó podok annyi erőforrást használhatnak, amennyi
+rendelkezésre áll az adott csomóponton. Ez felveti a kérdést, hogy nehogy elhasználja a többi alkalmazás elől a szükséges erőforrásokat. Emiatt ezen osztályba tartozó
+podok lesznek először leállítva, ha fogytán van a csomóponton elérhető erőforrások
+mennyisége.
+
+12
+
+A fentebb leírtak miatt körültekintőnek kell maradni, hogyan soroljuk be minőség osztályok alá az egyes alkalmazás részeinket és hogyan priorizáljuk ezzel
+együtt őket.
+
+13
+
+3. fejezet
+Irodalomkutatás
+A félév során több publikációt is elolvastam, hogy tisztább legyen a kutatási terület. A következőben szeretném összefoglalni, hogy eddig milyen irányban történtek
+haladások.
+Több oldalról meg lehet fogni a skálázás és szorosan hozzá köthető erőforrás
+elosztás területét. Minden kutatás kicsit más szempontból vizsgálja, más áll a középpontban.
+A legátfogóbb ismertető a témában Cloud resource management: A survey on
+forecasting and profiling models[22] című cikk. Szépen összegzi a téma megjelenésekor
+ismert kutatásokat és rendszerezi azokat. Strukturáltan összegyűjtötték, hogyan és
+miért lehet szükséges az egyes alkalmazások profilozása, milyen akadályokkal szembesülhetünk.
+Az alkalmazás mélyebb megismerésével lehetőségünk van előrejelzéseket adni a
+viselkedésére és ezáltal az erőforrás felhasználást is ügyesebben kezelni. Kritizálják,
+hogy a legtöbb kutatás elég szűk területet érint és nagyon specifikus kérdéskört
+vizsgál, miközben figyelmen kívül hagyja a felhős környezet változékonyságát és a
+valóságnál statikusabb rendszerként vannak kezelve.
+Ötleteket is tudunk meríteni, hogy milyen értékeke érdemes a mérések során
+figyelembe venni. Példaként említi a processzor, memória, I/O lemez késleltetések,
+válaszidő, áteresztő képesség mérését. Utóbbi kettő rendszeresen előfordul a szolgáltatási szint megállapodásokban (SLA), aminek a következményei a felhasználó által
+érzékelhető szolgáltatási szintben (QoE) is megjelenhet. Erre jó példa lehet, hogy ha
+egy online beszélgetés közben gyakran és nagy méretben változik a beszélgető felek
+közötti késleltetés az a szolgáltatás megítélésére is ki fog hatni. Ezek a tulajdonságok
+vannak összefoglalva a 3.1 ábrán, ami szintén a cikkben jelent meg.
+Gyakran elfelejtődik, de a cikkben hangsúlyozva van, hogy a rendszer monitorozása, döntéshozás és közbeavatkozás önmagukban is jelentenek valamekkora
+plusz költséget.
+Korábban már a tanszéken is foglalkoztak Kubernetesben történő skálázással.
+Az Adaptive scaling of Kubernetes pods[3] címen megjelent kutatás keretén belül sikeresen implementáltak egy automatikus skálázót, ami képes kihasználni a vertikális
+és horizontális skálázásban rejlő előnyöket. Az algoritmus első részében megkeresi az
+egy pod számára ideális erőforrás-használatot, ami tekinthető a vertikális skálázásnak. Később pedig az így megtalált konfigurációval történik az alkalmazás horizontális skálázása. Ez a megvalósítás egybeesik a korábbi kutatás következtetésével[24],
+14
+
+3.1. ábra. Alkalmazás profilozás elmetérképe[22]
+mely szerint általában jobb eredményt kapunk VPA segítségével, azonban feltehetően minden esetben létezik egy felső határ, ami után már nem kapunk jobb
+kiszolgálási eredményeket.
+A diplomaterv későbbi részében érdekes eredményeket kaphatunk, ha összehasonlítjuk ezt a megoldást a Kubernetes alapértelmezett skálázásával egy komplexebb
+szolgáltatásháló esetén.
+Több cikk[3][25] is említést tesz arról, hogy a jelenlegi módszertan alapján nehéz eltalálni az optimális erőforrás értékeket és ezzel együtt a skálázást. Ez főként
+onnan jön, hogy jelenleg a skálázók kevés logikával és metrikával működnek, ezért
+indításukkor, kézzel kell megadni a szükséges értékeket. Ez igaz az erőforrás felhasználásra is. Ebben az esetben is az alkalmazás üzemeltetője adja meg indítás idejében
+a paramétereket, amik befolyásolják a kiszolgálás minőségét is.
+Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó
+minél optimálisabb döntéséhez minél több adatra van szükség. Ez bizonyos alkalmazási területek körében problémás lehet. Hogyha az alkalmazás tulajdonosa nem
+szeretné, hogy megfigyeljék, hogy milyen egyéb szolgáltatásokkal van kapcsolatban,
+mennyi lekérdezés, felhasználó használja, milyen arányban oszlik meg a terhelés a
+rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete
+alapján lesz meghozva. Érdekes kérdéskör ez is, hogy hol van a határa a személyes adatoknak és mennyire lehet ezeket figyelembe venni az optimálisabb erőforrás
+elosztáshoz.
+Több megoldás bontakozott ki a tanulmányozott cikkekből. Vannak olyan megoldások, amik a rendszert fehér dobozként kezelik, amiben minden paraméter kiolvasható és befolyásolható, míg vannak olyanok, amik feketedobozként modellezik az
+alkalmazásokat és a belső működésük számunkra teljesen fedett.[15]. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni,
+javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számon tarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve
+javítható a modell bizonyossága[15].
+Elterjedt kutatási terület, hogyan lehet ilyen jellegű feladatok megoldásában segítségül hívni a neurális-hálózatokat, illetve egyéb gépi-tanulásos modelleket. Ilyen
+modell lehet például a Markov-láncok, ami képesek a valós rendszerekben megfigyelhető periodicitásokat figyelembe venni[29]. Ilyen ismétlődés több nagyságrendben is
+15
+
+elképzelhető, például egy napon belül is létezik, de létezhet nagyobb távlatban, például az évszakkal összefüggően is[25].
+
+16
+
+4. fejezet
+Rendszer felépítése
+Ebben a fejezetben szeretném bemutatni az általam elkészített rendszert és az
+azt alkotó egyes részeket. A
+
+4.1. Rendszer részei
+Az elkészült rendszer három fő komponensből áll. Ezek együttesen képesek tetszőleges tulajdonsággal rendelkező szolgáltatás hálózatokat megvalósítani, azt Kubernetes alatt elindítani, forgalmat generálni és mérés során adatokat gyűjteni.
+Az egyes részekről bővebben is lesz szó, azonban most átfogóan ismertetem
+a rendszert, ami a 4.1 ábrán látható. Minden elem megalkotásánál egy lényeges
+szempont volt, hogy az elkészült rendszerrel könnyen lehessen méréseket indítani és
+a lehető legtöbb paraméter konfigurálható legyen.
+A mérések paramétereit egy konfigurációs fájlban tudjuk megadni, ahonnan egy
+Python program olvassa be és vezényli le a mérések elvégzését. Először a Kubernetes
+API-n keresztül létrehoz egy ServiceGraph objektumot. Ez nem egy beépített típus,
+úgyhogy a Kubernetes nem tud vele mit kezdeni ezért írni kellett egy operátort, ami
+képes egy ilyen definíció szerint létrehozni a szükséges erőforrásokat (deployment,
+pod, service, HPA). Ahhoz, hogy az egyes kiszolgáló egységeket is tudjuk tetszés
+szerint konfigurálni kell egy olyan képfájl, ami a megadott paraméterek alapján tud
+működni. Ezért írni kellett egy külön alkalmazást hozzá.
+Miután elkészültek a kért objektumok és képesek már kiszolgálni a klaszteren
+kívülről érkező igényeket a Python szkript elkezd forgalmat generálni. A terhelés
+lejárta után ki kell nyerni a mérés során keletkezett adatokat. Ebben egy külön
+szoftver segít a Prometheus[10].
+Az elkészült rendszerhez szükséges részek forráskódjai megtalálhatóak a GitHub
+felületén[2].
+
+4.2. Korábbi munkák
+A korábbi projekttárgyak keretén belül már foglalkoztam hasonló kérdéskörrel,
+így már volt az egyes eszközök használatához tapasztalat és implementáció is, amiből ki lehetett indulni. Önálló labor tárgyban megismerkedtem a Go programozási
+nyelvvel, és elkészítettem egy Kubernetes operátort, ami képes egyedi erőforrás definíciók feldolgozására és ez alapján képes beépített objektumokat létrehozni. A félév
+17
+
+4.1. ábra. Rendszer áttekintése
+elején elején ezt tovább kellett bővíteni, hogy képes legyen skálázót is létrehozni
+valamint javítani kellett a megbízhatóságán is.
+Korábban készítettem már egy Docker képfájl is, ami a jelenlegi rendszerben
+felhasználttal azonos céllal született, hogy szabadon konfigurálható paraméterezés
+alapján szolgálja ki a beérkező kéréseket. Az így megírt Go alapú webszervert is a
+félév során tovább kellett bővíteni, személyre szabni, hogy a valósághűbb eredményeket szolgáltasson.
+
+4.3. Operátor
+Fontos szempontnak tekintettük, hogy egyszerű konfigurációs fájl alapján létre
+lehessen hozni a szolgáltatáshálót, amit szeretnénk tesztelni. A Kubernetes rendszer
+nem tartalmaz olyan erőforrást, ami számunkra ezt a funkcionalitást alapvetően támogatná. A feladat számunkra az lesz, hogy egy közös konfiguráció alapján több
+különböző fajta, már beépített erőforrást hozzunk létre. Már az orkesztrációs platform fejlesztésénél felkészültek arra az esetre, hogy sok egyedi igény fog megjelenni a
+különböző használatból fakadóan, ezért már fejlesztés közben fontos szempont volt a
+Kubernetes könnyű kibővítése. A mögöttes gondolat az, hogy nagyon változó igények
+és funkcionalitások jelenhetnek meg a felhasználási körülményektől függően, amiket
+nem célszerű a központi egységbe implementálni, hiszen akkor a rendszer könnyen
+átláthatatlanná és inkonzisztensé válna. Helyette egyedi erőforrásokat (CustomResource) hozhatunk létre és ezen erőforrások mellé megadhatunk különböző vezérlőket. Ezt csinálják az operátorok, amivel a fentebb vázolt feladat a diplomamunkában
+is megoldhatóvá vált.
+
+18
+
+4.3.1. Megírása
+A klaszter operátorral való kibővítése egy gyakran alkalmazott megoldás, amikor összetettebb alkalmazást vagy logikát kell implementálni. Olyan szinten elterjedt
+megoldásról van szó, hogy több nyelv és keretrendszer közül lehet választani[14]. Valamint külön weboldal is létezik, ahol össze vannak gyűjtve az egyes alkalmazásokhoz
+elérhető, korábban megírt operátorok.[21] A Kubernetes alkalmazási lehetőségei között ezt a megoldást külön mintaként említik.[4]
+Én a feladat megoldásához az Operator-SDK[20] keretrendszerét használtam
+fel. A keretrendszerrel könnyen írhatunk Kubernetes operátorokat. Ezt megtehetjük
+Helm, Ansible vagy Go segítségével is. Értelemszerűen a legnagyobb rugalmasságot
+a Go programozási nyelvvel érhetjük el, itt van lehetőségünk nagyon mély szinten
+belenyúlni a klaszter működébe. Én is ezt a megoldást választottam a korábbi projekttárgy keretén belül és sikerült megszerezni az alapvető ismerteket. A korábban
+megírt alkalmazás több hibát is tartalmazott, így a diplomamunka keretén belül
+ezeket ki kellett javítani és új funkciókkal bővítettem ki.
+Sajnos limitált számú segédanyag érhető el és azok is többnyire ugyanazt a
+példaalkalmazást mutatják be, ezért az elején nehéz belekezdeni. Egyedül a korábban
+mások által megírt operátorok forráskódja tudott jó kiindulásként szolgálni.
+Több megoldás is létezik az elkészült operátorunk futtatására. Futtathatjuk a
+klaszteren kívülről, mint alkalmazást, illetve a klaszteren belülről is. Utóbbi esetben
+készíteni kell az alkalmazásunkból egy Docker képfájlt, ami aztán külön kapszulában fog futni. Illetve klaszteren belül lehetőségünk van egy úgynevezett operátor
+életciklus kezelővel (Operator Lifecycle Manager - OLM) is megtenni ezt. Az utóbbi megoldás a legfejlettebb úgy kell elképzelni mint egy külön csomagkezelő csak
+a klaszteren belül, az operátoroknak. A félévben én a klaszteren kívüli megoldást
+használtam, mivel az operátort is folyamatosan fejleszteni kellett a különböző igények szerint, illetve a projekt kapcsán nem releváns az operátor futási környezete,
+cserébe több idő marad a mérésekre koncentrálni.
+
+4.3.2. Használata
+A 4.1 kódrészlet mutat egy példát a szolgáltatásháló definíciójára. Számunkra
+elég végiggondolni, hogy milyen szolgáltatásokat szeretnénk, hogyan kövessék egymást, milyen erőforrást biztosítsunk számukra. Miután ezek megvannak készítünk
+belőle egy yaml dokumentumot.
+Látható, hogy a apiVersion és kind érték egyedi, így tudunk hivatkozni a
+saját erőforrásunkra. Szintén meg kell adni pár meta információt, mint például az
+objektum neve és névtere. A spec szekció az érdekes számunkra. Itt tudjuk felsorolni, hogy milyen szolgáltatásokat szeretnénk majd a hálózatba. Be tudjuk állítani,
+hogy hány replikával fusson egy-egy szolgáltatás, illetve hogy milyen portokon tudjuk majd őket elérni. Ezek az információk azért lesznek fontosak, mert ez alapján
+fog az operátor létrehozni Kubernetes Deploymenteket és Serviceket. Ha szeretnénk
+skálázást is beállítani az adott szolgáltatásra akkor azt is megtehetjük, ha megadjuk
+a hpa konfigurációs paramétereket. Ezek hiányában nem kerül létrehozásra, és fix
+replikaszámmal fog üzemelni.
+Továbbá definiálni kell, hogy az adott szolgáltatás milyen végpontok hívására
+figyeljen. Például a front-end szolgáltatás a /instant és /chain lekérdezésekre fog
+19
+
+válaszolni. A válasz gyorsasága és a közben felhasznált erőforrás mennyiséget is lehetőségünk van befolyásolni. Az itt megadott paraméterek továbbításra kerülnek majd
+a futtatott konténerekhez így ők fogják helyileg érvényre juttatni a szabályokat.
+A bemutatott kód csak részlete a teljes forrásállománynak, mert elég repetitív
+ezért nem szerettem volna a helyet foglalni, de a GitHub oldalán megtalálható a
+teljes kód.
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+name: servicegraph
+namespace: customNamespace
+spec:
+nodes:
+− name: front−end
+replicas : 2
+port: 80
+nodePort: 30000
+hpa:
+utilization : 10
+min_replicas: 2
+max_replicas: 5
+resources :
+memory: 100
+cpu: 100
+endpoints:
+laszoljon
+− path: /instant
+cpuLoad: 10
+delay: 1
+− path: /chain
+cpuLoad: 20
+delay: 2
+callouts :
+− url: back−end:80/profile
+tvonallal
+− url: db:36/get
+− name: back−end
+replicas : 3
+...
+indul HPA
+endpoints:
+endpointok
+− path: / profile
+cpuLoad: 30
+delay: 2
+...
+
+# Erőforrás csoportja
+# Egyedi erőforrás típusa
+# Metainformációk
+# Objektum neve
+# Névtér, ahol az objektum létezik
+# A szolgáltatásháló konfigurációja
+# Milyen csomópontokat tartalmazzon
+# Csomópont neve
+# Alapból hány replika induljon belőle
+# Milyen porton figyeljen a Pod
+# Legyen−e NodePort típusú service
+# HPA specifikus specifikációk
+# Kitűzött CPU felhasználás
+# Minimális replika szám HPA−nak
+# Maximális replika szám HPA−nak
+# Erőforrás request / limit értékek
+# Memória felhasználás
+# Biztosított processzor mennyisége
+# Milyen hívásokra figyeljen , hogyan vá
+#
+#
+#
+#
+
+Lekérdezés útvonala
+Ennyi CPU intenzív műveletet fog végezni
+Legalább ennyi időbe telik a kiszolg álás
+Újabb lekérdezés specifikáció
+
+# Meg lehet adni, hova kérdezzen tovább
+# pl: hívja meg a back−end /profile ú
+# utána meg a db /get−től kérjen adatokat
+# Újabb csomópont definíciója
+# Ennyi replikaszámmal induljon
+# Ha nincs megadva HPA mező, akkor nem
+# A szolgáltatás á ltal biztos í tott
+
+4.1. kódrészlet. Saját szolgáltatásháló definiálása
+20
+
+Miután megtörtént a szolgáltatásháló leírása és fut a korábban elkészített operátor könnyű dolgunk van. Mintha csak egy beépített erőforrást hoznánk létre a 4.2
+kódrészletben mutatott módon telepíthető is. Ilyenkor az történik, hogy a kubectl
+parancs a Kubernetes API-t meghívja, és továbbítódik az operátor felé. Az operátor
+kiolvassa a kapott objektum értékeit és ez alapján létrehozza a kívánt erőforrásokat.
+$ kubectl apply −f path/to/servicegraph.yaml
+servicegraph.dipterv.my.domain/servicegraph created
+
+4.2. kódrészlet. Szolgáltatásháló indítása
+
+4.4. Alkalmazás konténer készítése
+A korábban látott módon lehetőségünk van tetszőleges szolgáltatásokat elindítani, azonban hogy az adott szolgáltatásoknak további paraméterek tudjunk átadni,
+olyan alkalmazás kell ami tudja kezelni őket. Például: milyen végpontokra figyeljenek, milyen kiszolgálási idővel dolgozzanak, mennyi erőforrást használjanak fel. A
+feladat megoldására létrehoztam egy Go alapú webalkalmazást, mely induláskor átveszi a szükséges paramétereket. A webszerverhez beérkező kérések pedig a megadott
+paraméterek által specifikált módon fognak végrehajtódni.
+A teljes kódbázis és annak működésének részletekbe menő bemutatását nem
+érzem releváns részének a végső rendszer felépítését tekintve. A mérések során használt kódok és a Docker képfájl készítéséhez szükséges minden forrás és erőforrás
+és instrukció megtalálható a diplomamunkához tartozó verziókövető rendszerben[2].
+Mindössze a számomra izgalmasabb vélt részeket, említésre méltó megoldásokat szeretném tárgyalni.
+Az alkalmazás elkészítéséhez fel tudtam használni a korábbi egyetemi projekt
+tárgyak alatt elkészített forráskódot, amit tovább kellett fejleszteni. Korábban egy
+http alapú üzenetet küldött vissza az alkalmazás, ami számunkra könnyebben olvasható, azonban a gépek nehezebben kezelik. Így kicsit változtatni kellett a kódon és
+jelenleg json üzenetet kapunk vissza.
+Lehetőségünk van a http kérés kiszolgálása közben további webalkalmazások
+felé továbbkérdezni. Ez a funkció ad lehetőséget, hogy a klaszteren belül tetszőleges
+szolgáltatáshálókat valósítsunk meg. Ezt a funkciót is kicsit fejleszteni kellett és
+az egyes lekérdezéseket aszinkron hívásra cseréltem le. Ezáltal miközben várunk a
+kint meghívott rendszerek válaszára közben végezhetjük a saját csomópontban a
+konfigurációban megadott számításokat.
+
+4.4.1. Processzor-használat skálázása
+Egyik legfontosabb feladata az egyes podokban elindított alkalmazásnak, hogy
+fel tudja dolgozni a számára átadott paramétereket. Kintről kell átadni minden olyan
+értéket, ami meghatározza a működési módját. Többek között meg lehet adni, hogy
+az egyes végpontokra érkező kérések esetén mekkora processzor igényt generáljon.
+Ezen funkció implementálása bizonyult a legérdekesebb feladatnak.
+Az alkalmazás első funkcióiban nem kapott még jelentős figyelmet, mert a nagy
+rendszer összeállítása volt a prioros feladat. Emiatt egy egyszerű processzor igényes algoritmust implementáltam, ami a feladatát tökéletesen ellátta. Az általam
+21
+
+választott algoritmus az Eratoszthenész szitája volt, ami képes megkeresni egy bizonyos számig létező prímszámokat. Az algoritmusban szereplő lépések nem nehezek,
+azonban több egymásba ágyazott for ciklust tartalmaz, ami így beláthatatlan ideig
+de használja a rendelkezésre álló processzort. További érdekesség, hogy amikor a
+végeredményt nem került kiírásra vagy felhasználásra, akkor a fordító valószínűleg
+figyelmen kívül hagyta a számára feleslegesnek hitt műveletsort és nem került bele
+a végleges alkalmazásba. Ez a tulajdonsága a fordítónak egyszerre barátságos, mert
+már fordítás közben is javítja a kódminőséget azonban egyszerre kiszámíthatatlanná
+teszi a kész programunkat, mert hiába írtuk meg nem került meghívásra a függvény.
+A megoldás gyengeségét az adta, hogy nem lehet finomhangolni és a Kubernetesben létező mCPU mértékegység szerint konfigurálni az alkalmazás egységünket.
+Amikor a rendszer fejlesztésének előrehaladott szakaszában ez a probléma ismét
+előkerült, megoldási javaslatot kellett keresni.
+A megoldás alapját az úgynevezett szoros ciklusok (tight loop[19]) adta.
+A mögöttes elgondolás, hogy 1000 mCPU felhasználást akkor kapunk, ha a
+megfigyelt konténer egy teljes másodpercig birtokolja és ezen idő alatt folyamatosan
+használja is az erőforrást. Viszont előre meghatározni, nem lehet, hogy mennyi műveletet végezzünk, hiszen ezt befolyásolja a Kubernetes klaszter mögötti infrastruktúra. Tehát elképzelhető, hogy azonos algoritmus futása eltérő terhelésként jelenik
+meg az adott rendszerben értelmezett 1 CPU egység miatt.
+A fenti következménye, hogy ha a Kubernetes mCPU mértékegységét akarjuk
+használni, akkor kötelező lesz az alkalmazás tényleges működése előtt egy kalibrációs
+tesztet végezni.
+Az alkalmazás indításakor futtatott függvényében egy másodpercig egy egyszerű tight loop algoritmust futtat és figyeljük, hogy ezen idő alatt hány iterációt tud
+megtenni. Amennyiben az ez információ adott könnyen tudunk generálni megadott
+terhelést bármilyen környezetben. Ehhez az kell, hogy a beérkező kérés esetén a korábban kiszámolt iterációk számához arányosan az igényelt processzor-fogyasztással
+megegyező iterációt tegyen meg.
+
+4.4.2. Elkészült alkalmazás használata
+Az elkészült alkalmazást fel kellett készíteni, hogy a Kubernetesben tudjuk
+futtatni. Ehhez Docker képfájlt készítettem belőle és miután elláttam a megfelelő
+címkékkel feltöltöttem[1] a Docker Hub oldalra, ami egy ingyenes és publikus
+konténer adattár.
+$ kubectl describe pod front−end−54b6ffc64c−cd8kl
+...
+Command:
+/app/main
+−name=front−end
+−port=80
+−cpu=100
+−memory=100
+−endpoint−url=/instant
+−endpoint−delay=1
+−endpoint−call=’’
+
+22
+
+...
+
+−endpoint−cpu=10
+−endpoint−url=/chain
+−endpoint−delay=2
+−endpoint−call=’back−end:80/profile_db:36/get’
+−endpoint−cpu=20
+
+$ kubectl run shell −−rm −it −−image nicolaka/netshoot −− sh
+~ # curl front−end:80/instant
+{" service ":" front−end","host":" front−end","config": true ," endpoint":"/instant "," cpu
+":10,"delay ":1," calloutparameter ":"’’"," callouts ":[""]," actualDelay":16967552,"
+time":"2021−05−13T16:55:02.951824587Z","requestMethod":"GET","requestURL":{"
+Scheme":"","Opaque":"","User":null,"Host":"","Path":"/instant","RawPath":"","
+ForceQuery":false,"RawQuery":"","Fragment":"","RawFragment":""},"requestAddr
+":"10.0.1.49:43678"}
+
+4.3. kódrészlet. Kénténer futtatása és válasza
+A 4.3 sorszámú kódrészleten egy, az elkészült Docker konténert futtató kapszula
+leírásának részlete látszik. Az indításhoz a korábban látott, 4.1 kódrészlet konfigurációját használtam fel. Érdemes megfigyelni, hogy az egyes paraméterek hogyan
+képződnek le a konténerhez. Például átadásra kerül a szolgáltatás neve, hogy melyik
+porton fog figyelni, melyik végpontok hívására kell válaszolnia és a hozzá tartozó
+egyéb paraméterek.
+A kódrészleten látott második paranccsal létrehozunk egy újabb kapszulát a
+klaszterben. Látható, hogy interaktív módban indítottuk el, így kaptunk egy felületet, ahonnan lekérdezést lehet indítani a front-end kapszula felé. Ez jó megoldás
+abban az esetben, ha ki szeretnénk próbálni, hogyan működik az alkalmazásunk. A
+kubectl run parancs alatt látható, hogy a curl alkalmazás kérésére milyen választ
+kaptunk. A válasz json formátumban tartalmazza a lekérdezés főbb paramétereit.
+Látható, hogy melyik végpontra érkezett, milyen konfiguráció van beállítva a végponthoz.
+
+4.5. Mérés vezénylése
+Az elkészített operátorral és konténerizált alkalmazásunkkal tetszőleges szolgáltatáshálót képesek vagyunk létrehozni. Azonban a mérések elvégzése így is nehéz
+feladat, mert szeretnénk, hogy determinisztikus legyen. Itt is fontos szempont volt,
+hogy a lehető legegyszerűbben és a rugalmasa módon lehessen végezni a méréseket. A
+feladat megvalósításához a Python nyelvet választottam, mivel könnyen lehet benne
+fejleszteni és komoly számítást nem végez így nem számottevő a plusz erőforrásfelhasználása más, alacsonyabb szintű nyelvekhez képest.
+Mérés megkezdése előtt készíteni kell egy konfigurációs fájlt. Erre egy példa
+látható a 4.4 kódrészleten. A mérést vezénylő alkalmazás az itt megadott paraméterek alapján fogja végezni a mérést. Többek között meg kell adni, hogy a
+mérések milyen szolgáltatáshálózatokon kerüljenek elvégzésre. Lehetőség van többet
+is megadni, így egy indítással akár az összes számunkra érdekes esetet le tudjuk
+szimulálni egyszerre. Továbbá meg kell adni, hogy milyen kérés per másodperc
+(QPS ) értékekre vagyunk kíváncsiak. Fontos megadni, hogy milyen forgalmat és
+23
+
+hova szeretnénk generálni. Ez látható a Load részen belül. Megadjuk a mérés idejét,
+IP címet és portot, ahol a szolgáltatásunk fogja fogadni a kéréseket.
+Name: example−measurement
+# Name of the measurement
+Servicegraphs:
+# Service graph specifications
+− /path/to/service_graph1.yaml # Measured services config file
+− /path/to/service_graph2.yaml # Can add more graphs
+Result_location: /path/to/result # Where to write results
+Cluster:
+# Not yet used
+Name: Dipterv
+# Clustername
+IP: 152.66.211.2
+# CLuster / node IP address
+QPS:
+# query per seconds
+From: 0
+# QPS lower bound
+To: 200
+# QPS upper bound
+Granularity: 10
+# QPS increment by this number
+Load:
+# Load specification
+Preheat: 0
+# warmup time in seconds
+Time: 180
+# measurement time in seconds
+ServiceIP: 152.66.211.2
+# IP for our service
+ServicePort: 30000
+# port for our service
+ServicePath: to−backend
+# path to our service
+ServiceQuery: ’’
+# URI’s query fragment
+Prometheus:
+# Prometheus values
+IP: 152.66.211.2
+# Prometheus IP address
+Port: 31090
+# Prometheus port number
+
+4.4. kódrészlet. Mérés konfigurációja
+A forgalom generálását egy külön alkalmazás végzi, a Vegeta[26]. Természetesen nagyon sok forgalom generáló alkalmazást tudunk felhasználni és a kész rendszer korábbi verziójában mást használtunk. A korábbi döntés a Fortio generátorra
+esett, mert egyre szélesebb körben használják és ideális döntésnek tűnt a méréseinkhez. Azonban a folyamatos mérések közben számos nehezen értelmezhető jelenséget
+produkált, ezért került sor a váltásra.
+Számos alkalmazást megnéztem, hogy minél körültekintőbb döntést tudjak hozni. Ebben nagy segítségemre volt egy összegyűjtött alkalmazás lista[7] így megkeresni
+már nem csak össze kellett hasonlítani őket. Végül a döntés a Vegetára esett, mert
+hasonló funkcionalitásokkal rendelkezik, mint a korábbi eszközünk, ami jelentősen
+megkönnyítette a komponens cseréjét.
+Egy-egy terhelés szimulációjához meg kell adnunk pár paramétert az alkalmazás
+indításához.
+Például meg kell adni az aktuális QPS értéket, amit szeretnénk elérni, hogy
+mennyi ideig fusson a mérés, hogy hova és milyen néven mentse a kapott eredményeket, és a legfontosabb, hogy hova küldje a kéréseket. Ezeket a paramétereket
+ugye a korábban ismertetett konfigurációs fájl alapján állítjuk össze.
+Miután megterheltük a rendszert és megkaptuk a kérések kiszolgálásával kapcsolatos statisztikákat a Vegetából, szükséges még a rendszer erőforrás-felhasználását
+célzó metrikákat is begyűjteni. Erre a Prometheus rendszerén keresztül van lehe-
+
+24
+
+tőségünk. A szoftver támogatja az API hívásokat, így lehetőségünk nyílik könnyen
+lekérdezni az általa gyűjtött statisztikákat.
+A metrikák lekérdezésére a 4.5 kódrészlet ad egy példát. Meg kell adnunk,
+hogy milyen értékekre vagyunk kíváncsiak. A látható példában ez a konténerek
+által felhasznált CPU mennyisége, továbbá kikötéseket teszünk, hogy csak a Default
+vagy Metrics névtérben futó konténerek érdekelnek. Meg kell adni a lekérdezés
+kezdeti és vég idejét, ez ugye az lesz amíg a generált kéréseket kiszolgálta. Össze kell
+állítani a Prometheus elérhetőségét, amihez a mérés elején megadott konfigurációt
+vesszük alapul. Ha megvan az előkészített API hívás, akkor a kódrészletben látott
+módon meg kell hívni azt. A kapott választ json formátumban érkezik, így később
+mi is így kezeljük.
+# Prometheus query parameters
+cpu_query = {"query": "container_cpu_usage_seconds_total{image!=’’, \
+namespace=~’default|metrics’, \
+container!=’POD’}",
+" start ": str (start_time),
+"end": str (end_time),
+"step ": "2",
+"timeout": "1000ms"
+}
+# Get parameters from config
+prometheus_ip = config["prometheus_ip"]
+prometheus_port = config["prometheus_port"]
+# Assemble prometheus base query URL
+url = "http://" + str(prometheus_ip) + ":" + str(prometheus_port) + "/api/v1/
+query_range?"
+# Assemble full query
+cpu_full_query = url + urllib.parse.urlencode(cpu_query)
+# Get results from Prometheus
+cpu_res = json.loads(requests.get(cpu_full_query).text)
+
+4.5. kódrészlet. Prometheus rendszer használata Python kódból
+A korábban látott megoldással egyéb adatokat is metrikákat is lekérdezhetünk.
+Jelenleg négy értéket gyűjtünk:
+• Konténerek processzor felhasználásait külön-külön.
+• Konténerek memória felhasználásait külön-külön.
+• Az összes futó Pod, ami részt vesz a mérésben.
+• A futó konténerek száma típus szerint. (például: külön amik a front-end szolgáltatást valósítják meg és külön amik a back-end szolgáltatást)
+A Prometheus egészen kiterjeszthető rendszer így közel tetszőleges metrikákat
+lehet gyűjteni.
+25
+
+A mérés végén miután összegyűjtöttük az összes keletkező adatokat, beleértve a
+Prometheus és Vegeta rendszereket is és az eredeti konfigurációt is azokat perzisztálni kell. Erre a legkézenfekvőbb módszer az adatok kiírása json fájlba. Ez azért is
+előnyös, mert könnyen olvasható és feldolgozható a formátum.
+
+4.6. A mérés és az eredmények feldolgozásának elemei
+A következő alfejezetben szeretném a korábban bemutatott alkotóelemeket egymás utáni sorba tenni és az általuk végrehajtott egy-egy lépést részletesebben bemutatni. A fő célja, hogy egy szimulációt teljes egészében bemutasson a mérés indításától kezdődően a kapott eredmények feldolgozásáig.
+Fontosnak tartom megemlíteni, hogy a bemutatott lépések inkább az elkészült
+rendszer működésének használatát tárgyalja. Emiatt a Kubernetes operátor működése nem szerepel fajsúlyos mértékben a leírt lépésekben. Az operátor működését
+ebben az esetben tekintsük egy beépített szolgáltatásként.
+A lépések könnyebb követhetőségét segíti a 4.2 ábra. A mérés elindításához
+szükségünk van egy konfigurációs fájlra, amiben definiálva a kívánt szimulációhoz
+szükséges paraméterek. Ebben a konfigurációs fájlban kell megadni azt vagy azokat a
+szolgáltatáshálót leíró ServiceGraph erőforrás yaml fájlokat, amiken a szimulációkat
+futtatni szeretnénk. Több ilyen szolgáltatás háló is megadható, ebben az esetben
+többször fog lefutni a szimulációnk azonos paraméterekkel.
+Az elindított Python alkalmazás először ellenőrzi, hogy létezik-e parancssorban
+megadott konfigurációs állomány. Amennyiben nem volt megadva, a program futása közben is lehetőségünk van azt behivatkozni, ráadásul ebben egy automatikus
+kiegészítő funkciói is segítségünkre van. Ha ez megtörtént, akkor egy segédmodul
+segítségével beolvassuk a paramétereket és eltároljuk egy Python szótárba, hogy
+később könnyebb legyen az adott értéket felhasználni.
+Ezután minden, megadott szolgáltatásháló esetén el kell végezni a következő
+terheléseket. Először ki kell számolni, hogy milyen QPS értékű terheléseket fog generálni. Ha van még ilyen ilyen QPS érték, amire nem lett elvégezve a terhelés, akkor
+megigényli az éppen aktuálisan vizsgált szolgáltatáshálót a Kubernetes klaszterben.
+Ez alapján az operátor elkezdi létrehozni a szükséges erőforrásokat. Eközben az alkalmazásunk folyamatosan figyelemmel követi, hogy az igényelt kapszulák állapota
+futó legyen, hiszen csak a rendszer teljes elindulása után lehet a méréseket elkezdeni.
+Miután elindultak a podok bizonyos előmelegítést végez a rendszer, ha a konfigurációs fájl alapján szükséges. Ez a funkció akkor lehet hasznos, ha nem szeretnénk
+rögtön a friss rendszeren méréseket végezni, hanem adunk neki egy kis időt és terhelést, hogy felvegyen egy alap állapotot. Ebben az esetben viszont figyelni kell
+arra, hogy a Prometheusban megjelenő adatok nem valósidejűek és ez befolyásolhatja a mért eredményeket. Emiatt a dolgozatban bemutatott méréseknél ezzel a
+lehetőséggel nem éltem. A funkció hiba nélküli alkalmazásához további fejlesztések
+szükségesek.
+Az előmelegítési fázis után következhet a valódi terhelés generálása. Ehhez jelenleg a parancssoros alkalmazást, a Vegetát használom. Miután a konfigurációban
+beállított ideig a megadott QPS értékkel történő terhelés befejeződött, szükséges
+26
+
+egy kicsit várni. Erre amiatt van szükség, hogy a Prometheushoz is megérkezzenek
+a mérés során generált statisztikák.
+A mesterséges késleltetés után le kell futtatni az egyes Prometheus lekérdezéseket. Itt megaddható, hogy milyen felbontással, mettől-meddig és milyen értékeket
+kérdezzen le. A rendszerből érkező egyes json válaszokat össze kell fűzni, illetve a
+mérő eszköz által generált statisztikákat is érdemes kezelni.
+A különböző forrásokból összeállított kimeneteket egy nagy fájlba kell kimenteni, hogy a későbbiekben is fel tudjuk azokat használni. A fájl mentése után törölhető
+a szolgáltatás háló, hogy a következő QPS értékkel történő mérésnél ne zavarjon be
+a korábbi rendszer és az azon végzett mérések, így a lehető legtisztább eredményeket
+kapjuk. Tehát ezt minden terhelési értékre és szolgáltatási hálón végig kell járni és
+az egyes kimeneti eredményeket letárolni.
+Eddig tart a mérést vezénylő Python alkalmazás hatásköre és feladata. Amikor
+előálltak a kimenetek, akkor készen állnak a további feldolgozásra, azonban ezt már
+egy következő alkalmazás fogja végezni. Ezért is szerepel más színnel a 4.2 ábrán,
+ahogy azt a bal alsó sarokban található jelmagyarázat is tartalmazza.
+Az ábrázolás folyamata a korábban bemutatott lépésekhez képest lineárisabb,
+emiatt könnyebben is értelmezhető. Az ábrázoló szkript indításakor szintén bizonyos paraméterek megadása kötelező, hiszen meg kell adni, hogy melyik mappában
+szereplő mérési eredményeket szeretnénk grafikonra vinni. A megadott mappában
+található és értelmezhető json típusú fájlokat fogja az alkalmazás egymás után beolvasni.
+A beolvasott fájl igazán nagyméretű és rendezetlen adathalmazt tartalmaz.
+Emiatt szükséges a nyers adatokat tisztítani és csak a számunkra értelmezhető információkat megtartani. Az így kapott adatokat transzformálni kell, hogy a későbbiekben az alkalmazás könnyebben tudja ábrázolni.
+Az kinyert és előkészített adatokat el kell tárolni, amíg minden mérési eredményt tartalmazó fájlon megtörténik ez a lépés. Ennek a folyamatnak a végére előállnak az ábrázolható adatok együttese. Ezeket különböző módon tudjuk ábrázolni
+és megjeleníteni. A kész grafikonokat lehetőségünk van lementeni, de ez csak egy opcionális lépés, emiatt szerepel az ábrán szaggatott vonalas nyíllal. A megjelenített
+ablak bezárása után végére is értünk a folyamatnak.
+
+27
+
+4.2. ábra. Szimuláció futtatásának és kiértékelésének lépései
+
+28
+
+5. fejezet
+Mérések
+A következő fejezetben szeretném bemutatni, hol és hogyan készültek a mérési
+eredmények, azokból mi olvasható ki. Fontos megjegyezni, hogy komolyabb mérések
+még a diplomamunka hátralevő részére vannak ütemezve, az alább bemutatott eredmények a rendszer működőképességét igazolják és némi előretekintést nyújtanak.
+
+5.1. Mérés környezete
+A feladat elején főként implementációval kellett foglalkozni így nem kapott jelentős szerepet a Kubernetes klaszter. Ezért a félév első felében elég volt lokálisan
+futtatni, amit én Minikube (v1.17.1) segítségével tettem meg.
+Amikor a fejlesztési rész kezdett véglegesedni kellett egy rendes környezet, a
+rendes mérésekhez. Ehhez több lehetőséget is számításba vettem.
+• BME Cloud: Egyik lehetőség az egyetemi felhő volt. Itt létre lehet hozni
+virtuális gépeket, amiket aztán klaszterbe lehet szervezni. Hátránya viszont,
+hogy hosszabb távra nehezen lehet gépet igényelni, rendszeresen le is állítják
+ami könnyen okozhatja egy-egy mérés elvesztését, hiszen több órán keresztül
+is futhat.
+• Klaszter a felhőben: Kézenfekvő megoldás lehet igényelni egy teljes, egész
+klasztert. Erre több opció is van, csak hogy a legnagyobbakat említsem: Google, Amazon, Microsoft. Ezek a minőségi szolgáltatások azonban havidíjasok
+lennének, és bizonyos tekintetben kevésbé rugalmasak.
+• Tanszéki infrastruktúra: A tanszéken létezik egy előretelepített klaszter,
+amin lehetne méréseket készíteni, de általában foglalt.
+• VM igénylés a Schönherz kollégiumtól: A Villamosmérnöki és Informatikai Karhoz tartozó Schönherz kollégiumban lévő Kollégiumi Számítástechnikai
+Körtől lehet tanulmányokhoz és egyéb projekthez kapcsolódóan virtuális gépeket igényelni. Az igénylés leadása után lehetőséget kaptam három virtuális gép
+használatára egészen a projektfeladat végéig. Bizonyos hátulütőkkel ezen lehetőségnél is számításba kellett venni. Ilyen például, hogy öntevékeny körként
+hiba esetén a többinél lassabb válaszidőkre lehet számítani.
+
+29
+
+A fenti opciók közül számomra a negyedik volt a legszimpatikusabb így kaptam
+is három teljesen új virtuális gépet. Telepítéshez a Debian (v10 - Buster) operációs rendszert választottam, mert stabil, megbízható és széles körben támogatott.
+A virtuális gépek tulajdonságai az 5.1 ábrán láthatóak. Hasonló erőforrásértékekkel
+rendelkeznek, annyi különbséggel, hogy csak az egyik gépnek van publikus címe.
+Továbbá a táblázat tartalmazza az egyes csomópontok nevét és a klaszteren belüli
+szerepét is.
+Tulajdonság
+CPU (mag)
+Memória (GB)
+Tárhely (GB)
+Node neve
+Külső IP
+Belső IP
+K8s szerep
+
+VM 1
+VM 2
+4
+4
+4
+4
+10
+10
+dipterv1
+dipterv2
+152.66.211.2
+∅
+10.151.103.1
+10.151.103.2
+control-plane,master
+worker
+
+VM 3
+4
+4
+10
+dipterv3
+∅
+10.151.103.3
+worker
+
+5.1. táblázat. Használt csomópontok tulajdonságai
+
+5.1.1. Klaszter előkészítése
+A virtuális gépekből klasztert kellett szervezni, amire különböző megoldások
+léteznek.[13] Két különbözőt szeretnék kiemelni:
+1. Kubespray: Ansible felhasználásával előre definiált lépéseket hajt végre.
+Mindössze egy pár soros konfigurációt kell írni hozzá és ígérete szerint minden
+mást elintéz.
+2. Kubeadm: Az előzőhöz képest a kubeadm jóval manuálisabb módszer. Segítségével le tudunk generálni mindenféle kulcsot a klaszterhez, csomópontokat
+bekötni a rendszerbe.
+Nem szándékosan de kipróbáltam mindkét megoldást. Vonzó volt ugyanis a
+Kubespray, hogy könnyen és automatikusan telepít minden függőséget. Sajnos pont
+amiatt mert ilyen magas szinten vezeti a telepítést hiba esetén nem sok információ
+derült ki. Miután eredménytelenül zárult minden próbálkozás, újratelepítettem a
+virtuális gépeket és áttértem a Kubeadm használatára.
+A telepítés menetét nem részletezném, mert a hivatalos weboldalon látható
+lépéseken kellett végigmenni. Az elkészült klaszter egy mester csomópontot és kettő kiszolgáló csomóponttal rendelkezik. A fő csomópont rendelkezik egyedül külső
+hálózatról elérhető, publikus IP címmel, a többinek csak belső címen érhetőek el.
+Ez némiképpen nehezítette a telepítés folyamatát, részben emiatt sem működött a
+Kubespray megoldása.
+A klaszter elkészülte után még pár függőséget ki kellett elégíteni, hogy a lokálisan összeállított mérő keretrendszer működni tudjon. Külön telepíteni kellett egy
+konténer hálózati interfészt (CNI). Ez alapból nem jön a Kubernetessel így külön
+kell installálni, hogy a különböző csomóponton futtatott konténerek tudjanak egymással kommunikálni. A választás a Cilium szoftverre esett, mert szerettem volna
+30
+
+jobban megismerni, széleskörűen használható és jól dokumentált. Telepítése után
+lehetőségünk van teszteseteket futtatni, ami igazolja a klaszterben a csomópontok
+és kapszulák kommunikációját.
+A 4.5 szakaszban leírt módon a mérések során gyűjtött adatok jelentős részét
+a Prometheus rendszere gyűjti össze és tőle kérdezzük le. Emiatt az éles méréseket
+végző klaszterben is telepíteni kellett. Ebben a Helm, Kuberneteshez készített
+csomagkezelő megoldása segített. A prometheus-stack csomagot kellett telepíteni
+annyi kiegészítéssel, hogy kintről is elérhetővé tegyük a felületet és szolgáltatásait.
+Azt úgy érhetjük el, hogy a létrehozandó Service típusát NodePort-ra állítjuk és
+a következetesség miatt adunk neki egy portszámot. Az így létrehozott környezet
+rendelkezik egy webes felhasználói felülettel is, ahol tetszőleges lekérdezéseket
+indíthatunk. Egy ilyen lekérdezés látszik az 5.1 ábrán is. A példán az látszik,
+hogy milyen eredményt kapunk, ha lekérdezzük az aktuálisan futó kapszulákat a
+Default és Metrics névtérben. Az eredményből leolvasható, hogy jelenleg 3 darab
+back-end, 2 darab front-end és 1 darab db névvel ellátott konténer fut.
+
+5.1. ábra. Telepített Prometheus rendszere
+Az aktuális rendszerben az operátor még nem külön konténerként fut egy kapszulában, hanem a klaszteren kívül, lokálisan a szerveren, mint egy Go alkalmazás.
+Emiatt külön telepíteni kellett a Go nyelvet is, hogy el tudjon indulni a rendszer.
+
+5.1.2. Verziók
+A rendszer és mérések összeállításához sok különböző komponenset kellett integrálni. Az 5.2 táblázat összefoglalóan tartalmazza az egyes környezetek és használt
+eszközök verzióit.
+
+31
+
+Szoftver
+Verzió
+Go
+1.16.3
+Kubernetes
+1.21.0
+Kubectl
+1.21.0
+Cilium
+1.9.5
+Python
+3.7.3
+Prometheus
+2.24.0
+Grafana
+7.5.3
+Operator-SDK 1.4.0-32
+Debian
+10 (buster)
+Istio
+1.11.4
+5.2. táblázat. Használt verziók
+
+5.2. Eredmények kiértékelése
+Az egyes méréseknek a kimenete egy-egy json fájl, azonban ebből nem nagyon
+tudunk használható következtetéseket kiolvasni. Szükségessé vált egy külön alkalmazás implementálása, ami az általunk elkészített mérések eredményét fel tudja
+dolgozni.
+A feladat megoldására szintén a Python nyelvet választottam, mert könnyen
+lehet benne a json objektumokat beolvasni és feldolgozni. Fontos szempont volt,
+hogy minél könnyebben használható legyen az alkalmazás, így bizonyos paramétereket akár parancssorban is meg lehet adni. Ez látható az 5.1 kódrészleten. Indításnál
+megadhatjuk, hogy milyen nevet szeretnénk a grafikonnak, milyen címke legyen az
+X és Y tengelyeken, hogy le akarjuk-e menteni az ábrát, illetve a legfontosabb,
+hogy melyik mappában keresse a mérési eredményeket. Egy példa konfiguráció is
+látható a korábban hivatkozott kódrészlet alján.
+(python_venv) $ python main.py −−help
+usage: main.py [−h] −d DIR [−t TITLE] [−x QPS] [−y mCPU] [−s [SAVE]]
+optional arguments:
+−h, −−help
+show this help message and exit
+−d DIR, −−directory DIR
+Directory where json files stored.
+−t TITLE, −−title TITLE
+Title of the graph.
+−x QPS, −−x−axis QPS X axis label.
+−y mCPU, −−y−axis mCPU
+Y axis label .
+−s [SAVE], −−save [SAVE]
+Save the plotting .
+(python_venv) $ python main.py −−directory ./path/to/results/directory/ −−title "
+Plot title" −x QPS −y mCPU −−save
+
+5.1. kódrészlet. Eredményeket feldolgozó alkalmazás használata
+Az alkalmazás indításakor meg kell adni, hogy hova vannak mentve a korábbi mérések során készült kimeneti fájlok. Itt egy-egy mérés jelentése, hogy a Vegeta
+32
+
+adott darabszámú lekérdezést generál másodpercenként fix ideig. Tehát egy teszteset
+futtatása több ilyen értelemben vett mérést tartalmaz, hiszen egy skálán megy végig
+a rendszer, ahol a minimális QPS értéktől megadott lépésközzel halad a maximális
+QPS értékig. Egyesével elkezdi beolvasni a mérési eredményeket és minden fájlból
+készít egy "tisztázott" eredményt. Ebben már csak az adott grafikon kirajzolásához
+nélkülözhetetlen értékeket tartalmazza. Például előfordul, hogy a Prometheus eredményében szerepel olyan pod is, ami nem vett részt az adott mérésben, mert még
+a korábbiból maradt ott. Az ilyen eseteket észlelni kell és kiszedni az értékeit, ne
+okozzanak anomáliákat.
+
+5.3. Példa mérés
+A rendszer összeállítása után méréseket is lehet már végezni. A mérés mérésben
+két szolgáltatás vett rész, ahogy az az 5.2 sorszámú ábrán is látszik. A szolgáltatáshálóban két különböző feladatot ellátó szolgáltatás szerepelt. Volt egy nodeport
+segítségével kintről elérhető front-end szolgáltatás, illetve egy csak bentről elérhető
+back-end. Azt a szituációt vizsgáltuk, amikor a front-end nem használ sok erőforrást,
+és két pod fut belőle. Ezzel szemben a back-end egy jóval erőforrásabb szolgáltatás,
+cserébe három egység fut belőle. A front-end minden felé érkező, /to-backend végpontra érkező kérést továbbított a back-end heavy végpontjára. Ezzel elértük, hogy
+a második szolgáltatásunk a számára beállított, sok processzort igénylő műveletet
+hajtsa végre.
+
+5.2. ábra. A mérésnek kitett szolgáltatások kapcsolata
+A kapott eredményekből készült grafikon látható az 5.3 és 5.4 ábrán.
+A kapott 5.4 ábráról leolvasható, hogy az átlagos válaszidő a mérés során nem
+változott érdemben, végig kellően alacsony maradt. Fontos megjegyezni, hogy a mérés során nem vittünk a rendszerbe mesterséges késleltetést, csak a kötelező műveletek elvégzését vártuk meg, így jött ki az állandó válaszidő.
+A másik, 5.3 grafikonon látható, hogy a kevésbé erőforrás-igényes front-end
+processzor felhasználása lassan de folyamatosan nő egészen addig, amíg a back-end
+is tudja növelni a processzor felhasználását. Ez körülbelül 125 QPS-ig tart. Ilyenkor
+a back-end eléri az indításkor beállított erőforrás limitációt és emiatt nem tud több
+beérkező igényt kiszolgálni. Emiatt a felhasználói forgalmat generáló Vegeta sem
+fog tudni több kérést a rendszer felé küldeni, mert meg kell várja, mire a front-end
+válaszol, de a front-end csak azután válaszol, hogy meghívta a végletekig megterhelt
+back-end szolgáltatást.
+33
+
+Érdemes figyelembe venni, hogy az X tengely az igényelt lekérdezések darabszámát mutatja, nem a rendszer által valóságban kiszolgált kérések mennyiségét.
+
+5.3. ábra. Front-end és back-end egységből álló rendszer CPU
+felhasználása
+
+5.4. Finomhangolás
+Az eredmények megjelenítésén még lehetne finomítani, mivel jelenleg egy grafikonon csak egy mérési sorozat kimenetét dolgozzuk fel. Ez viszont azzal jár, hogy
+az egyes mérések során lehetségesek eltérések. Például ilyen lehet, hogy a Prometheus még nem tudta lekérdezni az összes konténer utolsó erőforrás-használatait. A
+probléma orvoslására jelenleg biztonsági időket iktattunk be a mérés során, hogy
+minimalizáljuk ennek az esélyét. A szebb megoldás viszont az lenne, ha több mérést
+végeznénk azonos feltételek mellett és ezeknek az átlagát vennénk figyelembe.
+Illetve érdemes elgondolkodni, hogyan kellene kezelni az esetet, ha a rendszer
+nem tudja kiszolgálni az elvárt lekérdezéseket. Több megoldás is szóba jöhet. Egyik,
+hogy már a mérések végzése folyamán figyeljük és ha nem tudja teljesíteni, akkor idő
+előtt leállítjuk a terheléseket. Másik, hogy az X tengelyen a valódi, kiszolgált QPS
+értéket jelenítjük meg. Ezzel annyi gond lehet, hogy elveszítjük az információt, hogy
+az adott mérésnél a rendszer már túlterhelt állapotban volt és emiatt vagy alapból
+ennyi kéréssel terheltünk. Harmadik megoldás, hogy az X tengelyen lévő értékeket
+addig ábrázoljuk, amíg elvárt módon futottak a mérések.
+34
+
+5.4. ábra. Front-end és back-end egységből álló rendszer átlagos válaszideje
+Másik apróság, ami segítene az eredmények vizualizációjában, ha a felhasznált
+erőforrások és a hozzá kapcsolódó válaszidő egy ábrán lenne, viszont ehhez külön Y
+tengely fog kelleni, hiszen más a mértékegysége.
+
+5.5. Tervezett mérések
+A korábban bemutatott eredmények alapján a rendszerrel képesek vagyunk méréseket végezni az elvárt módon. Egyenlőre a kapott eredményekből még nem lehet
+nagyobb következtetéseket levonni, azonban segítség volt megtervezni a következő
+mérések környezetét.
+• 1 front-end, 1 back-end, 1 thread - Ez lenne a legegyszerűbb eset. Később
+össze lehet hasonlítani a komplexebb mérési környezetekkel.
+• 1 front-end, 1 back-end, 100 thread - Várhatóan érdekesebb eredményeket fog hozni, mert ebben az esetben hiába lesz telítésben a back-end a
+front-end még fogadni fogja a többi felhasználó kéréseit, ami így várhatóan a
+back-end előtt fel fog torlódni.
+• Előző mérések, csak proszesszorigényes front-end - Az előző méréseket
+meg lehet ismételni, csak más szolgáltatáshálón. Ebben az esetben a front35
+
+end lenne az erőforrásigényes és a back-end a könnyen kiszolgálható. Ebben az
+esetben már a front-end előtt el kell dobódni a lekérdezéseknek.
+• Horizontális skálázóval - Miután megvannak a fenti mérések el tudjuk dönteni, hogy milyen eseteket érdemes megismételni és kiegészítve a horizontális
+pod skálázóval.
+
+5.6. Elvégzett mérések
+A projektmunka jelentős részét tette ki, hogy méréseket kellett végezni a korábban bemutatott rendszerelemekkel rendelkező környezetben. A mérések darabszámát szemlélteti az 5.1 kódrészlet. Beépített Linux parancsok segítségével könnyen
+megkaphatjuk a projekt során készített és a kiértékeléshez használt json dokumentumok darabszáma. Ahogy a kódrészlet is mutatja először rekurzívan lekérdezzük
+az adott mappán és almappákon belül található adott kiterjesztéssel rendelkező fájlokat (find). Majd az így kapott eredményt csővezeték segítségével hozzákötjük egy
+szintén beépített parancs (wc) bemenetére, ami megszámolja a kiírt sorok számát.
+Ahogy az a kódrészleten is látszik, hogy ennek a kimenete 1445, ami azt jelenti,
+hogy a projekt jelenlegi állapotához kapcsolódóan ennyi mérés született. Az egyes
+mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb
+Prometheus-ból kapott eredményeket jelenti.
+tutkovics@dipterv1:~/Scaling_MSc/python_scripts/results$ find −type f −iname \∗.
+json | wc −l
+1445
+
+5.2. kódrészlet. Elvégzett mérések száma
+
+5.6.1. Költséghatékony frontendek és költséges backend láncban
+A konkrét mérése előtt is kíváncsiak voltunk, hogyan viselkedik a rendszer abban a helyzetben, ha több költséghatékony alkalmazáson keresztül jut el egy erőforrásigényes hátsó alkalmazáshoz. A szimulált szolgáltatáshálót alkotó elemek az 5.3
+táblázatban bemutatott specifikációkkal rendelkeznek. Látható, hogy a három költséghatékony frontend, egymásnak továbbítják a beérkező kéréseket. Jelen állásban a
+könnyebbség miatt mindegyikből egy darab replika fut, azonos paraméterekkel. Egyegy kérés kiszolgálása nagyjából 10mCPU processzort igényel, és 1000mCPU volt a
+lefoglalt és a frontendek által felhasználható erőforrás mennyisége is. Ezek alapján
+1000mCP U
+= 100kérés kiszolgálására elegendő erőforrás van számukra allokálva.
+10mCP U/kérés
+Ezzel szemben, a sor végén álló, költséges backend maximum 2vCPU-t használhat,
+és az egyes beérkező lekérdezések kiszolgálására 100 mCPU processzorra van szüksé2000mCP U
+gük. Ebből kifolyólag maximum 20mCP
+= 20kérés kiszolgálására van lehetőség
+U/kérés
+másodpercenként.
+Minden kérés a front-end-1 -hez érkezik be és innen kerül továbbításra. Mivel a
+sor elején lévő egységek ötször több kérést tudnak kiszolgálni, ezért a szűk keresztmetszet a sor hátulján lévő back-end-1 lesz. Emiatt minden kérésnek el kell jusson a
+sor végére, miközben az előtte lévő egységek miatt használja az erőforrásokat és mire
+36
+
+a sor végére eljut és feldolgozásra kerül, addig a beérkező http kapcsolat eldobásra
+is kerül a beállított öt másodperces időkorlát miatt.
+Név
+Replikák száma
+CPU használat
+(mCPU)
+CPU limit
+(mCPU)
+Memória limit
+(kB)
+Továbbhívás
+
+front-end-1
+1
+
+front-end-2
+1
+
+front-end-3
+1
+
+back-end-1
+1
+
+10
+
+10
+
+10
+
+100
+
+1000
+
+1000
+
+1000
+
+2000
+
+1000
+
+1000
+
+1000
+
+1000
+
+front-end-2:80
+
+front-end-3:80
+
+back-end-1:80
+
+-
+
+5.3. táblázat. Három költséghatékony frontend után egy költséges backend
+Az ismertetett környezetben elvégzett mérésről készített grafikon látható az 5.5
+ábrán. Megfigyelhető, hogy az egyre nagyobb beérkezett terhelés hatására folyamatosan növekszik a rendszer által felhasznált erőforrások mennyisége. Különösen
+érdekes, hogy a back-end-1 által használt processzor mennyisége, a várt módon,
+20 lekérdezés / másodperc érték környékén eléri a maximumot, onnan már nem
+emelkedik továss, csak stagnál. Ezzel ellentétben az egyes frontend alkalmazások
+erőforrásigénye folyamatosan növekszik a mérés végéig.
+Ezzel párhuzamosan a memória használata is érdekesen alakul. 18 QPS értékig
+látszólag nem változik érdemben, alacsonyan marad. Azonban a backend telítése
+után, minden egységnél elkezd növekedni. Ez azzal magyarázható, hogy a rendszerben lévő várakozási sorok, pufferek folyamatosan telnek meg, mivel a láncolat végén
+lévő költséges backend nem képes a beérkezések számával tartani a kiszolgálási számot.
+Az alsó sorban látható grafikonok segítségével leolvasható, hogy az átlagos válaszidők 20 QPS környékén elérik az 5 másodperces felső korlátot, amivel szinkronban
+az időben kiszolgálásra kerülő kérések száma is drasztikusan elkezd visszaesni, majd
+utána a beérkező kérések elhanyagolható részét tudjuk csak időn belül kiszolgálni.
+Összességében megállapítható, hogy létezik egy olyan pont a szimulációban, aminél
+több beérkező kérés esetén csak az erőforrásokat használjuk és az érdemi kiszolgálás
+is hirtelen és drasztikus mértékben visszaesik. Ilyenkor elszállnak a késleltetések és
+memória használat, valamint folyamatosan nő a processzor használata is.
+
+5.6.2. Költséghatékony frontendek egymás mellett és költséges backend mögöttük
+Az 5.6.1 fejezetben bemutatott tapasztalatokat igazoló, készítettem egy következő mérést is. Ebben az esetben kicsit egyszerűbb architektúrával végeztem el a
+mérést. A megkonstruált erőforráshasználatok és a rendszer felépítését táblázatos
+formában az 5.4 táblázat tartalmazza.
+Fontos különbség, hogy ebben a mérésben nem hozunk létre egy hosszú láncot
+az egyes frontend alkalmazások egymás mögé kötésével, hanem ennél sokkal rövidebb
+lesz egy-egy kérés kiszolgálásának folyamata. A költséghatékony frontend után rögtön a költséges backendhez kerül továbbításra a beérkező kérés. Ezen kívül még egy
+37
+
+5.5. ábra. Három költséghatékony frontend után egy költséges
+backend mérés ábrázolása
+Név
+Replikák száma
+CPU használat
+(mCPU)
+CPU limit
+(mCPU)
+Memória limit
+(kB)
+Továbbhívás
+HPA
+
+front-end-1
+3
+
+back-end-1
+1
+
+25
+
+100
+
+1000
+
+2000
+
+1000
+
+1000
+
+back-end-1:80 -
+
+5.4. táblázat. Költséghatékony frontend több replikával és utána egy költséges backend
+fontos módosítás, hogy három darab frontend fog futni és továbbra is egy backend
+lesz hátul. A megadott alapján kiszámolható az egyes egységek által körülbelül kiszolgálható kérések száma másodpercenként. 5.1. egyenlet alapján leolvasható, hogy
+a front-end-1 áteresztő képessége 120 kérés, míg a back-end-1 ennél jóval szerényebb
+20 beérkező kérést tud kiszolgálni másodpercenként, mint ahogy az következik az 5.2
+egyenletből.
+3(replika) ×
+
+1000mCP U
+= 120kérés/másodperc
+25mCP U/kérés
+
+(5.1)
+
+1(replika) ×
+
+2000mCP U
+= 20kérés/másodperc
+100mCP U/kérés
+
+(5.2)
+
+Jelen mérésben nincsen megadva semmilyen automatikus skálázó, ezért amikor az operátor az indításkor létrehozza adott replikaszámmal az egyes Kubernetes Deploymenteket, azok nem is fognak változni, függetlenül a beérkező kérések
+mennyiségétől. A korábban bemutatott környezeten is elvégeztem a szimulált terhe38
+
+léssel történő mérést. Ezen eredményeket mutatja be az 5.6 ábra. A korábbi méréssel
+szinkronban, hasonló megállapításokat tudunk leolvasni. Látható, hogy a back-end1 telítése az elvárt 20 QPS körül megtörténik (illetve kicsit még előtte). Azonban
+ettől függetlenül a front-end-1 által elhasznált processzor mennyisége folyamatosan
+nőtt. A legmagasabb terhelésnél már olyan szintre emelkedett a három példány által
+összesen használt processzor erőforrása, mint a backend maximuma, tehát mintha 2
+teljes virtuális CPU magot is lefoglaltunk volna számukra.
+A költséges backend telítése után jelentősen megugrik a beérkező kérések kiszolgálásához szükséges késleltetések és az egyes egységek által használt memória
+mennyiségek is. A jobb alsó grafikonon látszik, hogy 20 QPS-nél már vissza is zuhant
+a sikeres kiszolgálások száma, amivel szinkronban a kiszolgálások átlagos válaszideje is megugrik a maximumra, ami jelenleg 5 másodperc, mert a beállítások szerint
+ennyi idő után bontjuk a http kapcsolatokat.
+
+5.6. ábra. Költséghatékony frontend három példányban és
+utána egy költséges backend mérés ábrázolása
+Röviden elmondható, hogy a beérkező kérések növekedésével együtt fokozatosan
+nő az elhasznált processzor mennyisége és a sikeres kiszolgálások száma is. Azonban
+van egy pont, amikor a hálózatban lévő szűk keresztmetszet nem képes tartani a
+lépést a beérkező kérések mennyiségével. Ebben az esetben hirtelen visszaesik a
+kiszolgálás minősége, drasztikusan megugrik a várható kiszolgálási idő és ezzel együtt
+csökken a sikeres kiszolgálások aránya.
+Az elvégzett mérések esetén látható, hogy valódi problémáról van szó, abban
+az esetben, ha a rendszer az előre definiált erőforráshasználatokkal fut és nem képes
+azokat automatikusan állítani. Ha a beállítások dinamikusabbak lennének, akkor
+például a frontend által lefoglalt és használt erőforrásokat át lehetne csoportosítani
+a backend részére, amivel növelhető lenne a rendszer globális maximum kiszolgálása.
+
+39
+
+5.7. Mérések automatikus horizontális skálázóval
+A korábban végzett mérések alapján ki lehet jelenteni, hogy a podok statikus
+konfigurálásával nem mindig találjuk meg a rendszer ideális állapotát, sőt a jövőbeli
+terhelés pontos információja nélkül nagyon valószínű, hogy szuboptimális állapotban
+maradunk. A Kubernetes beépítetten támogatja a podok automatikus horizontális
+skálázását, mint ahogy azt a 2.3.1.1 alfejezetben bemutatásra került. A további
+haladás részeként szerettem volna megnézni, hogy milyen megoldást kínál beépített
+skálázó és mik a limitációi. A fő cél az volt, hogy bizonyítást nyerjen, hogy a skálázó
+algoritmusa miatt nem képes minden esetben egy ideális állapotba jutni.
+
+5.7.1. Áttérés nehézségei
+Az új fajta mérés több gondot is okozott, tekintve hogy az eddigre bejáratott
+ábrázoló alkalmazást teljesen át kellett variálni, ugyanis ezen mérések jelentősen
+mások. Ebben az esetben az egyes értékek az időtől változóan függnek, ellentétben a
+HPA nélküli méréseknél, amikor minden a beérkező terheléstől változott. Valamint a
+kezdeti méréseknél kiderült, hogy az elkészített operátor logikai működésében is hiba
+van. A jelenség onnan fakadt, hogy minden egyes alkalommal, amikor az operátorunk
+futásra került, ellenőrizte a ServiceGraph konfigurációban megadott replika számot
+és ha nem stimmelt, akkor módosította azt. Ezen logika miatt, amikor a skálázó
+szeretett volna több azonos podot elindítani egy adott alkalmazásból, akkor ezt
+észrevette az operátor és visszaállította a kezdeti értéket. A következmény pedig az
+lett, hogy a rendszer sosem került stabil állapotba és skálázó döntései nem tudtak
+érvényre jutni.
+A fenti probléma ideálisan példaként tud szolgálni az operátorok egy kevésbé kutatott és ritkán tárgyalt kihívására. Amennyiben több kezelő alá esik egy-egy
+Kubernetes erőforrás, akkor nagyon körültekintően kell eljárni az egyes feladatkörök elosztásában. Nem triviális észrevenni, ha direkt vagy indirekt módon, egymás
+döntéseire reagáltan futnak le az operátorok algoritmusai. Ezzel a rendszer egésze
+könnyen instabil vagy holtponti (deadlock) állapotba tud kerülni.
+Egy-egy ilyen helyzetet felismerni aránylag körülményes, alapértelmezetten nincsen erre külön logika implementálva az orkesztrációs platformba. Emiatt ezen esetek
+detektálása, újabb operátor bevonása nélkül nem lehetséges. Azonban újabb logika bevonása, ami azonos erőforrások kezelését teszi lehetővé, tovább növelheti az
+indirekt egymásra hatások valószínűségét.
+Természetesen a fenti probléma könnyen javíthatónak bizonyult és csak egy kisebb módosításra volt szükség. Végleges implementációban a megadott replikaszám
+ellenőrzése az egyes deploymentekben csak akkor kerül ellenőrzésre, ha automatikus
+skálázó nem került definiálásra a megadott konfiguráció alapján.
+
+5.7.2. Lokálisan mohó, globálisan szuboptimális
+A korábban a 2.3.1.1 alfejezetben bemutatott HPA skálázó döntési mechanizmusát ismerve, sejthető volt, hogy milyen szituációkra viselkedhet érzékenyen. Maga az
+algoritmus, ami meghatározza az egyes podokból aktuálisan szükséges darabszámot
+egyedül az ő felelőssége alá tartozó konténereket veszi számításba. Ezen kívül nem
+rendelkezik egyéb ismerettel a többi szolgáltatást illetően. Például nem tudja, hogy
+40
+
+Név
+Kezdeti replika szám
+CPU használat
+(mCPU)
+CPU foglalás és limit
+(mCPU)
+Memória foglalás és limit
+(kB)
+Továbbhívás
+Minimum replika
+HPA Maximum replika
+Cél CPU használat
+
+front-end-1
+1
+
+back-end-1
+1
+
+25
+
+100
+
+1000
+
+1000
+
+1000
+
+1000
+
+back-end-1:80 1
+1
+5
+5
+70%
+70%
+
+5.5. táblázat. Három költséghatékony frontend után egy költséges backend
+milyen más alkalmazás komponensekkel van kapcsolatba az alá tartozó komponens
+se azt, hogy mennyi erőforrás érhető el összesen a klaszterben.
+A fenti tulajdonságok alapján a jelenlegi skálázó csak lokálisan optimális döntéseket tud hozni egy-egy alkalmazás egység számára. Azt kellett bebizonyítani, hogy
+ezen tulajdonsága miatt a rendszer összességét érintő, globális optimumot nem fogja
+megtalálni. Ehhez létrehoztam egy egyszerű szolgáltatás hálót és az egyes elemekhez tartozó horizontális skálázót. A konkrét értékeket az 5.5 táblázat tartalmazza.
+Látható, hogy a korábbi mérésekhez hasonlóan itt is egy Frontend és egy Backend alkalmazás szerepel. A kérések a frontendhez érkeznek be, ami mindegyiket továbbítja
+a backend felé. Az egyes komponens podok által lefoglalt és maximálisan használható erőforrások mennyisége megegyezik. Egy virtuális CPU magot használhatnak
+illetve egy megabájt memóriát. Annyi különbség van, hogy a frontend a beérkező
+kérésenként negyed annyi CPU használatot fog generálni, mint a backend.
+A korábbi mérésektől eltérően ebben az esetben az operátorunk a konfiguráció alapján fog létrehozni automatikus horizontális skálázót is. Azonos szabályok
+kerültek alkalmazásra a két egységhez kapcsolódóan. Legalább egy podnak futnia
+kell de legfeljebb öt futhat egyszerre, illetve a processzor használtságot figyelembe
+véve fogjuk meghozni a skálázási döntést. Ebben az esetben a HPA törekedni fog
+a 70 százalékos foglaltságra. Tehát a maximálisan elérhető proszeszor használat 70
+százaléknál magasabb használata esetén fogjuk megkezdeni a felskálázást.
+A generált terhelés hatására a rendszernek másodpercenként hetven beérkező
+kérést kellett kiszolgálnia. Az egyes http kapcsolatokra a megszokott módon öt másodperces időkorlát volt, amin belül ha nem érkezett válasz, akkor az adott kérést
+sikertelennek tekintjük. A teljes szimuláció a szolgáltatásháló létrehozásától számított tíz percig, azaz hatszáz másodpercig tartott.
+Mérés során parancssorból is jól látható a skálázó működése. Ezt mutatja be
+az 5.3 kódrészlet, amin belül két parancs kimenetét is láthatjuk a mérés kezdetét
+követő bő öt és feledik percben. Első sorban lekérdezzük az éppen működésben
+lévő horizontális skálázókat. A parancs kimenetének második oszlopából kiderül,
+hogy az egyes skálázók az azonos névvel rendelkező deployment erőforráshoz vannak
+kapcsolva. Leolvasható, hogy skálázó döntései alapján öt és négy replikának kellene
+
+41
+
+futni ebben az időpillanatban illetve, hogy mind a frontend mind pedig a backend
+túl lépte a számára előirányzott processzor fogyasztást.
+A kódrészlet második parancsán láthatjuk, hogy milyen podok és milyen állapotban léteztek ilyenkor. Megfigyelhető, hogy valóban szerepel a korábban a skálázó
+által meghatározásra kerülő négy darab frontend és az öt darab backend kapszula.
+Viszont, ami tanulságos, hogy közülük nem mindegyiknek sikerült az elvárt módon
+elindulnia. Erre abból lehet következtetni, hogy egyes podok állapot mezője nem
+az elvárt Running, hanem Pending állapotban vannak. Amiatt van ez, mert ugyan
+a skálázó döntése alapján el kellene induljon az elvárt számú kapszula, azonban a
+Kubernetes ütemezője nem tudja őket elindítani. Látható, hogy három plusz három kapszula tudott rendesen elindulni, így rögtön hat virtuális cpu magot le is
+foglaltunk a klaszterben és nem tud új egységet lehelyezni. Ez a magyarázata, hogy
+míg a korábban elindított egységek (magasabb AGE értékkel) sikeresen elindultak,
+azonban a későbbieknél ez már nem mondható el.
+$ kubectl get horizontalpodautoscalers
+NAME
+REFERENCE
+TARGETS MINPODS MAXPODS
+REPLICAS AGE
+back−end−1 Deployment/back−end−1 100%/70% 1
+5
+5
+m34s
+front−end−1 Deployment/front−end−1 80%/70% 1
+5
+4
+m34s
+
+5
+5
+
+$ kubectl get all
+NAME
+READY STATUS RESTARTS AGE
+pod/back−end−1−7cb9d49594−7btf8 1/1
+Running 0
+2m48s
+pod/back−end−1−7cb9d49594−fpgcj 0/1
+Pending 0
+108s
+pod/back−end−1−7cb9d49594−lhjvl 0/1
+Pending 0
+108s
+pod/back−end−1−7cb9d49594−rvsgk 1/1
+Running 0
+5m34s
+pod/back−end−1−7cb9d49594−vdl7m 1/1
+Running 0
+3m48s
+pod/front−end−1−6677c56849−26nmn 1/1
+Running 0
+5m34s
+pod/front−end−1−6677c56849−26zr2 1/1
+Running 0
+3m48s
+pod/front−end−1−6677c56849−8s9ph 0/1
+Pending 0
+48s
+pod/front−end−1−6677c56849−fndnw 1/1
+Running 0
+2m48s
+...
+
+5.3. kódrészlet. Horizontális skálázóval történő mérés
+A mérés eredményeit ábrázolva előkerült egy érdekesség is, amit az 5.7 ábrán
+láthatunk. A grafikonon egyszerre van ábrázolva a frontendből és a backendből futó
+egységek száma is. Erre utal a bal felső sarokban szereplő jelmagyarázat is, viszont a
+kék színnel rajzolt költségesebb backend nem is látszik. Ez amiatt van, mert a Prometheus adatai szerint egyszerre történtek meg a skálázások és ez az oka, hogy mindkét alkalmazásegységből három, három darab került elindításra. Értelemszerűen ez
+az erőforrások nem ideális elosztását vonja magával, hiszen azonos erőforrás került
+lefoglalásra és használatra a költségesebb illetve könnyebb alkalmazásrész részére is.
+Ha a skálázó rendelkezne a környezetéről több információval, akkor ennél ideálisabb
+arányban tudna erőforrásokat allokálni. Például, ha feltesszük, hogy összesen hat
+pod indítható, akkor előnyösebb lenne egy 2-4 vagy 1-5 megosztás a költségesebb
+backend javára. Viszont a tapasztalható megosztással nem tudjuk maximálisan kihasználni a rendszerben lévő erőforrásokat. Pontosabban mondva kihasználjuk, mert
+42
+
+a lefoglalt processzor mennyiségét jelentősen kihasználjuk, azonban a kiszolgálás minőségén és mennyiségén ez nem látszódik.
+
+5.7. ábra. HPA skálázóval történő mérés - 70% cél CPU használat mellett
+A bemutatott eredményekből adódik a kérdés, hogy mennyire általános jelenségről van szó, vagy csak a rosszul konfigurált skálázó a jelenség okozója. A megérzés szerint az előirányzott 70 százalékos processzorhasználattal lehetnek problémák,
+hogy túl alacsony szintre lettek beállítva. Emiatt a újabb szimulációkon kellett megnézni és értelmezni a jelenséget.
+
+5.7.3. Skálázás során jelentkező időkorlátok
+A klaszter létrehozása közben a lehető legtöbb paraméter nem explicit módon
+konfigurálva, ezért az alapértelmezett paraméterek kerültek alkalmazásra.
+
+43
+
+6. fejezet
+Megoldási lehetőségek
+Ebben a fejezetben szeretném bemutatni, hogy a korábban az 5 fejezetben látott
+mérések alapján milyen megoldási lehetőségek jöhetnek számításba. Természetesen
+minden bemutatott megoldásnak megvan a saját erőssége és gyengesége, amiket a
+következő alfejezetben részletesen is ismertetek.
+
+6.1. Feltárt probléma rövid összefoglalása
+A megoldási lehetőségek bemutatása előtt szeretném röviden a problémát és
+felvetést, amire keressük a megoldást. A mérési eredmények alapján arra jutottam,
+hogy léteznek olyan skálázási helyzetek, amikor a Kubernetes jelenlegi skálázója
+nem tud ideálisan lekezelni. Ez a működés onnan fakad, hogy a futó alkalmazásról
+nem rendelkezik globális ismerettel, csak az egyes független szolgáltatásokat kezeli
+a többitől függetlenül.
+A látott mérésekből kiderült, hogy a jelenlegi rendszerben létezik egy átbukási
+pont, amikor a beérkező kéréseket az össz alkalmazás már nem képes időben kiszolgálni, mert az egyik szolgáltatási komponens túlterhelt állapotba kerül. Ilyenkor
+a beérkező kérések továbbra is fogadásra kerülnek és elkezdődnek a pufferek megtöltései a rendszerben. Ez egy öngerjesztő folyamatot indít meg, ahol a hosszabb
+sorbaállás, a folyamatos túlterheltség miatt aránylag egyre kisebb lesz a sikeres kiszolgálások száma.
+A hatékonytalan működésen az sem segít, hogy az előre beállított idő túllépése
+után bontjuk a kapcsolatot, azonban ezt az alkalmazás nem tudja lekezelni. Nem
+létezik implementált megoldás arra az esetre, hogy az ilyen kérések által keltett
+az egyéb alkalmazás egységek terhelését megszüntesse. Értelemszerűen ebben az
+esetben felesleges még a back-end oldalán elvégezni az erőforrás intenzív feladatot,
+amikor az azt kiváltó eredeti kérés eldobásra került.
+A feltárt problémát két részre lehet osztani, amik egymás hatását tudják erősíteni vagy gyengíteni.
+
+6.2. Lehetséges eszközök
+A kiírásban megfogalmazott feladatom volt, hogy keressek olyan kiegészítést
+vagy javaslatot, ami a jelenlegi HPA működését javítani tudná. A feladatom elvégzése és források keresése közben számos megoldási lehetőség felmerült. A bemutatott
+44
+
+eszközök elemzése során látni fogjuk, hogy kicsit más megközelítésből és a probléma
+más aspektusát célozva próbálja a feltárt hatásokat csökkenteni.
+Az egyes eszközök értékelésénél az is fontos szempont volt, hogy a lehető legkevesebb módosítást kelljen végrehajtani az alkalmazás oldalán. Ez fontos, mert a
+megvalósítani kívánt feladat nem tartozik szorosan az alkalmazáshoz és ideális esetben teljesen transzparens módon működne. Természetesen több dolgot is mérlegelni
+kell az adott helyzetben ideálisnak ítélt megoldás kiválasztása közben.
+Fontos azt is megfontolni, hogy egy az infrastrukturális részekre hatást gyakorló
+eszköz milyen információk alapján engedjük, hogy dolgozzon. Természetesen minél
+több információval rendelkezünk az adott alkalmazást illetően, annál optimálisabb
+megoldásokat tudunk adni. Például, ha egy okos skálázónak rálátást adunk az alkalmazás hálózatára, az egyes egységek által használt erőforrásokra, a köztük lévő
+kapcsolatra és esetleg saját metrikákat is kivezetünk, akkor a skálázási döntés meghozatalában ezeket mind számításba tudjuk venni. Másik oldaról viszont aggályos
+lehet, ha ilyen szintű monitorozást és belelátást biztosítunk, mert ezáltal következtetéseket tudunk levonni a futtatott alkalmazásról. Ez pedig bizonyos esetekben az
+ügyfél érdekeit sértheti.
+
+6.2.1. Beépített állapotjelzők
+A Kubernetes kapszulák létrehozása közben, beépített módon lehetőségünk van
+a kapszula állapotáról jelzési pontokat meghatározni. Ezzel a megoldással sokrétűen
+használható funkciókat kapunk, amivel közvetetten több dolog befolyásolására nyílik
+lehetőségünk. Három jelzési módszerünk van, amit három különböző esetre találtak
+ki. Az alapvető felvetés onnan fakad, hogy különböző, gyakran előforduló helyzetekre
+adnak megoldási lehetőségeket különálló működésük által. Az egyes állapotjelzők
+ideális használati módját az alábbi szituációkkal szeretném szemléltetni.
+1. (Liveness probe - életteli próba) Előfordulhat, hogy az alkalmazásunk
+valamilyen bemenetek következtében holtponti állapotba kerül, amit nehéz
+lenne kívülről észrevenni, viszont külső behatás nélkül nem tudna továbblépni
+belőle. Illetve egyéb okok miatt is kerülhet olyan állapotban, amikor a vizsgált
+alkalmazás nem képes ellátni a működését, mindezt különösebb hiba és kilépés
+nélkül teszi. Szerencsére az ilyen esetek nem számítanak különösnek és hamar
+fel is lehet oldani az egység újraindításával, amit az életteli próbával tudunk
+kezelni. Ez egy teljesen ideális implementáció esetén nem fog gondot okozni,
+hiszen a kapszulák nem tartalmaznak, tárolnak fontos adatokat és állapotokat.
+Egy újraindítás sokkal idő- és költséghatékonyabb megoldás, mintha az egész
+rendszer funkcionális működését veszélyeztetnénk.
+2. (Startup probe - indítási próba) Eshetőség, hogy az alkalmazás elindítása
+után még el kell végezni pár inicializációt, mielőtt a külső kérések kiszolgálását
+elkezdhetné. Ebben az esetben is tudatni kell az infrastruktúra részére, hogy
+a jelenlegi állapotába még nem áll készen a működésre. Nagy hibázási lehetőséget rejtene magába, ha erre a korábban látott életteli próbát használjuk,
+mert nehéz kiszámítani mennyi időt fog igénybe venni a komponens elindulása.
+Külön emiatt létezik az indítási próba, ami csak akkor fogja az adott kapszula
+állapotát készenléti státuszba sorolni, ha sikeresen lefutott a próba.
+45
+
+3. (Readiness probe - készenléti próba) Tegyük fel, hogy van egy szolgáltatásunk, ahol nagy fájlok feltöltésére van lehetőségünk. A megvalósított funkció
+szám Ez egy időigényesebb feladat lesz, miközben az alkalmazásunkat nem
+szeretnénk további kérésekkel terhelni. Ebben az esetben meg kell várni a korábban érkező kérés kiszolgálását és csak utána van lehetőségünk fogadni a
+többit. Ilyen helyzetben tudjuk használni a készenléti próba jelzést. Amennyiben a próba sikertelen vol, tehát jelenleg nem engedhetünk új kiszolgálást,
+akkor a kapszula IP címe ki fog kerülni erre az időszakra a hozzá tartozó
+Service alól, így forgalom se fog eljutni hozzá.
+A fentebb bemutatott eszközök megkönnyítik a robusztus rendszerek építését.
+Segítségükkel kihasználhatjuk, hogy inkább az előforduló hiba gyors észrevételét és
+nem annak az elkerülését részesíti előnyben. Erre lehetőség is van, mert az új konténerek elindítása általában pár másodperc alatt megtörténik és ezáltal egy öngyógyító
+tulajdonsággal is fog bírni a kész rendszer. Így pedig a rendszer megbízhatósága is
+javulni fog.
+Ennek ellenére körültekintően kell ezeket az eszközöket is használni, hiszen rossz
+konfiguráció esetén mi magunk tehetjük működésképtelenné a rendszert. Például, hibás beállítás esetén az életteli próba hajlamos állandóan újraindítani az alkalmazást.
+Vagy a készenléti próba miatt egyes komponens egységek nem fognak annyi kérést
+kapni, amit azok valóban képesek lennének kiszolgálni.
+6.2.1.1. Módszer tesztelése
+A következő feladat az volt, hogy a bemutatott állapotjelzők használatával ismét el kellett végezni a korábbi mérést és megnézni az elért hatását. Számomra a
+készenléti probléma volt a legérdekesebb, hiszen ez a megoldás ad lehetőséget arra,
+hogy addig ne érkezzen kiszolgálandó kérés az adott alkalmazás egységhez, amíg egy
+bizonyos állapot teljesül.
+A mérés elvégzéséhez fel kellett készíteni a korábban megírt operátort, hogy
+a Deployment létrehozása közben egy készenléti próba definíciót is építsen bele.
+Valamint minden egyes alkalmazásegységnek rendelkeznie kell egy olyan végponttal,
+ami nem jelent számottevő többlet terhelést, és az ide érkező kérések kiszolgálása
+alapján tudja megmondani a rendszer jelenlegi terheltségét. Amennyiben a próba
+sikertelen, tehát a rendszer túlterhelt állapotban van, akkor nem szabad számára
+több kérést továbbítani, amíg nem csökken a kiszolgálásra váró kérések sora.
+
+6.1. ábra. Korábbi szimuláció megismétlése készenléti próbával
+A módszer hatékonyságának vizsgálata érdekében arra gondoltam, hogy egy
+korábban már bemutatott mérést fogok megismételni, csak kibővítve az állapotjel46
+
+zővel. Ehhez a ?? mérést választottam. A szimuláció elvégzését követően kapott
+eredmények sajnos nem váltották be a hozzájuk fűzött reményeket, és nem javultak
+számottevő mértékben a kiszolgálási paraméterek. Összességben hasonló tendenciát lehetett megfigyelni, mint a korábbi, próba nélküli mérés esetén. A mérés elején
+folyamatosan emelkedett a kiszolgált kérések száma, azonban az eredeti méréssel
+azonos időben és helyen megindult a meredek visszaesés is. Ez amiatt lehetett, mert
+a beérkező kérések kiszolgálása továbbra sem tudott megtörténni az öt másodperces időkorláton belül. Emiatt nem szeretném részletekbe menően elemezni minden
+korábbi eredményt, egyedül az említésre-méltó processzorfelhasználást. A kapott értékeket a 6.1 ábra tartalmazza. Az eredeti méréssel azonos tendenciát figyelhetünk
+meg. Ebben az esetben is azt látjuk, hogy a backend CPU felhasználása hamar egy
+plafonba ütközik, amin túl kitörni már nem tud. Illetve ezzel párhuzamosan a költséghatékony frontend továbbra is fogadja a beérkező kéréseket, ami miatt további
+erőforrásokat fog elhasználni. Emlékezzünk, hogy a korábbi méréseknél a backend
+részére 2000 mCPU és a frontend kapszuláknak pedig 1000 mCPU limitáció volt
+beállítva. Ezen limitek a mostani méréseknél sem változtak, azonban az ábráról
+tisztán leolvasható, hogy a felhasznált erőforrás mennyisége a korábbitól jelentősen
+elmaradt. Azt láthatjuk, hogy a beállított próba hatására a backend és a frontend által elhasznált erőforrások mennyisége lecsökkent. Az lehet erre a magyarázat, hogy
+a backend, amikor érzékelte, hogy kezd túlterhelődni, akkor egy kisebb időszakra
+szüneteltette a kérések fogadását, ami miatt arányaiban csökkent a mérések során
+elhasznált processzor mennyisége.
+Sajnos azonban a beállított próbával sem sikerült elérni, hogy a kiszolgálási mutatók megfelelő mértékben javuljanak, hiszen a megismételt mérésben is egy
+megadott pont után visszaesett a sikeres kiszolgálások száma. Jelen állásban minden alkalmazás egység saját magának a terheltségét tudja monitorozni, ami miatt
+hiába van a sor végén lévő backend komponens leterhelve, ezt a frontend még nem
+érzékeli és továbbra is fogadni fogja a felé irányított kéréseket. Esetleg érdemes lehet
+további finomításokat bevezetni és egy saját szkripttel ellenőrizni a láncolat végén
+elhelyezkedő backend állapotát a frontend oldaláról is. Ezzel megoldhatóvá válna,
+hogy a lassú komponenshez igazodva tudjuk a kéréseket fogadni már a kiszolgálási
+lánc elején.
+Természetesen a vázolt megoldás is tartalmaz néhány kifogásolható aspektust.
+Az ilyen módon összeállított rendszer egy másik komponens állapotát monitorozza
+és ez alapján tudja a saját készenléti állapotjelzőjét állítani. Statikusan kell ezen
+próbákat beállítani és a terhelés változásával változhat a szűk keresztmetszet is.
+Például egy valódi forgalmat elemezve rendszeresen megjelenik, hogy periodikusan
+lesznek terhelve a komponensek. Nap elején elképzelhető, hogy a bejelentkeztető
+komponens lesz túlterhelt és szűk keresztmetszet, míg nap közben pedig az adatok
+validációjáért felelős szolgáltatás. Ezen változásokat pedig nehéz lehet lekezelni, egy
+egyszerűbb szkripttel.
+
+6.2.2. Konténer specifikus metrikák alapján
+Következőnek ismertetett megoldási javaslat szintén a beépített Kubernetes erőforrásokat és azok funkcióit kívánja felhasználni. Ezen megoldásoknak előnye, hogy
+a klaszter oldaláról nem igényelnek nagy mértékű többlet fejlesztést és támogatást,
+hiszen ezek a funkciók valószínűleg rendelkezésre állnak már a rendszerben vagy pe47
+
+dig könnyen telepíthetőek. A mérleg másik oldalán ezen megoldások az alkalmazás
+oldalán igényelnek fejlesztéseket vagy pedig a helyes konfiguráció okozhat kihívást.
+Még korábban, a 2.3.1.1 alfejezetben bemutatott HPA skálázás esetén említésre
+került, hogy tetszőleges metrikák alapján is lehetőségünk van skálázni. Alapértelmezetten és leginkább a mérések által általunk is használt processzor erőforrás igény
+alapján történő skálázás a legelterjedtebb forgatókönyv. Ezen metrikákat a klaszter
+automatikusan tudja gyűjteni, így a skálázók konfigurációja és elindítása egyszerű
+folyamattá tud válni. Illetve a legtöbb esetben, ha a klaszterünkben nincsenek szűkös
+erőforráshatárok aránylag jó működést eredményez.
+A megoldási lehetőség hátránya, hogy ezen implementáció is lokálisan az egyes
+alkalmazásegységek skálázását fogja végezni. Így pedig, amikor az erőforrások allokációja nagymértékű nem képes a rendszer áteresztőképességét figyelembe venni.
+Továbbá nincs a skálázás mögött egy dinamikus algoritmus. Továbbra is az
+indítás pillanatában beállított konfigurációk alapján fogja meghozni a skálázó a
+döntéseit. Emiatt a kezdeti konfigurációnál nagyon alaposan végig kell gondolni,
+hogy milyen szabályokat szeretnénk alkalmazni. Esetlegesen rosszul felmért metrikák alapján többlet erőforrásokat is lefoglalhatunk a kiszolgálási metrikák javulása
+nélkül.
+A megoldás felvetése, hogy az alkalmazás logikai rétegében legyenek követve,
+mentve és exportálva olyan metrikák, amik az alsóbb-szintű infrastruktúra réteg
+döntéseinek lesz az alapja. Ezt szintén mérlegelni kell, hiszen nem tartozik szorosan
+az alkalmazás logikai részéhez illetve bizonyos mértékű többlet fejlesztést is igényel.
+
+6.2.3. Szolgáltatás hálók által nyújtott lehetőségek
+Több új kihívás is megjelent a mikroszolgáltatások elterjedésével, amivel szembe
+kellett nézni a fejlesztőknek és az üzemeltetőknek is. Ezen kihívások mentén született meg a szolgáltatás hálók (service mesh) fogalma. Fontos megjegyezni, hogy a
+fejezetben tárgyalt szolgáltatás háló kifejezés a dolgozatban szereplő többi előfordulásán túl egyéb megkötéseket is tartalmaz. Emiatt szeretném tisztázni, hogy a
+következőkben használt szolgáltatás háló alatt mit értünk.
+A szolgáltatás háló egy lehetséges módja, hogy szabályozzuk az alkalmazásrészek közti kommunikációt. Általa egy külön infrastruktúra réteget tudunk létrehozni,
+amin keresztül láthatjuk és szabályozhatjuk a komponensek közti kommunikációt.
+Ezzel ígéretet kapunk a kommunikáció optimalizációjára, amivel együtt az esetleges
+kieséseket is csökkenthetjük[23].
+Az egyes alkalmazás komponenseket nevezzük egy-egy szolgáltatásnak, és az ő
+kommunikációjuk által alkothatunk belőlük hálózatot. Több megvalósítás is létezik,
+azonban a felépítésük nagyon hasonlít. Egy ilyen architektúra bemutatása látható
+a 6.2 ábrán.
+Az ábrán Instance A/B/C névvel ellátott alkalmazás egységek valósítanak meg
+egy-egy szolgáltatást az elképzelt mikroszolgáltatás architektúrában. Jól látható,
+hogy köztük nem történik semmilyen közvetlen kommunikáció, csak a mellettük lévő oldalkocsival (sidecar) vannak kapcsolatban. Ezek az oldalkocsik tipikusan egy
+konfigurálható proxyt tartalmaznak és az adott szolgáltatás mellett üzemelnek. Ezt
+a mintát nevezik a oldalkocsis mintának (sidecar pattern)[18]. Minden, a szolgáltatások által küldött és fogadott kérésnek keresztül kell menni ezen a proxyn, ami
+pedig így belelátást kap a csomagokba illetve azok továbbítására is ráhatása van.
+48
+
+Ezáltal nyomon követhető és megfigyelhető lesz a komponensek közti kommunikáció.
+Ez önmagában is előnyös, hiszen könnyebben meg lehet tudni, hogy az egyes szolgáltatáshálók milyen kiszolgálást tudnak nyújtani, könnyebb kideríteni az aktuálisan
+legszűkebb keresztmetszetet. Természetesen a rendszerbe kötött proxykat kezelni is
+kell, amire egy külön réteg van, azonban ez már nagyobb mértékben specifikus az
+egyes megvalósításokra.
+
+6.2. ábra. Szolgáltatás hálót
+működésük[9]
+
+alkotó
+
+komponensek
+
+és
+
+Az új architektúra is rendelkezik bizonyos megkötésekkel, amit az alkalmazása
+előtt figyelembe kell venni. Mivel új komponenseket hozunk be a kommunikációba,
+ezért a késleltetések is meg fognak nőni. Valamint a proxyk működtetése is többlet
+erőforrásokkal fog járni. Természetesen növelni fogja a processzor foglaltságot és
+használtságot, valamint az alkalmazás futtatásához memóriára lesz szükség. További
+hátránya, ami egyben az előnye is, hogy egy új komplexitást hoz be az amúgy is
+összetett alkalmazás üzemeltetésbe. Ezért az architekturális döntés meghozatalában
+körültekintően kell eljárni.
+6.2.3.1. Gloo Edge
+- Ingress controller - hivetkozás - Mivel tud kevesebbet, mint a service mesh
+
+6.2.4. Okos skálázó
+A korábban bemutatott megoldási lehetőségeknél, 6.2.2 alfejezetben látottat leszámítva, a fő motiváció a beérkező terhelés szabályozása volt. Az eredeti problémánkat viszont több irányból is meg lehet fogni. Másik megközelítésben az erőforrások
+globálisan optimális elosztása a fő szempont a megoldandó kihívás.
+A következő megoldási javaslat ezt a megközelítést veszi alapul és bővíti ki a
+korábban látott javaslatokkal. A javaslat egy központi skálázó alkalmazás, ami folyamatosan monitorozza a klaszter teljes állapotát és az éppen futtatott alkalmazásokat
+49
+
+is. A skálázási javaslatokat pedig ezen információk összességéből tudja meghatározni. Így figyelembe tudja venni az egyes kapszulák minőségi osztály besorolásuktól
+kezdve az egyes komponensek közti forgalmak megosztásán keresztül az esetlegesen
+exportált alkalmazás metrikákig.
+Ezzel a megoldással lehetőségünk lenne az alkalmazás egységek kezelése helyett
+a teljes rendszer számára ideális döntéseket meghozni. Akár több névtérben futó
+rendszerek erőforrás allokációit is össze lehet hangolni, ami további optimalizálást
+jelentene.
+A bemutatott javaslatok közül ez a megoldás a legkomplexebb is. Ez egyértelműen a Kubernetes platform nyílt forráskódjának bővítésével járna. Egy ilyen projekt
+jelentős szakmai erőforrás ráfordításával járna, hiszen az újfajta skálázóhoz új erőforrásokat is létre kell hozni illetve a kezeléshez szükséges logikát implementálni is
+kell.
+Nem elhanyagolható felvetés, hogy a skálázási algoritmus logikájának bonyolítása jelentős kockázatokkal járhat, ha annak paraméterezését a felhasználóra bízzuk.
+
+6.2.5. HPA és VPA skálázó
+
+50
+
+7. fejezet
+Összefoglalás
+7.1. Elvégzett munka
+Ráadásul folyamatosan fejlődnek a keretrendszerben felhasznált egységek, így
+folyamatosan lehetőség van bővíteni is azokat.
+Alapvetően jól működik a beépített skálázó. Pár extra lépéssel javítható lenne.
+Vagy nagyon komplex lehetőség vezetne csak sikerre.
+
+7.2. Dolgozatban nem vizsgált kérdések
+Megítélésem szerint a két félévben egyenletesen sikerült haladni, amivel egyidejűleg folyamatosan bontakozott ki a feladat komplexitása. Sok feladatot sikerült
+megvalósítani és a legtöbb vizsgált kérdésre sikerült választ is kapni. Ettől függetlenül a tanulmányok során tetemes számban előkerültek olyan kérdések, amik a rendelkezésre álló idő miatt nem sikerült felderíteni. Ezen kérdéskörök további vizsgálatot
+és kutatást igényelnének.
+Az elvégzett mérések során bizonyos egyszerűsítésekkel éltem, hogy értelmezhető maradjon a kapott eredmény. Ilyen egyszerűsítés például az a megkötés, hogy a
+beérkező kérések száma egyenletes az időben, azonban ez nem minden rendszer esetén van így. Jól megfigyelhető periódusok jelentkezhet egy napon, hónapon vagy éven
+belül is. Több projekt is foglalkozik ezzel a jelenséggel és próbálják szintén keresni
+az erőforrások ideális használatát a historikus adatok elemzésével. Létezik egy fejlesztés, ami a horizontális pod skálázót szeretné ilyen irányba továbbfejleszteni[16].
+A dolgozatban elkészített mérések mögötti szolgáltatás hálók a leggyakoribb,
+egyszerű eseteket fedték le. Egy valódi mikroszolgáltatás architektúra ennél nagyságrendekkel több komponenssel rendelkezik, melyek közti kapcsolatok is összetettebbek. Jelenlegi keretrendszert tovább lehetne fejleszteni, hogy a komponensekhez érkező kérések megadott arányok mellett kerüljenek egyik- vagy másik további
+komponenshez továbbküldésre. Ezzel kicsit dinamikusabbá lehetne tenni a mostani
+rendszert, ami minden beérkező kérés esetén azonos kérés-válasz folyamatokat fogja
+elindítani.
+További vizsgálandó kérdés, hogy a kapott eredmények más környezetben hogyan változnak meg. Például, más eredmény jöhet ki, ha több csomóponttal, nagyobb terhelés mellett, nagyobb erőforrás felhasználással történnek a tesztek. Az a
+gond, hogy az ilyen klaszterek bérlése drága különösen, hogy a méréseink szándé51
+
+kosan a magas számban használják a processzort, ami alapja szokott lenni a bérelt
+infrastruktúra utáni számlázásnak.
+
+7.2.1. Keretrendszer további használata
+Az elvégzett munka jelentős részét kitevő keretrendszer lehetőséget biztosít további felhasználásra is. A diplomamunkán belül a feladata az volt, hogy fiktív paraméterekkel rendelkező szolgáltatás hálókat tudjunk elindítani és létrehozni. Ezen
+kívül egy igazán hasznos felhasználási mód lehet, ha már létező, üzemelő hálózatokat szeretnénk klónozni. Tehát létre tudunk hozni kisebb másolatokat az eredeti
+rendszerről, ami közel azonos kiszolgálási és erőforrás felhasználási paraméterekkel
+fog rendelkezni, mint a valódi. Ezután lehetőségünk van fiktív fejlesztéseket végezni
+az egyes komponensek átkonfigurálásával és az így kapott rendszert tesztelni. Ezáltal
+könnyebben és megalapozott döntéseket lehet hozni, hogy az aktuális környezetben
+melyik szolgáltatást érdemes fejleszteni, melyikkel lehet érdemben befolyásolni az
+eredő nyereséget.
+Továbbá az előzőleg bemutatott példán keresztül ki tudjuk próbálni az aktuális rendszerünket egy új környezetben is. Mindezt úgy tudjuk megtenni, hogy az
+alkalmazás egységeket alkotó képfájlok mozgatása nem szükséges, ezáltal nem csak
+gyorsabb lesz a tesztelés, hanem nem kell újabb felek számára elérhetővé tenni a
+megírt állományokat.
+
+52
+
+Irodalomjegyzék
+[1] Tukovics András: Dockerhub - tuti/service-graph-simulator, 2020.
+URL
+https://hub.docker.com/repository/docker/tuti/
+service-graph-simulator. (felkeresve: 2021.05.13.).
+[2] Tutkovics András: Github repo scaling msc, 2021. URL https://github.com/
+Tutkovics/Scaling_MSc. (felkeresve: 2021.05.05.).
+[3] Markosz Maliosz Balla David, Simon Csaba: Adaptive scaling of kubernetes
+pods, 2020.
+[4] Roland Huß Bilgin Ibryam: Kubernetes Patterns. 2019.
+[5] Kubernetes
+Blog:
+Borg:
+The
+predecessor
+to
+kubernetes,
+2015.04.23. URL
+https://kubernetes.io/blog/2015/04/
+borg-predecessor-to-kubernetes/. (felkeresve: 2021.05.02.).
+[6] CNCF: Who we are | cloud native computing foundation, 2021.
+URL https://www.cncf.io/about/who-we-are/. (felkeresve: 2021.05.14.).
+[7] Denis Denisov (denji): Http(s) benchmark tools, testing/debugging, and restapi
+(restful), 2017.02.24.
+URL https://github.com/denji/awesome-http-benchmark. (felkeresve:
+2021.11.21.).
+[8] IBM Cloud Education: What is etcd? | ibm, 2019.12.18. URL https:
+//www.ibm.com/cloud/learn/etcd#toc-raft-conse-6_wBECZ-. (felkeresve: 2021.05.13.).
+[9] Owen Garrett Floyd Smith: What is a service mesh? - nginx, 2018.04.03.
+URL https://www.nginx.com/blog/what-is-a-service-mesh/. (felkeresve: 2021.12.05.).
+[10] The Linux Foundation: Prometheus - monitoring system and time series database, 2014-2021.
+URL https://prometheus.io/docs/introduction/overview/. (felkeresve:
+2021.05.05.).
+[11] The Linux Foundation: Kubernetes components | kubernetes, 2021.03.18.
+URL
+https://kubernetes.io/docs/concepts/overview/components/.
+(felkeresve: 2021.05.13.).
+
+53
+
+[12] The Linux Foundation: Configure quality of service for pods | kubernetes,
+2021.05.20.
+URL https://kubernetes.io/docs/tasks/configure-pod-container/
+quality-service-pod/. (felkeresve: 2021.11.14.).
+[13] The Linux Foundation: Production environment - kubernetes, April 08, 2021.
+URL
+https://kubernetes.io/docs/setup/production-environment/
+#production-control-plane. (felkeresve: 2021.05.08.).
+[14] The Linux Foundation: Operator pattern | kubernetes, Sep 07, 2021. URL
+https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
+#writing-operator. (felkeresve: 2021.11.01.).
+[15] Nectarios Koziris Ioannis Giannakopoulos, Dimitrios Tsoumakos: Towards an
+adaptive, fully automated performance modeling methodology for cloud applications, 2018.
+[16] Jamie Thompson (jthomperoo): Horizontal pod autoscaler built with
+predictive abilities using statistical models, 2019.12.09. URL https://
+github.com/jthomperoo/predictive-horizontal-pod-autoscaler. (felkeresve: 2021.12.05.).
+[17] Christopher
+McFadden:
+The
+fascinating
+history
+of
+netflix,
+Jul
+04,
+2020. URL
+https://interestingengineering.com/
+the-fascinating-history-of-netflix. (felkeresve: 2021.05.06.).
+[18] Masashi Narumoto: Oldalkocsi minta - cloud design patterns, 2021.08.11. URL
+https://docs.microsoft.com/hu-hu/azure/architecture/patterns/
+sidecar. (felkeresve: 2021.12.05.).
+[19] NEWBEDEV: What is a "tight loop"? URL https://medium.com/blutv/
+qos-classes-of-k8s-pods-722238a61c93. (felkeresve: 2021.11.14.).
+[20] Operator-SDK: Operator sdk, 2020.
+URL https://sdk.operatorframework.io. (felkeresve: 2021.05.13.).
+[21] Operator-SDK: Operatorhub.io | the registry for kubernetes operators, 2020.
+URL https://operatorhub.io. (felkeresve: 2021.05.13.).
+[22] Carlos Becker Westphall Rafael Weingärtner, Gabriel Beims Bräscher: Cloud
+resource management: A survey on forecasting and profiling models. 2015.
+[23] Inc. Red Hat: What’s a service mesh?, 2018.06.29. URL https://www.
+redhat.com/en/topics/microservices/what-is-a-service-mesh. (felkeresve: 2021.12.05.).
+[24] Tutkovics András (szakdolgozat): Felhő alapú alkalmazások teljesítményének
+kiértékelése és modellezése, 2019.
+[25] Marco Chiesa Thomas Wang, Simone Ferlin: Predicting cpu usage for proactive
+autoscaling, 2021.
+54
+
+[26] Tomás Senart (tsenart): Vegeta: Http load testing tool and library., 2013.08.13.
+URL https://github.com/tsenart/vegeta. (felkeresve: 2021.11.21.).
+[27] UKEssays: Impact of technology on amazon’s business strategy, 8th
+Feb 2020. URL https://www.ukessays.com/essays/business-strategy/
+impact-of-technology-on-amazons-business-strategy.php. (felkeresve:
+2021.05.06.).
+[28] VMware: The state of kubernetes 2020. 2020.
+[29] Zhiming Shen Sethuraman Subbiah Xiaohui Gu John Wilkes: Cloudscale: Elastic resource scaling for multi-tenant cloud systems, 2011.
+
+55
+
+Rövidítések és fordítások
+A szakterület sok rövidítést és mégtöbb angol kifejezést tartalmaz, amiket a
+lehetőségemhez mérten próbáltam magyarítani a könyebb olvashatóság érdekébe,
+illetve feloldani az első előfordulásakor. Ahol találtam már előforduló magyar kifejezést, azt használtam, azonban az esetek nagy részében ez nem állt fent, így elnézést
+az esetlegesen váratlan és meglepő kifejezésekért. Emiatt és a könyebb kereshetőség
+érdekében összegyűjtöttem a rövidítéseket és az általam használt magyarításokat.
+API Application Programming InQPS Queries per Second
+HPA Horizontal Pod Autoscaler / terface / Alkalmazásprogramozási felület
+OLM Operator Lifecycle Manager /
+Automatikus Horizontális Pod Skálázó
+VPA Vertical Pod Autoscaler / Au- Operátor Életciklus kezelő
+FE Front-end
+tomatikus Vertikális Pod Skálázó
+BE Back-end
+CPU Processzor
+HTTP Hypertext Transfer Protocol
+I/O Input and Output / Kimenet és
+Tight loop Szoros ciklus
+Bemenet
+kubectl Kubernetes parancssoros
+K8s Kubernetes
+CNCF Cloud Native Computing kezelője
+Liveness probe Életteli próba
+Foundation
+Startup probe Indítási próba
+Control plane Vezérlő sík
+Readiness probe Készenléti próba
+Node Csomópont
+Service Mesh Szolgáltatás háló
+Pod Kapszula
+Kube Scheduler Ütemező
+CR Custom Resource / Saját Erőforrás
+CRD Custom Resource Definition /
+Saját Erőforrás Leíró
+SLA Service-level Agreement / szolgáltatási szint megállapodásokba
+QoE Quality of Experience / érzékelhető szolgáltatási szint
+
+56
+
+

@@ -2,8 +2,8 @@
 \chapter{Rendszer felépítése}
 \label{sec:system}
 %----------------------------------------------------------------------------
-Ebben a fejezetben szeretném bemutatni az általam elkészített rendszert és az azt alkotó egyes részeket. A
-
+Ebben a fejezetben szeretném bemutatni az elkészített rendszert és az azt alkotó egyes elemeket.
+A fejezet végén részletezésre kerül egy teljes mérés folyamata és a kapott eredmények feldolgozásának lépései.
 
 %----------------------------------------------------------------------------
 \section{Rendszer részei}
@@ -12,9 +12,16 @@ Az elkészült rendszer három fő komponensből áll. Ezek együttesen képesek
 
 Az egyes részekről bővebben is lesz szó, azonban most átfogóan ismertetem a rendszert, ami a \ref{fig:system_overview} ábrán látható. Minden elem megalkotásánál egy lényeges szempont volt, hogy az elkészült rendszerrel könnyen lehessen méréseket indítani és a lehető legtöbb paraméter konfigurálható legyen.
 
-A mérések paramétereit egy konfigurációs fájlban tudjuk megadni, ahonnan egy Python program olvassa be és vezényli le a mérések elvégzését. Először a Kubernetes API-n keresztül létrehoz egy \textit{ServiceGraph} objektumot. Ez nem egy beépített típus, úgyhogy a Kubernetes nem tud vele mit kezdeni ezért írni kellett egy operátort, ami képes egy ilyen definíció szerint létrehozni a szükséges erőforrásokat (\textit{deployment, pod, service, HPA}). Ahhoz, hogy az egyes kiszolgáló egységeket is tudjuk tetszés szerint konfigurálni kell egy olyan képfájl, ami a megadott paraméterek alapján tud működni. Ezért írni kellett egy külön alkalmazást hozzá.
+A mérések paramétereit egy konfigurációs fájlban tudjuk megadni, ahonnan egy Python program olvassa be és vezényli le a mérések elvégzését.
+Először a Kubernetes API-n keresztül létrehoz egy \textit{ServiceGraph} objektumot, ami nem egy beépített típus.
+Az objektum értelmezéséhez és megfelelő kezeléséhez létre kellett hozni egy operátort, ami képes egy ilyen definíció szerint létrehozni a szükséges erőforrásokat (\textit{deployment, pod, service, HPA}).
 
-Miután elkészültek a kért objektumok és képesek már kiszolgálni a klaszteren kívülről érkező igényeket a Python szkript elkezd forgalmat generálni. A terhelés lejárta után ki kell nyerni a mérés során keletkezett adatokat. Ebben egy külön szoftver segít a Prometheus\citep{Prometheus}. 
+Ahhoz, hogy az egyes kiszolgáló egységeket is tudjuk tetszés szerint konfigurálni kell egy olyan képfájl, ami a megadott paraméterek alapján tud működni.
+Ezért írni kellett egy külön alkalmazást hozzá.
+
+Miután elkészültek a kért objektumok és képesek már kiszolgálni a klaszteren kívülről érkező igényeket a Python szkript elkezd számukra forgalmat generálni.
+A terhelés lejárta után ki kell nyerni a mérés során keletkezett adatokat.
+A feladat elvégzésében segítségünkre lesz a Prometheus\citep{Prometheus} alkalmazás, ami gyűjti és exportálja a klaszterből érkező metrikákat. 
 
 Az elkészült rendszerhez szükséges részek forráskódjai megtalálhatóak a GitHub felületén\citep{gitRepo}. 
 
@@ -32,7 +39,8 @@ Az elkészült rendszerhez szükséges részek forráskódjai megtalálhatóak a
 A korábbi projekttárgyak keretén belül már foglalkoztam hasonló kérdéskörrel, így már volt az egyes eszközök használatához tapasztalat és implementáció is, amiből ki lehetett indulni. 
 Önálló labor tárgyban megismerkedtem a Go programozási nyelvvel, és elkészítettem egy Kubernetes operátort, ami képes egyedi erőforrás definíciók feldolgozására és ez alapján képes beépített objektumokat létrehozni. A félév elején elején ezt tovább kellett bővíteni, hogy képes legyen skálázót is létrehozni valamint javítani kellett a megbízhatóságán is.
 
-Korábban készítettem már egy Docker képfájl is, ami a jelenlegi rendszerben felhasználttal azonos céllal született, hogy szabadon konfigurálható paraméterezés alapján szolgálja ki a beérkező kéréseket. Az így megírt Go alapú webszervert is a félév során tovább kellett bővíteni, személyre szabni, hogy a valósághűbb eredményeket szolgáltasson.
+%TODO
+Korábban készítettem egy Docker képfájlt, ami a jelenlegi rendszerben felhasználttal azonos céllal született, hogy szabadon konfigurálható paraméterezés alapján szolgálja ki a beérkező kéréseket. Az így megírt Go alapú webszervert is tovább kellett fejleszteni, személyre szabni, hogy valósághűbb eredményeket szolgáltasson.
 
 %----------------------------------------------------------------------------
 \section{Operátor}
