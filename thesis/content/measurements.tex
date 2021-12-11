@@ -177,7 +177,7 @@ Ezután meg kellett tervezni a diplomamunkához szükséges méréseket, amik a 
 \section{Elvégzett mérések statikus konfigurációkkal}
 %----------------------------------------------------------------------------
 A projektmunka jelentős részét tette ki, hogy méréseket kellett végezni a korábban bemutatott rendszerelemekkel rendelkező környezetben.
-A mérések darabszámát szemlélteti \aref{python_drawer} kódrészlet. Beépített Linux parancsok segítségével könnyen megkaphatjuk a projekt során készített és a kiértékeléshez használt \textit{json} dokumentumok darabszáma. Ahogy a kódrészlet is mutatja először rekurzívan lekérdezzük az adott mappán és almappákon belül található adott kiterjesztéssel rendelkező fájlokat \textit{(find)}. 
+A mérések darabszámát szemlélteti \aref{number_of_measurements} kódrészlet. Beépített Linux parancsok segítségével könnyen megkaphatjuk a projekt során készített és a kiértékeléshez használt \textit{json} dokumentumok darabszáma. Ahogy a kódrészlet is mutatja először rekurzívan lekérdezzük az adott mappán és almappákon belül található adott kiterjesztéssel rendelkező fájlokat \textit{(find)}. 
 Majd az így kapott eredményt csővezeték segítségével hozzákötjük egy szintén beépített parancs \textit{(wc)} bemenetére, ami megszámolja a kiírt sorok számát. 
 Ahogy az a kódrészleten is látszik, hogy ennek a kimenete $1445$, ami azt jelenti, hogy a projekt jelenlegi állapotához kapcsolódóan ennyi mérés született. %TODO konkrét mérési számot frissíteni
 Az egyes mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb Prometheus-ból kapott eredményeket jelenti.
@@ -396,7 +396,7 @@ Az egyes http kapcsolatokra a megszokott módon öt másodperces időkorlát vol
 A teljes szimuláció a szolgáltatásháló létrehozásától számított tíz percig, azaz hatszáz másodpercig tartott.
 
 Mérés során parancssorból is jól látható a skálázó működése. 
-Ezt mutatja be \aref{hpa_measurement_pending} kódrészlet, amin belül két parancs kimenetét is láthatjuk a mérés kezdetét követő bő öt és feledik percben.
+Ezt mutatja be \aref{hpa_measurement_pending} kódrészlet, amin belül két parancs kimenetét is láthatjuk a mérés kezdetét követő öt és feledik percben.
 Első sorban lekérdezzük az éppen működésben lévő horizontális skálázókat. 
 A parancs kimenetének második oszlopából kiderül, hogy az egyes skálázók az azonos névvel rendelkező deployment erőforráshoz vannak kapcsolva.
 Leolvasható, hogy skálázó döntései alapján öt és négy replikának kellene futni ebben az időpillanatban illetve, hogy mind a frontend mind pedig a backend túl lépte a számára előirányzott processzor fogyasztást.
@@ -418,10 +418,23 @@ A grafikonon egyszerre van ábrázolva a frontendből és a backendből futó eg
 Erre utal a bal felső sarokban szereplő jelmagyarázat is, viszont a kék színnel rajzolt költségesebb backend nem is látszik.
 Ez amiatt van, mert a Prometheus adatai szerint egyszerre történtek meg a skálázások és ez az oka, hogy mindkét alkalmazásegységből három, három darab került elindításra.
 Értelemszerűen ez az erőforrások nem ideális elosztását vonja magával, hiszen azonos erőforrás került lefoglalásra és használatra a költségesebb illetve könnyebb alkalmazásrész részére is.
-Ha a skálázó rendelkezne a környezetéről több információval, akkor ennél ideálisabb arányban tudna erőforrásokat allokálni.
-Például, ha feltesszük, hogy összesen hat pod indítható, akkor előnyösebb lenne egy 2-4 vagy 1-5 megosztás a költségesebb backend javára.
-Viszont a tapasztalható megosztással nem tudjuk maximálisan kihasználni a rendszerben lévő erőforrásokat.
-Pontosabban mondva kihasználjuk, mert a lefoglalt processzor mennyiségét jelentősen kihasználjuk, azonban a kiszolgálás minőségén és mennyiségén ez nem látszódik.
+
+\paragraph{Elméleti optimum meghatározása} 
+A skálázó minősítéséhez meg kell határozni mi lenne az adott rendszerben ideális állapot.
+Melyik az az erőforrás-elosztás, amikor a legtöbb kérést tudja kiszolgálni.
+Ezt könnyű megtenni, ha rendelkezünk pár szükséges paraméterrel.
+Tudni kell a klaszter által kiosztható erőforrás mennyisége, illetve azt, hogy abból hány darab pod indítható. Jelen esetben ez $6000$ mCPU, amiből $6$ darab kapszula kerülhet elindításra.
+Ezen felül tudni kell az egyes podok által maximálisan kiszolgálható kérések számát. 
+Ez is kiszámolható \aref{tab:1FE_1BE_chain_with_HPA} táblázatban megadott paraméterekből. 
+Frontend számára 1 virtuális processzormag áll rendelkezésre, és minden kiszolgált kérés igénye $25$ mCPU.
+Ebből adódik, hogy egy frontend kapszula $40$ kérés kiszolgálását tudja teljesíteni másodpercenként. 
+Egy backend pod ezzel analóg módon $1000mCPU / 100mCPU = 10$ kérés áteresztésére képes másodpercenként.
+Az elvégzett szimuláció esetén, mivel egy láncot alkotnak az alkalmazások, a leglassabb alkalmazás komponens fogja jelenteni a felső határt.
+Jelen példánál azt kapjuk, hogy 1:5 vagy 2:4 arányban elindítva a kapszulákat a kiszolgálás felső határa mindkét esetben $40$ másodpercenkénti kérés lesz.
+Egyedül az a különbség, hogy ez a plafonérték a frontend vagy backend oldalán jelenik meg.\\
+
+Tehát skálázó által alkotott megosztással a jelenlegi mérésben nem tudjuk maximálisan kihasználni a rendszerben lévő erőforrásokat.
+Pontosabban mondva kihasználjuk, mert a lefoglalt processzor mennyiségét jelentősen használjuk, azonban a kiszolgálás minőségén és mennyiségén ez nem látszódik.
 
 \begin{figure}[!ht]
 	\centering
@@ -434,12 +447,6 @@ A bemutatott eredményekből adódik a kérdés, hogy mennyire általános jelen
 Felmerült gondolatként, hogy a rendszer kezdeti állapotának változtatásával kaphatunk-e eltérő végeredményt.
 Ezekre a kérdésekre kellett válaszokat keresni, hogy megállapításokat tegyünk a skálázó működését illetően.
 
-%A megérzés szerint az előirányzott 70 százalékos processzorhasználattal lehetnek problémák, hogy túl alacsony szintre lettek beállítva.
-%Emiatt a újabb szimulációkon kellett megnézni és értelmezni a jelenséget. 
-
-%TODO - újabb mérések
-% 3) magasabb cpu használat
-% 2) frontendből több indul kezdetben és mikor skálázza le
 
 \subsection{Mérés megismétlése, más indulási állapottal}
 %----------------------------------------------------------------------------
