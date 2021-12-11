@@ -218,6 +218,29 @@ A \verb+Prometheus+ egészen kiterjeszthető rendszer így közel tetszőleges m
 A mérés végén miután összegyűjtöttük az összes keletkező adatokat, beleértve a \verb+Prometheus+ és \verb+Vegeta+ rendszereket is és az eredeti konfigurációt is azokat perzisztálni kell. Erre a legkézenfekvőbb módszer az adatok kiírása \verb+json+ fájlba. Ez azért is előnyös, mert könnyen olvasható és feldolgozható a formátum. 
 
 %----------------------------------------------------------------------------
+\section{Eredmények ábrázolása}
+%----------------------------------------------------------------------------
+Az egyes mérések kimenetei \textit{json} fájlok, melyek értelmezése és ezáltal a következtetések levonása számunkra nehéz feladat lenne ebben a formában. 
+Szükségessé vált tehát egy külön alkalmazás implementálása, ami az általunk kapott eredményeket könnyen átlátható formában ábrázolja. 
+
+A feladat megoldására szintén a Python nyelvet választottam, mert könnyen lehet benne fájlokat kezelni, egyes objektumokat módosítani és rendelkezik grafikus megjelenítő modullal.
+Fontos szempont volt az alkalmazás könnyű használata ezért bizonyos paramétereket akár parancssorban, indításkor is meg lehet adni. 
+Ezáltal az alkalmazás működését tudjuk befolyásolni a konkrét forráskód módosítása nélkül.
+%Indításnál megadhatjuk, hogy milyen nevet szeretnénk a grafikonnak, milyen címke legyen az $X$ és $Y$ tengelyeken, hogy le akarjuk-e menteni az ábrát, illetve a legfontosabb, hogy melyik mappában keresse a mérési eredményeket. Egy példa konfiguráció is látható a korábban hivatkozott kódrészlet alján. \\
+
+% Rajzoló program indítása --------------------------------------------------
+%\lstset{caption=Eredményeket feldolgozó alkalmazás használata, label=python_drawer}
+%\lstinputlisting{figures/python-drawer.sh}
+
+Az alkalmazás indításakor meg kell adni, hogy hova vannak mentve a mérések során készült kimeneti \textit{json} fájlok, melyek feldolgozása szükséges.
+Itt egy-egy mérés a forgalomgenerátor által, adott terhelés mellett, adott ideig történő szimulációját értjük.
+Ebből következik, hogy egy teszteset futtatása több ilyen értelemben vett mérést tartalmaz, hiszen egy skálán megy végig a rendszer, ahol a minimális QPS értéktől megadott lépésközzel halad a maximális QPS értékig. 
+Egyesével elkezdi beolvasni a mérési eredményeket és minden fájlból készít egy "tisztázott" eredményt.
+Ebben már csak az adott grafikon kirajzolásához nélkülözhetetlen értékeket tartalmazza.
+Például előfordul, hogy a Prometheus eredményében szerepel olyan pod is, ami nem vett részt az adott mérésben, mert még a korábbiból maradt ott.
+Az ilyen eseteket észlelni kell és kiszűrni az értékeit, hogy ne okozzanak anomáliákat. 
+
+%----------------------------------------------------------------------------
 \section{A mérés és az eredmények feldolgozásának elemei}
 \label{sec:measure_steps}
 %----------------------------------------------------------------------------

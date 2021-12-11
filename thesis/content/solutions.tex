@@ -11,14 +11,14 @@ Természetesen minden bemutatott megoldásnak megvan a saját erőssége és gye
 %----------------------------------------------------------------------------
 
 A megoldási lehetőségek bemutatása előtt szeretném röviden  a problémát és felvetést, amire keressük a megoldást.
-A mérési eredmények alapján arra jutottam, hogy léteznek olyan skálázási helyzetek, amikor a Kubernetes jelenlegi skálázója nem tud ideálisan lekezelni.
+A mérési eredmények alapján arra jutottam, hogy léteznek olyan skálázási helyzetek, melyeket a Kubernetes jelenlegi skálázója nem tud ideálisan kezelni.
 Ez a működés onnan fakad, hogy a futó alkalmazásról nem rendelkezik globális ismerettel, csak az egyes független szolgáltatásokat kezeli a többitől függetlenül.
 
 A látott mérésekből kiderült, hogy a jelenlegi rendszerben létezik egy átbukási pont, amikor a beérkező kéréseket az össz alkalmazás már nem képes időben kiszolgálni, mert az egyik szolgáltatási komponens túlterhelt állapotba kerül.
-Ilyenkor a beérkező kérések továbbra is fogadásra kerülnek és elkezdődnek a pufferek megtöltései a rendszerben.
+Ilyenkor a beérkező kérések továbbra is fogadásra kerülnek és elkezdődik a rendszerben lévő pufferek megtöltése.
 Ez egy öngerjesztő folyamatot indít meg, ahol a hosszabb sorbaállás, a folyamatos túlterheltség miatt aránylag egyre kisebb lesz a sikeres kiszolgálások száma. 
 
-A hatékonytalan működésen az sem segít, hogy az előre beállított idő túllépése után bontjuk a kapcsolatot, azonban ezt az alkalmazás nem tudja lekezelni.
+A hatékonytalan működést tovább rontja, hogy az előre beállított idő túllépése után bontjuk a kapcsolatot, azonban ezt az alkalmazás nem tudja lekezelni.
 Nem létezik implementált megoldás arra az esetre, hogy az ilyen kérések által keltett az egyéb alkalmazás egységek terhelését megszüntesse.
 Értelemszerűen ebben az esetben felesleges még a back-end oldalán elvégezni az erőforrás intenzív feladatot, amikor az azt kiváltó eredeti kérés eldobásra került.
 
@@ -37,9 +37,9 @@ Ez fontos, mert a megvalósítani kívánt feladat nem tartozik szorosan az alka
 Természetesen több dolgot is mérlegelni kell az adott helyzetben ideálisnak ítélt megoldás kiválasztása közben.
 
 Fontos azt is megfontolni, hogy egy az infrastrukturális részekre hatást gyakorló eszköz milyen információk alapján engedjük, hogy dolgozzon.
-Természetesen minél több információval rendelkezünk az adott alkalmazást illetően, annál optimálisabb megoldásokat tudunk adni.
+Természetesen minél több információval rendelkezünk az adott alkalmazást illetően, annál közelebbi megoldásokat tudunk nyújtani az optimálishoz.
 Például, ha egy okos skálázónak rálátást adunk az alkalmazás hálózatára, az egyes egységek által használt erőforrásokra, a köztük lévő kapcsolatra és esetleg saját metrikákat is kivezetünk, akkor a skálázási döntés meghozatalában ezeket mind számításba tudjuk venni.
-Másik oldaról viszont aggályos lehet, ha ilyen szintű monitorozást és belelátást biztosítunk, mert ezáltal következtetéseket tudunk levonni a futtatott alkalmazásról.
+Másik oldalról viszont aggályos lehet, ha ilyen szintű monitorozást és belelátást biztosítunk, mert ezáltal következtetéseket tudunk levonni a futtatott alkalmazásról.
 Ez pedig bizonyos esetekben az ügyfél érdekeit sértheti.
 
 
@@ -53,18 +53,17 @@ Az egyes állapotjelzők ideális használati módját az alábbi szituációkka
 
 \begin{enumerate}
     \item \textbf{(Liveness probe - életteli próba)} Előfordulhat, hogy az alkalmazásunk valamilyen bemenetek következtében holtponti állapotba kerül, amit nehéz lenne kívülről észrevenni, viszont külső behatás nélkül nem tudna továbblépni belőle. 
-    Illetve egyéb okok miatt is kerülhet olyan állapotban, amikor a vizsgált alkalmazás nem képes ellátni a működését, mindezt különösebb hiba és kilépés nélkül teszi.
+    Illetve egyéb okok miatt is kerülhet olyan állapotba, amikor a vizsgált alkalmazás nem képes ellátni a működését, mindezt különösebb hiba és kilépés nélkül.
     Szerencsére az ilyen esetek nem számítanak különösnek és hamar fel is lehet oldani az egység újraindításával, amit az életteli próbával tudunk kezelni.
     Ez egy teljesen ideális implementáció esetén nem fog gondot okozni, hiszen a kapszulák nem tartalmaznak, tárolnak fontos adatokat és állapotokat.
     Egy újraindítás sokkal idő- és költséghatékonyabb megoldás, mintha az egész rendszer funkcionális működését veszélyeztetnénk.
 
     \item \textbf{(Startup probe - indítási próba)} Eshetőség, hogy az alkalmazás elindítása után még el kell végezni pár inicializációt, mielőtt a külső kérések kiszolgálását elkezdhetné.
-    Ebben az esetben is tudatni kell az infrastruktúra részére, hogy a jelenlegi állapotába még nem áll készen a működésre.
+    Ebben az esetben is tudatni kell az infrastruktúra részére, hogy a jelenlegi állapotában még nem áll készen a működésre.
     Nagy hibázási lehetőséget rejtene magába, ha erre a korábban látott  életteli próbát használjuk, mert nehéz kiszámítani mennyi időt fog igénybe venni a komponens elindulása.
     Külön emiatt létezik az indítási próba, ami csak akkor fogja az adott kapszula állapotát készenléti státuszba sorolni, ha sikeresen lefutott a próba.
 
     \item \textbf{(Readiness probe - készenléti próba)} Tegyük fel, hogy van egy szolgáltatásunk, ahol nagy fájlok feltöltésére van lehetőségünk.
-    A megvalósított funkció szám
     Ez egy időigényesebb feladat lesz, miközben az alkalmazásunkat nem szeretnénk további kérésekkel terhelni.
     Ebben az esetben meg kell várni a korábban érkező kérés kiszolgálását és csak utána van lehetőségünk fogadni a többit.
     Ilyen helyzetben tudjuk használni a készenléti próba jelzést. 
@@ -91,23 +90,21 @@ Amennyiben a próba sikertelen, tehát a rendszer túlterhelt állapotban van, a
 % MultiFE & SingleBE with Readiness probe -------------------------------------------------------
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE-readinessprobe.png}
+\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE-readinessprobe-sum.png}
 \caption{Korábbi szimuláció megismétlése készenléti próbával}
 \label{fig:readiness-probe-measurement}
 \end{figure}
 
 A módszer hatékonyságának vizsgálata érdekében arra gondoltam, hogy egy korábban már bemutatott mérést fogok megismételni, csak kibővítve az állapotjelzővel.
-Ehhez \aref{fig:todo} mérést választottam.
+Ehhez \aref{subsec:3FE_1BE_stack} alfejezetben bemutatott mérést választottam.
 A szimuláció elvégzését követően kapott eredmények sajnos nem váltották be a hozzájuk fűzött reményeket, és nem javultak számottevő mértékben a kiszolgálási paraméterek.
 Összességben hasonló tendenciát lehetett megfigyelni, mint a korábbi, próba nélküli mérés esetén. 
 A mérés elején folyamatosan emelkedett a kiszolgált kérések száma, azonban az eredeti méréssel azonos időben és helyen megindult a meredek visszaesés is.
-Ez amiatt lehetett, mert a beérkező kérések kiszolgálása továbbra sem tudott megtörténni az öt másodperces időkorláton belül.
-Emiatt nem szeretném részletekbe menően elemezni minden korábbi eredményt, egyedül az említésre-méltó processzorfelhasználást.
-A kapott értékeket \aref{fig:readiness-probe-measurement} ábra tartalmazza.
-Az eredeti méréssel azonos tendenciát figyelhetünk meg. 
+Ez amiatt lehetett, mert a beérkező kérések kiszolgálása továbbra sem tudott megtörténni az öt másodperces időkorláton belül, ahogy az \aref{fig:readiness-probe-measurement} ábra tetején is látszik.
+Az eredeti méréssel azonos tendenciát figyelhetünk meg és azonos helyen van az átbukási pont, amikor a rendszer terhelését növelve drasztikusan visszaesik a sikeres kiszolgálások száma.
 Ebben az esetben is azt látjuk, hogy a backend CPU felhasználása hamar egy plafonba ütközik, amin túl kitörni már nem tud.
 Illetve ezzel párhuzamosan a költséghatékony frontend továbbra is fogadja a beérkező kéréseket, ami miatt további erőforrásokat fog elhasználni.
-Emlékezzünk, hogy a korábbi méréseknél a backend részére 2000 mCPU és a frontend kapszuláknak pedig 1000 mCPU limitáció volt beállítva.
+A korábbi méréseknél a backend részére 2000 mCPU és a frontend kapszuláknak pedig 1000 mCPU limitáció volt beállítva.
 Ezen limitek a mostani méréseknél sem változtak, azonban az ábráról tisztán leolvasható, hogy a felhasznált erőforrás mennyisége a korábbitól jelentősen elmaradt.
 Azt láthatjuk, hogy a beállított próba hatására a backend és a frontend által elhasznált erőforrások mennyisége lecsökkent.
 Az lehet erre a magyarázat, hogy a backend, amikor érzékelte, hogy kezd túlterhelődni, akkor egy kisebb időszakra szüneteltette a kérések fogadását, ami miatt arányaiban csökkent a mérések során elhasznált processzor mennyisége.
@@ -139,12 +136,11 @@ Illetve a legtöbb esetben, ha a klaszterünkben nincsenek szűkös erőforrásh
 A megoldási lehetőség hátránya, hogy ezen implementáció is lokálisan az egyes alkalmazásegységek skálázását fogja végezni.
 Így pedig, amikor az erőforrások allokációja nagymértékű nem képes a rendszer áteresztőképességét figyelembe venni.
 
-Továbbá nincs a skálázás mögött egy dinamikus algoritmus.
-Továbbra is az indítás pillanatában beállított konfigurációk alapján fogja meghozni a skálázó a döntéseit.
+Továbbra sincs dinamikus algoritmus a skálázó mögött, így az indítás pillanatában beállított konfigurációk alapján fogja meghozni a beavatkozási döntéseket.
 Emiatt a kezdeti konfigurációnál nagyon alaposan végig kell gondolni, hogy milyen szabályokat szeretnénk alkalmazni.
 Esetlegesen rosszul felmért metrikák alapján többlet erőforrásokat is lefoglalhatunk a kiszolgálási metrikák javulása nélkül.
 
-A megoldás felvetése, hogy az alkalmazás logikai rétegében legyenek követve, mentve és exportálva olyan metrikák, amik az alsóbb-szintű infrastruktúra réteg döntéseinek lesz az alapja.
+A megoldás felvetése, hogy az alkalmazás logikai rétegében legyenek követve, mentve és exportálva olyan metrikák, melyek később az alsóbb szintű infrastruktúra réteg működését fogják befolyásolni.
 Ezt szintén mérlegelni kell, hiszen nem tartozik szorosan az alkalmazás logikai részéhez illetve bizonyos mértékű többlet fejlesztést is igényel.
 
 \subsection{Szolgáltatás hálók által nyújtott lehetőségek}
@@ -155,10 +151,10 @@ Fontos megjegyezni, hogy a fejezetben tárgyalt szolgáltatás háló kifejezés
 Emiatt szeretném tisztázni, hogy a következőkben használt szolgáltatás háló alatt mit értünk.
 
 A szolgáltatás háló egy lehetséges módja, hogy szabályozzuk az alkalmazásrészek közti kommunikációt. 
-Általa egy külön infrastruktúra réteget tudunk létrehozni, amin keresztül láthatjuk és szabályozhatjuk a komponensek közti kommunikációt.
+Külön infrastruktúra réteget tudunk létrehozni, amin keresztül láthatjuk és szabályozhatjuk a komponensek közti kommunikációt.
 Ezzel ígéretet kapunk a kommunikáció optimalizációjára, amivel együtt az esetleges kieséseket is csökkenthetjük\citep{serviceMeshDefinition}.
 
-Az egyes alkalmazás komponenseket nevezzük egy-egy szolgáltatásnak, és az ő kommunikációjuk által alkothatunk belőlük hálózatot.
+Az egyes alkalmazás komponenseket nevezzük egy-egy szolgáltatásnak, és a kommunikációjuk által alkothatunk belőlük hálózatot.
 Több megvalósítás is létezik, azonban a felépítésük nagyon hasonlít.
 Egy ilyen architektúra bemutatása látható \aref{fig:serviceMesh-topology} ábrán.
 
@@ -182,7 +178,7 @@ Természetesen a rendszerbe kötött proxykat kezelni is kell, amire egy külön
 
 Az új architektúra is rendelkezik bizonyos megkötésekkel, amit az alkalmazása előtt figyelembe kell venni.
 Mivel új komponenseket hozunk be a kommunikációba, ezért a késleltetések is meg fognak nőni.
-Valamint a proxyk működtetése is többlet erőforrásokkal fog járni. 
+Továbbá megfontolandó, hogy a proxyk működtetése is többlet erőforrás-használatot fog eredményezni. 
 Természetesen növelni fogja a processzor foglaltságot és használtságot, valamint az alkalmazás futtatásához memóriára lesz szükség.
 További hátránya, ami egyben az előnye is, hogy egy új komplexitást hoz be az amúgy is összetett alkalmazás üzemeltetésbe. 
 Ezért az architekturális döntés meghozatalában körültekintően kell eljárni.

@@ -27,21 +27,23 @@ Ráadásul folyamatosan fejlődnek a keretrendszerben felhasznált egységek, í
 Alapvetően jól működik a beépített skálázó.
 Pár extra lépéssel javítható lenne.
 Vagy nagyon komplex lehetőség vezetne csak sikerre.
+%TODO
 
 
 %----------------------------------------------------------------------------
 \section{Dolgozatban nem vizsgált kérdések}
 %----------------------------------------------------------------------------
-Megítélésem szerint a két félévben egyenletesen sikerült haladni, amivel egyidejűleg folyamatosan bontakozott ki a feladat komplexitása.
-Sok feladatot sikerült megvalósítani és a legtöbb vizsgált kérdésre sikerült választ is kapni.
-Ettől függetlenül a tanulmányok során tetemes számban előkerültek olyan kérdések, amik a rendelkezésre álló idő miatt nem sikerült felderíteni.
-Ezen kérdéskörök további vizsgálatot és kutatást igényelnének.
+A diplomamunka keretén belül sikerült elmélyülni a feladatban, miközben folyamatosan bontakozott ki a terület komplexitása.
+Sok feladatot sikerült megvalósítani és a legtöbb vizsgált kérdésre sikerült választ is kapni azonban a tanulmányok során tetemes számban kerültek elő olyan kérdések, amik a rendelkezésre álló idő miatt nem sikerült felderíteni.
+Ezen kérdéskörök további vizsgálatot és kutatást igényelnek.
 
 Az elvégzett mérések során bizonyos egyszerűsítésekkel éltem, hogy értelmezhető maradjon a kapott eredmény.
 Ilyen egyszerűsítés például az a megkötés, hogy a beérkező kérések száma egyenletes az időben, azonban ez nem minden rendszer esetén van így.
 Jól megfigyelhető periódusok jelentkezhet egy napon, hónapon vagy éven belül is.
 Több projekt is foglalkozik ezzel a jelenséggel és próbálják szintén keresni az erőforrások ideális használatát a historikus adatok elemzésével.
 Létezik egy fejlesztés, ami a horizontális pod skálázót szeretné ilyen irányba továbbfejleszteni\citep{predictiveHPAGithub}.
+A skálázó segítségével szintén érdemes lenne méréseket futtatni, azonban ennek előfeltétele, hogy dinamikusabban lehessen forgalmat generálni.
+Például az időben változóan illetve ezeket több alkalmazásvégpont irányába küldeni.
 
 A dolgozatban elkészített mérések mögötti szolgáltatás hálók a leggyakoribb, egyszerű eseteket fedték le.
 Egy valódi mikroszolgáltatás architektúra ennél nagyságrendekkel több komponenssel rendelkezik, melyek közti kapcsolatok is összetettebbek.
@@ -50,7 +52,7 @@ Ezzel kicsit dinamikusabbá lehetne tenni a mostani rendszert, ami minden beérk
 
 További vizsgálandó kérdés, hogy a kapott eredmények más környezetben hogyan változnak meg.
 Például, más eredmény jöhet ki, ha több csomóponttal, nagyobb terhelés mellett, nagyobb erőforrás felhasználással történnek a tesztek.
-Az a gond, hogy az ilyen klaszterek bérlése drága különösen, hogy a méréseink szándékosan a magas számban használják a processzort, ami alapja szokott lenni a bérelt infrastruktúra utáni számlázásnak.
+Sajnos az ilyen klaszterek bérlése drága különösen, hogy a méréseink szándékosan magas mennyiségű processzort használnak, ami alapja szokott lenni a bérelt infrastruktúra utáni számlázásnak.
 
 
 \subsection{Keretrendszer további használata}
@@ -64,3 +66,4 @@ Ezáltal könnyebben és megalapozott döntéseket lehet hozni, hogy az aktuáli
 
 Továbbá az előzőleg bemutatott példán keresztül ki tudjuk próbálni az aktuális rendszerünket egy új környezetben is.
 Mindezt úgy tudjuk megtenni, hogy az alkalmazás egységeket alkotó képfájlok mozgatása nem szükséges, ezáltal nem csak gyorsabb lesz a tesztelés, hanem nem kell újabb felek számára elérhetővé tenni a megírt állományokat.
+Az így létrehozott mérések betekintést tudnak nyújtani, hogy egy esetleges infrastruktúra váltás milyen változásokkal jár a kiszolgálási paramétereket illetően.
