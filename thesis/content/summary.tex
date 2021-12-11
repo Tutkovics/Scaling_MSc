@@ -7,28 +7,35 @@
 %----------------------------------------------------------------------------
 \section{Elvégzett munka}
 %----------------------------------------------------------------------------
+%Alapvetően jól működik a beépített skálázó.
+%Pár extra lépéssel javítható lenne.
+%Vagy nagyon komplex lehetőség vezetne csak sikerre.
 
-% % A félév végére sikerült összeállítani egy olyan keretrendszert, amivel előre leírt konfigurációs
-% % fájlból kiindulva Kubernetes felett hoz létre egy szolgáltatás-hálót. Az elkészült
-% % szolgáltatáshálóba különböző mennyiségű felhasználói forgalmat tudunk generálni. 
-% Kiszolgálás közben folyamatosan monitorozzuk a rendszer terheltségét és egyéb metrikáit. 
-% A feladat megoldásához tovább kellett fejleszteni a korábbi operátort és webalkalmazásomat.
-% Ezen felül Python kódokat írtam, ami képes automatikusan elvégezni a méréseket és az eredményeket vizuálisan megjeleníteni.
+Szeretném gyorsan összefoglalni a diplomamunkában tárgyalásra kerülteket és ezáltal az elvégzett munkát is, hogy a korábban végigvezetett gondolatmenet részei egészben megjelenjenek.
 
-% % A rendszer működésének teszteléséhez igényeltem virtuális gépeket és azok telepítése után összeállítottam egy Kubernetes klasztert.
-% A klaszter telepítését a \textit{Kubeadm} segítségével végeztem, de kipróbáltam a \textit{Kubespray} telepítőt is. 
+A fő vizsgálandó terület a terhelésfüggő HPA skálázó működése volt szolgáltatáshálókon.
+Ez a kérdés egyre több ágazatot érint, ahogy egyre többen választják az alkalmazásaik futtatására a felhőt, mint platformot.
+Bevezetésként felvázoltam ezen folyamatot, annak beazonosítható elemeit és a jelenlegi tendenciákat.
 
-% % Az elkészült klaszterben próbaméréseket végeztem, amik sikeresen lefutottak, ezzel bizonyosságot nyert, hogy az egyes elemek nem csak a lokális környezetben képesek együttműködni, hanem a valósághoz közelálló rendszerben is.
-% Az elkészült mérési eredményekből  sikerült kézzelfogható grafikont készíteni. 
+Ezután a technikai részletek és megvalósítás előtt bemutattam a diplomadolgozat központi szerepét játszó Kubernetes klaszter felépítést, és a benne elérhető erőforrások szabályozását és a beépített skálázóját.
 
-% % A projekt során úgy érzem sikerült a korábbinál mélyebben megismerni a Kubernetes platformot és ezzel egyidőben belátni, hogy olyan mélységei vannak, hogy mindig lesz újabb és újabb terület amit meg lehet ismerni.
-Ráadásul folyamatosan fejlődnek a keretrendszerben felhasznált egységek, így folyamatosan lehetőség van bővíteni is azokat.
+Az érdemi feladatok előtt fel kellett mérni a szakmán belül elérhető korábbi kutatásokat. Ismertettem a főbb elméleti vonalakat és ötleteket gyűjtöttem a saját munkához.
 
-Alapvetően jól működik a beépített skálázó.
-Pár extra lépéssel javítható lenne.
-Vagy nagyon komplex lehetőség vezetne csak sikerre.
-%TODO
+A kérdések megválaszolásához sok mérést kellett végezni, melyhez nélkülözhetetlen volt implementálni egy erre alkalmas környezetet. 
+A környezet több különálló részből állt.
+Létre kellett hozni egy saját erőforrást a Kubernetesen belül és implementálni egy kezelő logikát hozzá.
+Szükség volt egy tetszőlegesen konfigurálható alkalmazásra, ami előre beállított végpontokra érkező kéréseket szolgál ki.
+A mérés vezénylését és a kapott eredmények megjelenítését egy-egy külön alklmazás végzi.
 
+Méréseken keresztül először megismertük, hogyan viselkednek a szolgáltatáshálók forgalomszabályozás nélkül egy túlterhelt rendszerben. 
+Láttuk, hogy egy átbukási pont után a kiszolgálási paraméterek nagymértékben visszaesnek.
+
+Következő kérdés, amire válasz született, hogy ezeket az eseteket mennyire csillapítja a HPA.
+Láthattuk, hogy szűkös erőforrások esetén nem minden esetben sikerül elérni az elméleti optimum pontot, és a végeredmény függ a rendszer eredeti állapotától és a jól eltalált konfigurációtól.
+Amennyiben kellően nagy mennyiségű erőforrás áll rendelkezésre, akkor a HPA képes lenne a lokálisan optimális döntések által mindig növelve a szűk keresztmetszetet, egy globálisan is elfogadható állapotba kerülni.
+
+A szolgáltatáshálók és a skálázó esetében megfigyelt limitációkra több megoldási javaslatot is adtam, melyek a probléma más-más aspektusát megragadva próbálják megszüntetni vagy csökkenteni azt.
+Ezen javaslatoknál bemutatásra került az adott eszköz előnye és hátránya is, hogy megfontoltabb döntési alapot kínáljon.
 
 %----------------------------------------------------------------------------
 \section{Dolgozatban nem vizsgált kérdések}

@@ -516,7 +516,19 @@ Látható, hogy a rendelkezésre álló szűk erőforrások miatt fontos a kör�
 
 \subsection{Skálázás során jelentkező időkorlátok}
 %----------------------------------------------------------------------------
-%TODO 
-A klaszter létrehozása közben a lehető legtöbb paraméter nem explicit módon konfigurálva, ezért az alapértelmezett paraméterek kerültek alkalmazásra.
+A klaszter létrehozása közben csak a feltétlen szükséges konfigurációk kerültek beállításra és minden más pedig az alapértelmezett értéken maradt.
+Többek között a HPA működésének befolyásolását is meg lehet tenni akár a klaszter telepítése közben, akár pedig utána.
+Erre azért van mód, mert bizonyos paraméterek változók módosításával befolyással bírnak az algoritmus működésére\citep{kubernetesHPADocumentation}.
+A következőkben szeretnék bemutatni néhány ilyen paramétert.
 
-Minél messzebb van az végső állapot annál tovább tarta annak elérése.
+\begin{itemize}
+	\item \verb+horizontal-pod-autoscaler-initial-readiness-delay+ - Amikor elindul egy új kapszula, akkor a skálázó még nem tudja kezelni azt, mert nem áll rendelkezésre kellő mennyiségű információ. Emiatt a kapszula létrejötte után a paraméter által megadott ideig úgy van kezelve, mintha még nem lenne készen, és nem kerül skálázásra sem. HPA specifikusan lehet állítani, az egyes alkalmazások egyéni szükségleteihez, de van egy központi értéke is. Alapértelmezettként harminc másodperc. 
+
+	\item \verb+horizontal-pod-autoscaler-sync-period+ - A Kubernetes skálázója nem folyamatosan gyűjti az adatokat és tesz beavatkozási lépésre javaslatokat, hanem időszakosan történik ez meg. Ezen periódus időtartamát tudjuk befolyásolni ezzel a kapcsolóval, ami alapértelmezetten 15 másodperc. 
+	
+	\item \verb+horizontal-pod-autoscaler-downscale-stabilization+ - Nincs megkötés, hogy egy kapszulát csak egy HPA és egy metrika alapján kezelhet. Emiatt előfordulhat, hogy több skálázási javaslat is létezik azonos erőforráshoz. Ez inkonzisztenciához vezetne, ha mindig a legutolsó ajánlat kerülne érvényre. Ezért a végső döntésnél a fenti paraméter által megadott időt nézi, ami alapértelmezetten öt perc és ezen idő alatti legnagyobb érték lesz beállítva.
+\end{itemize}
+
+A paraméterek teljesen tetszőleges módon módosíthatóak, azonban figyelni kell, mert a klaszter teljes működösére kihatnak.
+Bizonyos esetekben szükséges lehet, ha a pod elindulása után több időt töltünk monitorozással és csak utána teszünk skálázásai javaslatot, ilyenkor módosíthatjuk az első megadott paramétert.
+Szintén adódhat olyan felhasználási terület, amikor a kapszulák terheltsége gyorsan ingadozik, ilyenkor érdemes lehet a szinkronizációs perióduson és a leskálázási időn is módosítani.

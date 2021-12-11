@@ -1,36 +1,36 @@
-apiVersion: dipterv.my.domain/v1beta1    # Erőforrás csoportja
-kind: Servicegraph                       # Egyedi erőforrás típusa
-metadata:                                # Metainformációk
-  name: servicegraph                     # Objektum neve
-  namespace: customNamespace             # Névtér, ahol az objektum létezik
-spec:                                    # A szolgáltatásháló konfigurációja
-  nodes:                                 # Milyen csomópontokat tartalmazzon
-    - name: front-end                    # Csomópont neve
-      replicas: 2                        # Alapból hány replika induljon belőle
-      port: 80                           # Milyen porton figyeljen a Pod
-      nodePort: 30000                    # Legyen-e NodePort típusú service
-      hpa:                               # HPA specifikus specifikációk
-        utilization: 10                  # Kitűzött CPU felhasználás 
-        min_replicas: 2                  # Minimális replika szám HPA-nak
-        max_replicas: 5                  # Maximális replika szám HPA-nak
-      resources:                         # Erőforrás request / limit értékek
-        memory: 100                      # Memória felhasználás
-        cpu: 100                         # Biztosított processzor mennyisége 
-      endpoints:                         # Milyen hívásokra figyeljen, hogyan válaszoljon
-        - path: /instant                 # Lekérdezés útvonala
-          cpuLoad: 10                    # Ennyi CPU intenzív műveletet fog végezni
-          delay: 1                       # Legalább ennyi időbe telik a kiszolgálás
-        - path: /chain                   # Újabb lekérdezés specifikáció
+apiVersion: dipterv.my.domain/v1beta1  # Erőforrás csoportja
+kind: Servicegraph                  # Egyedi erőforrás típusa
+metadata:                           # Metainformációk
+  name: servicegraph                # Objektum neve
+  namespace: customNamespace        # Névtér, ahol az objektum létezik
+spec:                               # A szolgáltatásháló konfigurációja
+  nodes:                            # Milyen csomópontokat tartalmazzon
+    - name: front-end               # Csomópont neve
+      replicas: 2                   # Alapból hány replika induljon belőle
+      port: 80                      # Milyen porton figyeljen a Pod
+      nodePort: 30000               # Legyen-e NodePort típusú service
+      hpa:                          # HPA specifikus specifikációk
+        utilization: 80             # Kitűzött CPU felhasználás 
+        min_replicas: 2             # Minimális replika szám HPA-nak
+        max_replicas: 5             # Maximális replika szám HPA-nak
+      resources:                    # Erőforrás request / limit értékek
+        memory: 100                 # Memória felhasználás
+        cpu: 100                    # Biztosított processzor mennyisége 
+      endpoints:                    # Alkalmazás végpontok, amire figyel
+        - path: /instant            # Lekérdezés útvonala
+          cpuLoad: 10               # Ennyi CPU intenzív műveletet fog végezni
+          delay: 1                  # Legalább ennyi időbe telik a kiszolgálás
+        - path: /chain              # Újabb lekérdezés specifikáció
           cpuLoad: 20                      
           delay: 2   
-          callouts:                      # Meg lehet adni, hova kérdezzen tovább
-            - url: back-end:80/profile   # pl: hívja meg a back-end /profile útvonallal
-            - url: db:36/get             # utána meg a db /get-től kérjen adatokat 
+          callouts:                 # Meg lehet adni, hova kérdezzen tovább
+            - url: back-end:80/profile   # Hívja meg a back-end /profile útvonalat
+            - url: db:36/get        # Utána meg a db /get-től kérjen adatokat 
 
-    - name: back-end                     # Újabb csomópont definíciója
-      replicas: 3                        # Ennyi replikaszámmal induljon
-      ...                                # Ha nincs megadva HPA mező, akkor nem indul HPA
-      endpoints:                         # A szolgáltatás által biztosított endpointok
+    - name: back-end                # Újabb csomópont definíciója
+      replicas: 3                   # Ennyi replikaszámmal induljon
+      ...                           # Nincs megadva HPA mező, akkor nem lesz HPA
+      endpoints:                    # A szolgáltatás által biztosított endpointok
         - path: /profile
           cpuLoad: 30
           delay: 2
