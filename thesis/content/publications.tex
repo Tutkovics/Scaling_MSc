@@ -6,12 +6,12 @@
 \label{sec:Publications}
 A diplomamunka során több publikációt is elolvastam, hogy tisztább legyen a kutatási terület. A következőben szeretném összefoglalva bemutatni az eddigi kutatások által vizsgált irányokat.
 
-Több oldalról meg lehet fogni a skálázás és szorosan hozzá köthető erőforrás elosztás területét. Minden kutatás kicsit más szempontból vizsgálja, más áll a középpontban.
+Több oldalról meg lehet fogni a skálázás és a szorosan hozzá köthető erőforrás elosztás területét. Minden kutatás kicsit más szempontból vizsgálja, más áll a középpontban.
 
-A legátfogóbb ismertető a témában \emph{Cloud resource management: A survey on forecasting and profiling models}\citep{CloudResourceManagement} című cikk. Szépen összegzi a téma megjelenésekor ismert kutatásokat és rendszerezi azokat. Strukturáltan összegyűjtötték, hogyan és miért lehet szükséges az egyes alkalmazások profilozása, milyen akadályokkal szembesülhetünk.
+A legátfogóbb ismertető a témában a \emph{Cloud resource management: A survey on forecasting and profiling models}\citep{CloudResourceManagement} című cikk. Szépen összegzi a téma megjelenésekor ismert kutatásokat és rendszerezi azokat. Strukturáltan összegyűjtötték, hogyan és miért lehet szükséges az egyes alkalmazások profilozása, milyen akadályokkal szembesülhetünk.
 
 Az alkalmazás mélyebb megismerésével lehetőségünk nyílik előrejelzéseket adni, amivel az erőforrások optimális használatát érhetjük el.
-Kritikaként megfogalmazódik meg, hogy a legtöbb kutatás elég szűk területet érint és nagyon specifikus kérdéskört vizsgál, miközben figyelmen kívül hagyja a felhős környezet változékonyságát és a valóságnál statikusabb rendszerként vannak kezelve. 
+Kritikaként megfogalmazódik, hogy a legtöbb kutatás elég szűk területet érint és nagyon specifikus kérdéskört vizsgál, miközben figyelmen kívül hagyja a felhős környezet  változékonyságát és azt a valóságnál statikusabb rendszerként kezeli. 
 
 Ötleteket is tudunk meríteni, hogy milyen mutatókat érdemes a mérések során figyelembe venni.
 Példaként említi  a processzor, memória, I/O lemez késleltetések, válaszidő, áteresztő képesség mérését.
@@ -30,7 +30,11 @@ Gyakran elfelejtődik, de a cikkben hangsúlyozva van, hogy a rendszer monitoroz
 \label{fig:applicationprofiling}
 \end{figure}
 
-Korábban már a tanszéken is foglalkoztak Kubernetesben történő skálázással. Az \emph{Adaptive scaling of Kubernetes pods}\cite{AdaptiveScalingOfPods} címen megjelent kutatás keretén belül sikeresen implementáltak egy automatikus skálázót, ami képes kihasználni a vertikális és horizontális skálázásban rejlő előnyöket. Az algoritmus első részében megkeresi az egy pod számára ideális erőforrás-használatot, ami tekinthető a vertikális skálázásnak. Később pedig az így megtalált konfigurációval történik az alkalmazás horizontális skálázása. Ez a megvalósítás egybeesik a korábbi kutatás következtetésével\citep{bscThesis}, mely szerint általában jobb eredményt kapunk VPA segítségével, azonban feltehetően minden esetben létezik egy felső határ, ami után már nem kapunk jobb kiszolgálási eredményeket. 
+Korábban már a BME TMIT tanszékén is foglalkoztak Kubernetesben történő skálázással. 
+Az \emph{Adaptive scaling of Kubernetes pods}\cite{AdaptiveScalingOfPods} címen megjelent kutatás keretén belül sikeresen implementáltak egy automatikus skálázót, ami képes kihasználni a vertikális és horizontális skálázásban rejlő előnyöket. 
+Az algoritmus első részében megkeresi az egy pod számára ideális erőforrás-használatot, ami tekinthető a vertikális skálázásnak. 
+Később pedig az így megtalált konfigurációval történik az alkalmazás horizontális skálázása. 
+Ez a megvalósítás egybeesik a korábbi kutatás következtetésével\citep{bscThesis}, mely szerint általában jobb kezdeti eredményt kapunk VPA segítségével, azonban feltehetően minden esetben létezik egy felső határ, ami után már nem kapunk jobb kiszolgálási eredményeket. 
 
 A diplomaterv későbbi részében érdekes eredményeket kaphatunk, ha összehasonlítjuk ezt a megoldást a Kubernetes alapértelmezett skálázásával egy komplexebb szolgáltatásháló esetén.
 
@@ -41,8 +45,10 @@ működnek, ezért indításukkor, kézzel kell megadni a szükséges értékeke
 felhasználásra is. Ebben az esetben is az alkalmazás üzemeltetője adja meg indítás idejében a
 paramétereket, amik befolyásolják a kiszolgálás minőségét is. 
 
-Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó minél ideálisabb döntéséhez a lehető legtöbb adatra van szükség. Ez bizonyos alkalmazási területek körében problémás lehet. Hogyha az alkalmazás tulajdonosa nem szeretné, hogy megfigyeljék, hogy milyen egyéb szolgáltatásokkal van kapcsolatban, mennyi lekérdezés, felhasználó használja, milyen arányban oszlik meg a terhelés a rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete alapján lesz meghozva.
-Érdekes kérdéskör ez is, hogy hol van a határa a személyes adatoknak és mennyire lehet ezeket figyelembe venni az erőforrások elosztási döntésekben.
+Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó minél ideálisabb döntéséhez a lehető legtöbb adatra van szükség.
+Ez bizonyos alkalmazási területek körében problémás lehet.
+Hogyha az alkalmazás tulajdonosa nem szeretné, hogy megfigyeljék, hogy milyen egyéb szolgáltatásokkal van kapcsolatban, mennyi lekérdezés, felhasználó használja, milyen arányban oszlik meg a terhelés a rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete alapján lesz meghozva.
+Érdekes kérdéskör az is, hogy hol van a határa a személyes adatoknak és mennyire lehet ezeket figyelembe venni az erőforrások elosztási döntésekben.
 
 Több megoldás bontakozott ki a tanulmányozott cikkek alapján. Léteznek olyan megoldások, amik a rendszert fehér dobozként (\textit{white box}) kezelik, amiben minden paraméter kiolvasható és befolyásolható, míg vannak olyanok, amik fekete dobozként (\textit{black box}) modellezik és az alkalmazás belső működése számunkra ismeretlen marad\citep{TowardsAnAdaptive}. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni, javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számon tarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve javítható a modell bizonyossága\citep{TowardsAnAdaptive}.
 

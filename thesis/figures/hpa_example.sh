@@ -12,6 +12,7 @@ spec:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 50
 
+$ kubectl apply -f hpa/hpa.yaml
 $ while sleep 0.01; do wget -q -O- http://localhost:30100; done
 
 $ kubectl get horizontalpodautoscalers                                               

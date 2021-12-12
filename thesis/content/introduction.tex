@@ -8,65 +8,58 @@
 
 Nagyobb távlatól tekintve az informatikai rendszerekre számos tendenciát figyelhetünk meg a technológia változásával.
 Ilyen folyamat, hogy régebben jellemzően dedikált csapat, dedikált nyelven, dedikált alkalmazást, dedikált hardveres erőforrásra fejlesztett éveken keresztül. 
-Ennek az eredménye a mostanra megbonthatatlanul nagyra nőtt rendszerek, amelyeknek külön szervereket kell biztosítani, hogy azok hiba nélkül tudják kiszolgálni a beérkező igényeket.
+Ennek az eredménye a mostanra megbonthatatlanul nagyra nőtt monolitikus\citep{monoliticAndMicroserviceArchitecture} rendszerek, amelyeknek külön szervereket kell biztosítani, hogy azok hiba nélkül tudják kiszolgálni a beérkező igényeket.
 Több területen használnak még ilyen rendszereket megbízhatóságuk miatt, ugyanakkor továbbfejlesztésük bonyolult és költséges folyamat.
 
 Anyagi megfontolások mentén beláthatóvá vált, hogy saját fizikai szervereket ilyen szolgáltatások számára nem éri meg fenntartani, mivel azok az idő túlnyomó részében nem használják ki a rendelkezésre álló erőforrásokat.
-További faktort jelentett a folyamatosan megjelenő virtualizációs technológiák, amik lehetővé tették, hogy a fizikai rendszert absztrahálva, különböző virtuális környezetet hozzunk létre azok felett.
-A megoldásnak köszönhetően lehetőség nyílt előre definiált lépésekkel azonos tulajdonsággal bíró rendszereket létrehozni igény szerint. 
+További faktorokat jelentettek a folyamatosan fejlődő virtualizációs technológiák, melyek lehetővé teszik, hogy a fizikai rendszert absztrahálva, különböző virtuális környezeteket hozzunk létre azok felett.
+A megoldásnak köszönhetően lehetőség nyílt előre definiált lépésekkel azonos tulajdonsággal bíró rendszereket létrehozni igény szerint\citep{infrastuctureAsCode}. 
 Természetesen mindezt úgy, hogy a fizikailag rendelkezésre álló erőforrások kihasználtsága is javult.
 
-A korábban vázolt lehetőséggel mai napig sokan élnek, azonban a fizikai életben is megjelenő rugalmasság és agilitás iránti vágy köszön vissza az informatikában is. 
-Aki nem tud lépést tartani a gyors fejlődésben az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. 
+A korábban vázolt monolitikus architektúrát a mai napig sokan alkalmazzák, azonban folyamatos tolódás figyelhető meg a mikro-szolgáltatások irányába, melynek üzleti okai vannak. 
+Aki nem tud lépést tartani a gyors fejlődéssel az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. 
 Az érem másik oldala viszont az, hogy aki időben észreveszi a lehetőséget, az hirtelen nagy előnyt tud szerezni. 
-Erre jó példa az Amazon\citep{amazon} és a Netflix\citep{netflix} is.  
+Erre jó példa az Amazon\citep{amazon} és a Netflix\citep{netflix} története is.  
 
-Egyre szélesebb körben terjednek el a konténerizációs technológiák és velük együtt az úgynevezett mikro-szolgáltatások.
+Egyre szélesebb körben terjednek el a konténerizációs technológiák és velük együtt az úgynevezett mikro-szolgáltatások\citep{monoliticAndMicroserviceArchitecture}.
 A paradigma értelmében a korábbi nagyobb kódegységeket szét lehet bontani több kisebb kódbázisra, ami számtalan előnyt jelent az alkalmazás fejlesztéséhez.
-Mivel a kisebb egységeket könnyebb megérteni mint a teljes kódbázist, az új fejlesztők számára könnyebb becsatlakozni fejlesztésbe.
-A kisebb elemekre bontott kód lehetőséget biztosít arra is, hogy az egyes komponenseket több
-nyelven és többfajta keretrendszerben fejlesszük, minden komponens számára az optimális fejlesztési környezetet kiválasztva. 
-Végül, ha egy komponenst szeretnénk teljesen elölről újraírni, akkor ez a rendszer többi részét nem érinti.
-Ezek által lehetőség nyílik egy agilis rendszer kialakítására.
+Mivel a kisebb egységeket könnyebb megérteni mint a teljes kódbázist, az új fejlesztők számára könnyebb becsatlakozni a fejlesztési folyamatokba.
+A kisebb elemekre bontott kód lehetőséget biztosít arra is, hogy az egyes komponenseket több nyelven és többfajta keretrendszerben fejlesszük, minden komponens számára az optimális fejlesztési környezetet kiválasztva. 
+Végül, ha egy komponens teljes körű felülvizsgálatára van szükség, az nem érinti a rendszer többi részét, amíg a publikus interfészek változatlanok maradnak. 
+Ezek által lehetőség nyílik egy kellően agilis rendszer kialakítására, ami könnyebben és gyorsabban tudja kiszolgálni az ügyfelek igényeit, ami üzleti előnyt jelent.
 
-A végbemenő tendenciaváltás egyik nagy szereplője a Kubernetes rendszer, ami lehetőséget biztosít a konténerizációs technológia széles körű és egyszerű használatára.
+Ez a modern paradigma tartalmaz néhány kihívást is, ami a monolitikus alkalmazások esetében nem merül fel.
+Egy ilyen kihívás kerül tárgyalásra a dolgozatban is.
+A tendenciaváltás legnagyobb szereplője a Kubernetes\citep{kubernetesBaseDocumentation}, ami lehetőséget biztosít a konténerizációs technológiák egyszerű és széles körű használatára.
 
 %----------------------------------------------------------------------------
 \section{Feladat meghatározása}
 %----------------------------------------------------------------------------
-A korábban említett paradigma váltással lépést kell tartani az alkalmazás üzemeltetésekor is. 
+A korábban említett paradigmaváltással lépést kell tartani az alkalmazás üzemeltetésekor is. 
 Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. 
-Sokan választották az új megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
+Sokan választották ezt a modern megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
 Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük.
-Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül. 
-Azonban a valóság ennél jóval komplexebb. Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel.
-Látható, hogy pár paramétert bevéve az egyenletbe már nem is könnyű feladat. 
+Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül, azonban a valóság ennél jóval komplexebb.
+Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel.
+A sok szolgáltatás közül melyiket érdemes először skálázni, melyik okozza a kiszolgálások lassulását, milyen módosítással lehet a legtöbb felhasználót kiszolgálni.
+Látható, hogy pár paramétert bevéve az egyenletbe a komplexitás meredeken emelkedik. 
 Különösen megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor, memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető legjobb kiszolgálást tudja biztosítani a rendszer. 
 
-A diplomatervezés során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. 
-Első lépésben szeretném bemutatni a használt környezetet, a Kubernetes felépítését illetve, hogy
-milyen skálázási megoldások léteznek és melyiket hogyan támogatja.
-% Első lépésként fontos tisztában lenni a használt platformmal, a Kubernetessel megnézni benne milyen skálázási megoldások vannak jelenleg és melyik hogyan van támogatva. 
-Konkrét példán keresztül bemutatom a HPA megoldását. 
+A diplomamunka során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. 
+Első lépésben szeretném bemutatni a használt környezetet, a Kubernetes felépítését illetve, hogy milyen skálázási megoldások léteznek és melyiket hogyan támogatja.
+Konkrét példán keresztül bemutatom az automatikus pod horizontális skálázó megoldását. 
 
 Egy egyedi keretrendszert kellett összeállítani, ami képes tetszőleges szolgáltatáshálót létrehozni
 Kubernetesen belül és azt lekérdezésekkel terhelni. Ezáltal lehetőségünk nyílik szabadon
-konfigurálható körülmények között vizsgálni a Kubernetes beépített skálázóját, illetve az
-irodalomban javasolt egyéb megoldásokat is. Az így nyert eredményekből következtetéseket tudunk
-levonni az egyes implementációk dinamikáját, költségeit, hatékonyságát illetően.
+konfigurálható körülmények között vizsgálni a Kubernetes automatikus horizontális skálázóját, illetve az irodalomban javasolt egyéb megoldásokat is.
+Az így nyert eredményekből következtetéseket tudunk tenni az egyes implementációk dinamikáját, költségeit, hatékonyságát illetően.
 
 A feladat része a kapott mérési eredmények vizualizációja is, így könnyebben láthatóvá válnak a
 skálázási megoldások és a megoldások közötti különbségek is. 
 
-Amennyiben a mérési eredmények alapján fejleszthető lenne egy új stratégia, akkor azt implementálás
-után szintén meg lehet vizsgálni és kiértékelni a hipotézist.
-
-%A beépített skálázás értékeléséhez méréseket kell végezni minél több szolgáltatáshálón, hogy látni lehessen melyik rendszer hogyan viselkedik a terhelés függvényében. 
-%Az adatok gyűjtéséhez kell egy külön rendszer, ami képes lesz tetszőleges tulajdonságokkal rendelkező szolgáltatáshálót létrehozni és azokon szimulációkat végezni.
-
-%Az így gyűjtött eredményeket ki kell értékelni, hogy jobban megértsük a rendszert és következtetéseket tudjunk levonni a skálázás minőségét illetően. 
-%Amennyiben azt találjuk, hogy bizonyos lépésekkel optimálisabb skálázás valósítható meg, akkor erre
-%egy példát kell mutatni és bizonyítani a hipotézis igazát. 
+Az elkészített keretrendszer segítségével, mérési eredményekkel kell bemutatni a Kubernetes felett történő mikroszolgáltatások kommunikációját és figyelni hogyan változik a terhelés függvényében.
+Meg kell ismerni, hogy a beépített skálázó működése milyen megoldásokkal jár és milyen helyzetben ad az optimálistól eltérő kiszolgálást.
+Ilyen helyzetekre megoldási javaslatokat kell keresni és bemutatni azok működéseit.
 
 %----------------------------------------------------------------------------
 \section{A dolgozat felépítése}
@@ -74,8 +67,8 @@ után szintén meg lehet vizsgálni és kiértékelni a hipotézist.
 A dolgozat fejezetei úgy lettek sorba állítva, hogy azok a lehető legkövethetőbb módon mutassák be a kapott eredményeket. Ehhez viszont az általános részektől kell indulni és így mutatva be az egyre konkrétabb részeket.
 Először szeretném ismertetni a Kubernetes platform architektúráját és az általa támogatott automatikus skálázást \aref{sec:Kubernetes}. fejezetben.
 %A \ref{sec:Kubernetes}. fejezetben szó lesz a Kubernetes architektúrájáról, illetve hogyan támogatja beépített módon az automatikus skálázást.
-A munka kezdetén meg kellett ismerni a témában készült korábbi kutatásokat, amelyeket \aref{sec:Publications}. fejezetben ismertetek.
+A munka kezdetén el kellett olvasni a témában készült korábbi kutatásokat, amelyeket \aref{sec:Publications}. fejezetben ismertetek.
 Ezután \aref{sec:system}. fejezetben bemutatom az elkészített keretrendszert, annak építő elemeit és a megvalósítás során hozott döntéseket. 
 Az elvégzett mérések kerülnek ismertetésre \aref{sec:results}. fejezetben, beleértve a kapott eredmények értelmezését is.
 A mérési eredmények alapján pár megoldási javaslatot teszek \aref{sec:solutions}. fejezetben, vázolva az előnyeiket és hátrányaikat. 
-Végül \aref{sec:summary}. fejezetben összefoglalom a diplomamunkám eredményeit és kitérek az újonnan felmerült kérdésekre.
+Végül \aref{sec:summary}. fejezetben összefoglalom a diplomamunkám eredményeit és kitérek az újonnan felmerült kérdésekre, továbbhaladási irányokra.
