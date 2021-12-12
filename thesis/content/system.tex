@@ -16,8 +16,12 @@ A mérések paramétereit egy konfigurációs fájlban tudjuk megadni, ahonnan e
 Először a Kubernetes API-n keresztül létrehoz egy \textit{ServiceGraph} objektumot, ami nem egy beépített típus.
 Az objektum értelmezéséhez és megfelelő kezeléséhez létre kellett hozni egy operátort, ami képes egy ilyen definíció szerint létrehozni a szükséges erőforrásokat (\textit{deployment, pod, service, HPA}).
 
-Ahhoz, hogy az egyes kiszolgáló egységeket is tudjuk tetszés szerint konfigurálni kell egy olyan képfájl, ami a megadott paraméterek alapján tud működni.
-Ezért írni kellett egy külön alkalmazást hozzá.
+Az elindításra kerülő kapszulák tartalmaznak egy alkalmazást, amely számára az operátor indításkor át tudja adni szükséges paramétereket. 
+A Go nyelven megírt alkalmazás képes a beérkező kéréseket fogadni és az indításkor megadott paraméterek alapján műveletet végrehajtani a hatására.
+Elég speciális igényeink vannak az alkalmazást illetően, ezért külön implementálni kellett.
+
+%Ahhoz, hogy az egyes kiszolgáló egységeket is tudjuk tetszés szerint konfigurálni kell egy olyan képfájl, ami a megadott paraméterek alapján tud működni.
+%Ezért írni kellett egy külön alkalmazást hozzá.
 
 Miután elkészültek a kért objektumok és képesek már kiszolgálni a klaszteren kívülről érkező igényeket a Python szkript elkezd számukra forgalmat generálni.
 A terhelés lejárta után ki kell nyerni a mérés során keletkezett adatokat.
@@ -37,11 +41,12 @@ Az elkészült rendszerhez szükséges részek forráskódjai megtalálhatóak a
 \section{Korábbi munkák}
 %----------------------------------------------------------------------------
 A korábbi projekttárgyak keretén belül már foglalkoztam hasonló kérdéskörrel, így már volt az egyes eszközök használatához tapasztalat és implementáció is, amiből ki lehetett indulni. 
-Önálló labor tárgyban megismerkedtem a Go programozási nyelvvel, és elkészítettem egy Kubernetes operátort, ami képes egyedi erőforrás definíciók feldolgozására és ez alapján képes beépített objektumokat létrehozni. A félév elején elején ezt tovább kellett bővíteni, hogy képes legyen skálázót is létrehozni valamint javítani kellett a megbízhatóságán is.
+Önálló labor tárgyban megismerkedtem a Go programozási nyelvvel, és elkészítettem egy Kubernetes operátort, ami képes egyedi erőforrás definíciók feldolgozására és ez alapján képes beépített objektumokat létrehozni.
+A félév elején ezt tovább kellett bővíteni, hogy képes legyen skálázót is létrehozni valamint javítani kellett a megbízhatóságán is.
 
-Korábbi tanulmányaim során elkezdtem készíteni egy Go nyelven íródott alkalmazást, aminek a célja azonos volt a mostani projektben foglalttal.
+Korábbi tanulmányaim során elkezdtem készíteni egy Go nyelven íródott alkalmazást, melynek célja azonos volt a mostani projektben foglalttal.
 A megkezdett alkalmazás is egy kellően szabadon konfigurálható paraméterezéssel rendelkező webszerver volt, hogy tetszőleges módon tudja kiszolgálni a beérkező kéréseket. 
-A korábbi állományból elindulva kellett fejleszteni a funkcionalitásán, hogy valósághűbb eredményeket tudjon szolgáltatni.
+A korábbi állományból kiindulva kellett fejleszteni a funkcionalitásán, hogy valósághűbb eredményeket tudjon szolgáltatni.
 
 %----------------------------------------------------------------------------
 \section{Operátor}
@@ -53,7 +58,7 @@ Már az orkesztrációs platform fejlesztésénél felkészültek arra az esetre
 A mögöttes gondolat az, hogy nagyon változó igények és funkcionalitások jelenhetnek meg a felhasználási körülményektől függően, amiket nem célszerű a központi egységbe implementálni, hiszen akkor a rendszer könnyen átláthatatlanná és inkonzisztensé válna.
 Helyette egyedi erőforrásokat (CustomResource) hozhatunk létre és ezen erőforrások mellé megadhatunk különböző vezérlőket. Ezt csinálják az operátorok, amivel a fentebb vázolt feladat a diplomamunkában is megoldhatóvá vált.
 
-\subsection{Megírása}
+\subsection{Implementáció}
 %----------------------------------------------------------------------------
 A klaszter operátorral való kibővítése egy gyakran alkalmazott megoldás, amikor összetettebb alkalmazást vagy logikát kell implementálni.
 Olyan szinten elterjedt megoldásról van szó, hogy több nyelv és keretrendszer közül lehet választani\citep{availableOperatorFrameworks}.
@@ -67,17 +72,37 @@ A felsorolt opciók közül a Go programozási nyelv adja a legnagyobb rugalmass
 Én is ezt a megoldást választottam a korábbi projekttárgy keretén belül és sikerült megszerezni az alapvető ismerteket. 
 Feladatom volt a korábban megírt alkalmazás hibáinak javítása és új funkciókkal történő bővítése.
 
-Sajnos limitált számú segédanyag érhető el és azok is többnyire ugyanazt a példaalkalmazást mutatják be, ezért az elején nehéz belekezdeni. Egyedül a korábban mások által megírt operátorok forráskódja tudott jó kiindulásként szolgálni.
+Sajnos limitált számú segédanyag érhető el és azok is többnyire ugyanazt a példaalkalmazást mutatják be, ezért az elején nehéz belekezdeni.
+Egyedül a korábban mások által megírt operátorok forráskódja tudott jó kiindulásként szolgálni.
 
-Több megoldás is létezik az elkészült operátorunk futtatására. Futtathatjuk a klaszteren kívülről, mint alkalmazást, illetve a klaszteren belülről is. Utóbbi esetben készíteni kell az alkalmazásunkból egy Docker képfájlt, ami aztán külön kapszulában fog futni. Illetve klaszteren belül lehetőségünk van egy úgynevezett operátor életciklus kezelővel (Operator Lifecycle Manager - OLM) is megtenni ezt. Az utóbbi megoldás a legfejlettebb úgy kell elképzelni mint egy külön csomagkezelő csak a klaszteren belül, az operátoroknak. A félévben én a klaszteren kívüli megoldást használtam, mivel az operátort is folyamatosan fejleszteni kellett a különböző igények szerint, illetve a projekt kapcsán nem releváns az operátor futási környezete, cserébe több idő marad a mérésekre koncentrálni.
+Több megoldás is létezik az elkészült operátorunk futtatására.
+Futtathatjuk a klaszteren kívülről, mint alkalmazást, illetve a klaszteren belülről is.
+Utóbbi esetben készíteni kell az alkalmazásunkból egy Docker képfájlt, ami aztán külön kapszulában fog futni. 
+Illetve klaszteren belül lehetőségünk van egy úgynevezett operátor életciklus kezelővel (Operator Lifecycle Manager - OLM) is megtenni ezt. 
+Az utóbbi megoldás a legfejlettebb, úgy kell elképzelni mint egy külön csomagkezelő csak a klaszteren belül, az operátoroknak. 
+A félévben én a klaszteren kívüli megoldást használtam, mivel az operátort is folyamatosan fejleszteni kellett a különböző igények szerint, illetve a projekt kapcsán nem releváns az operátor futási környezete, cserébe több idő marad a mérésekre koncentrálni.
 
 \subsection{Használata}
 %----------------------------------------------------------------------------
-A \ref{servicegraph_example} kódrészlet mutat egy példát a szolgáltatásháló definíciójára. Számunkra elég végiggondolni, hogy milyen szolgáltatásokat szeretnénk, hogyan kövessék egymást, milyen erőforrást biztosítsunk számukra. Miután ezek megvannak készítünk belőle egy \textit{yaml} dokumentumot.
+A \ref{servicegraph_example} kódrészlet mutat egy példát a szolgáltatásháló definíciójára. 
+Számunkra elég végiggondolni, hogy milyen szolgáltatásokat szeretnénk, hogyan kövessék egymást, milyen erőforrást biztosítsunk számukra.
+Miután ezek megvannak, készítünk belőle egy \textit{yaml} dokumentumot.
 
-Látható, hogy a \verb+apiVersion+ és \verb+kind+ érték egyedi, így tudunk hivatkozni a saját erőforrásunkra. Szintén meg kell adni pár meta információt, mint például az objektum neve és névtere. A \verb+spec+ szekció az érdekes számunkra. Itt tudjuk felsorolni, hogy milyen szolgáltatásokat szeretnénk majd a hálózatba. Be tudjuk állítani, hogy hány replikával fusson egy-egy szolgáltatás, illetve hogy milyen portokon tudjuk majd őket elérni. Ezek az információk azért lesznek fontosak, mert ez alapján fog az operátor létrehozni Kubernetes Deploymenteket és Serviceket. Ha szeretnénk skálázást is beállítani az adott szolgáltatásra akkor azt is megtehetjük, ha megadjuk a \verb+hpa+ konfigurációs paramétereket. Ezek hiányában nem kerül létrehozásra, és fix replikaszámmal fog üzemelni.
+Látható, hogy az \verb+apiVersion+ és \verb+kind+ értékek egyediek, általuk tudunk hivatkozni a saját erőforrásunkra.
+Szintén meg kell adni pár meta információt, mint például az objektum neve és névtere.
+Számunkra legérdekesebb beállítások a \verb+spec+ szekció alatt találhatóak.
+Itt tudjuk felsorolni, hogy milyen szolgáltatásokat szeretnénk majd a hálózatba.
+Be tudjuk állítani, hogy hány replikával fusson egy-egy szolgáltatás, illetve hogy milyen portokon tudjuk majd őket elérni. 
+Ezek az információk azért lesznek fontosak, mert ez alapján fog az operátor létrehozni Kubernetes Deploymenteket és Serviceket. 
+Ha szeretnénk skálázást is beállítani az adott szolgáltatásra akkor azt is megtehetjük, ha megadjuk a \verb+hpa+ konfigurációs paramétereket. 
+Ezek hiányában nem kerül létrehozásra, és fix replikaszámmal fog üzemelni.
 
-Továbbá definiálni kell, hogy az adott szolgáltatás milyen végpontok hívására figyeljen. Például a \textit{front-end} szolgáltatás a \verb+/instant+ és \verb+/chain+ lekérdezésekre fog válaszolni. A válasz gyorsasága és a közben felhasznált erőforrás mennyiséget is lehetőségünk van befolyásolni. Az itt megadott paraméterek továbbításra kerülnek majd a futtatott konténerekhez így ők fogják helyileg érvényre juttatni a szabályokat. 
+Továbbá definiálni kell, hogy az adott alkalmazás számára milyen végpontok létrehozása szükséges. 
+Az itt megadott végpontok meghívása esetén lesz képes válaszolni a beérkező kérésekre.
+Például a \textit{front-end} szolgáltatás a \verb+/instant+ és \verb+/chain+ lekérdezésekre fog válaszolni. 
+A válasz gyorsasága és a közben felhasznált erőforrás mennyiséget is lehetőségünk van szabályozni. 
+Az itt megadott paraméterek továbbításra kerülnek majd a futtatott konténerekhez így ők fogják helyileg érvényre juttatni a szabályokat. 
+Ezen paraméterek értelmezése miatt volt szükséges egy egyedi alkalmazás implementálása.
 
 A bemutatott kód csak részlete a teljes forrásállománynak, mert elég repetitív ezért nem szerettem volna a helyet foglalni, de a GitHub oldalán megtalálható a teljes kód. \\
 
@@ -123,26 +148,26 @@ Kintről kell átadni minden olyan értéket, ami meghatározza a működési m�
 Többek között meg lehet adni, hogy az egyes végpontokra érkező kérések esetén mekkora processzor igényt generáljon.
 Ezen funkció implementálása bizonyult a legérdekesebb feladatnak.
 
-Az alkalmazás első funkcióiban nem kapott még jelentős figyelmet, mert a nagy rendszer összeállítása került fókuszba.
+Az alkalmazás első funkcióiban nem kapott még jelentős figyelmet, mert a nagy rendszer összeállításán volt a fókusz.
 Emiatt egy egyszerű processzor igényes algoritmust implementáltam, ami a feladatát tökéletesen ellátta.
-Az általam választott algoritmus az Eratoszthenész szitája volt, ami képes megkeresni egy bizonyos számig létező prímszámokat.
+Az általam választott algoritmus az Eratoszthenész szitája\citep{sieveOfEratosthenes} volt, ami képes megkeresni egy adott számnál kisebb összes prímszámot.
 Az algoritmusban szereplő lépések nem nehezek, azonban több egymásba ágyazott \textit{for} ciklust tartalmaz, ami így beláthatatlan ideig de használja a rendelkezésre álló processzort.
-További érdekesség, hogy amikor a végeredményt nem került kiírásra vagy felhasználásra, akkor a fordító valószínűleg figyelmen kívül hagyta a számára feleslegesnek hitt műveletsort és nem került bele a végleges alkalmazásba.
-Ez a tulajdonsága a fordítónak egyszerre barátságos, mert már fordítás közben is javítja a kódminőséget azonban egyszerre kiszámíthatatlanná teszi a kész programunkat, mert hiába írtuk meg nem került meghívásra a függvény.
+%További érdekesség, hogy amikor a végeredményt nem került kiírásra vagy felhasználásra, akkor a fordító valószínűleg figyelmen kívül hagyta a számára feleslegesnek hitt műveletsort és nem került bele a végleges alkalmazásba.
+%Ez a tulajdonsága a fordítónak egyszerre barátságos, mert már fordítás közben is javítja a kódminőséget azonban egyszerre kiszámíthatatlanná teszi a kész programunkat, mert hiába írtuk meg nem került meghívásra a függvény.
 
 A megoldás gyengeségét az adta, hogy nem lehet finomhangolni és a Kubernetesben létező mCPU mértékegység szerint konfigurálni az alkalmazás egységünket.
 Amikor a rendszer fejlesztésének előrehaladott szakaszában ez a probléma ismét előkerült, megoldási javaslatot kellett keresni.
 
-A megoldás alapját az úgynevezett szoros ciklusok (\textit{tight loop}\citep{tightLoop}) adta.
+A megoldás alapját az úgynevezett szoros ciklusok (\textit{tight loop}\citep{tightLoop}) módszertan adta.
 
 A mögöttes elgondolás, hogy 1000 mCPU felhasználást akkor kapunk, ha a megfigyelt konténer egy teljes másodpercig birtokolja és ezen idő alatt folyamatosan használja is az erőforrást.
 Viszont előre meghatározni, nem lehet, hogy mennyi műveletet végezzünk, hiszen ezt befolyásolja a Kubernetes klaszter mögötti infrastruktúra.
 Tehát elképzelhető, hogy azonos algoritmus futása eltérő terhelésként jelenik meg az adott rendszerben értelmezett 1 CPU egység miatt.
 
-A fenti következménye, hogy ha a Kubernetes mCPU mértékegységét akarjuk használni, akkor kötelező lesz az alkalmazás tényleges működése előtt egy kalibrációs tesztet végezni.
+A fenti következménye, hogy ha a Kubernetes mCPU mértékegységét akarjuk használni, akkor az alkalmazás tényleges működtetése előtt szükséges egy kalibrációs tesztet végezni.
 
-Az alkalmazás indításakor futtatott függvényében egy másodpercig egy egyszerű tight loop algoritmust futtat és figyeljük, hogy ezen idő alatt hány iterációt tud megtenni.
-Amennyiben az ez információ adott könnyen tudunk generálni megadott terhelést bármilyen környezetben.
+Az alkalmazás az indításakor futtatott függvényében egy másodpercig egy egyszerű tight loop algoritmust futtat és figyeljük, hogy ezen idő alatt hány iterációt tud megtenni.
+Amennyiben az ez információ adott, könnyen tudunk generálni megadott terhelést bármilyen környezetben.
 Ehhez az kell, hogy a beérkező kérés esetén a korábban kiszámolt iterációk számához arányosan az igényelt processzor-fogyasztással megegyező iterációt tegyen meg. 
 
 A végeredményül előállt megoldás által lehetőségünk van finomhangolni és kontrollálni az egyes lekérdezések hatására keletkező processzor terhelést és annak idejét is. 
@@ -169,7 +194,7 @@ A következő megoldandó kihívás a mérések kezelése volt, mivel törekedte
 Fontos szempont volt, hogy a mérések elvégzése a lehető legegyszerűbben és rugalmas módon tudjon megtörténni. 
 A feladat megvalósításához a Python nyelvet választottam, hiszen könnyen lehet benne szkripteket fejleszteni illetve komoly számítást nem fog végezni így nem számottevő a plusz erőforrás-felhasználása, más alacsonyabb szintű nyelvekhez képest sem. 
 
-Mérés megkezdése előtt készíteni kell egy konfigurációs fájlt. Erre egy példa látható a \ref{measurement_config} kódrészleten. A mérést vezénylő alkalmazás az itt megadott paraméterek alapján fogja végezni a mérést. Többek között meg kell adni, hogy a mérések milyen szolgáltatáshálózatokon kerüljenek elvégzésre. Lehetőség van többet is megadni, így egy indítással akár az összes számunkra érdekes esetet le tudjuk szimulálni egyszerre. Továbbá meg kell adni, hogy milyen kérés per másodperc (\textit{QPS}) értékekre vagyunk kíváncsiak. Fontos megadni, hogy milyen forgalmat és hova szeretnénk generálni. Ez látható a \verb+Load+ részen belül. Megadjuk a mérés idejét, IP címet és portot, ahol a szolgáltatásunk fogja fogadni a kéréseket.\\
+A érés megkezdése előtt készíteni kell egy konfigurációs fájlt. Erre egy példa látható a \ref{measurement_config} kódrészleten. A mérést vezénylő alkalmazás az itt megadott paraméterek alapján fogja végezni a mérést. Többek között meg kell adni, hogy a mérések milyen szolgáltatáshálózatokon kerüljenek elvégzésre. Lehetőség van többet is megadni, így egy indítással akár az összes számunkra érdekes esetet le tudjuk szimulálni egyszerre. Továbbá meg kell adni, hogy milyen kérés per másodperc (\textit{QPS}) értékekre vagyunk kíváncsiak. Fontos megadni, hogy milyen forgalmat és hova szeretnénk generálni. Ez látható a \verb+Load+ részen belül. Megadjuk a mérés idejét, IP címet és portot, ahol a szolgáltatásunk fogja fogadni a kéréseket.\\
 
 
 \lstset{caption=Mérés konfigurációja, label=measurement_config}
@@ -187,7 +212,7 @@ Végül a döntés a \textit{Vegetára} esett, mert hasonló funkcionalitásokka
 Egy-egy terhelés szimulációjához meg kell adnunk pár paramétert az alkalmazás indításához. 
 %Egy valódi indítást mutat be a  \ref{vegeta_command} kódrészlet. 
 Ilyen például az elérni kívánt QPS érték, a terhelés időtartama, a megcélzott végpont, az eredmények mentési neve és helye.
-Ezeket a paramétereket a korábban ismertetett konfigurációs fájl alapján állítjuk elő. \\
+Ezeket a paramétereket a korábban ismertetett konfigurációs fájl alapján állítjuk elő.
 
 %\lstset{caption=Példa a \textit{Vegeta} indítására, label=vegeta_command}
 %\lstinputlisting[language=Bash]{figures/vegeta_command.sh}
@@ -196,15 +221,18 @@ Miután megterheltük a rendszert és megkaptuk a kérések kiszolgálásával k
 Erre a \verb+Prometheus+ rendszerén keresztül van lehetőségünk.
 A szoftver támogatja az API hívásokat, így lehetőségünk nyílik könnyen lekérdezni az általa gyűjtött statisztikákat. 
 
-A metrikák lekérdezésére a \ref{prometheus_query} kódrészlet ad egy példát. Meg kell adnunk, hogy milyen értékekre vagyunk kíváncsiak. A látható példában ez a konténerek által felhasznált CPU mennyisége, továbbá kikötéseket teszünk, hogy csak a \textit{Default} vagy \textit{Metrics} névtérben futó konténerek érdekelnek.
+A metrikák lekérdezésére a \ref{prometheus_query} kódrészlet ad egy példát. Meg kell adnunk, hogy milyen értékekre vagyunk kíváncsiak. 
+A látható példában ez a konténerek által felhasznált CPU mennyisége, továbbá kikötéseket teszünk, hogy csak a \textit{Default} vagy \textit{Metrics} névtérben futó konténerek érdekelnek.
 Meg kell adni a lekérdezés kezdeti és vég idejét, amíg a generált kéréseket kiszolgálta.
-Össze kell állítani a \verb+Prometheus+ elérhetőségét, amihez a mérés elején megadott konfigurációt vesszük alapul. Ha megvan az előkészített API hívás, akkor a kódrészletben látott módon meg kell hívni azt. A kapott választ \verb+json+ formátumban érkezik, így később mi is így kezeljük. \\
+Össze kell állítani a \verb+Prometheus+ elérhetőségét, amihez a mérés elején megadott konfigurációt vesszük alapul. Ha megvan az előkészített API hívás, akkor a kódrészletben látott módon meg kell hívni azt.
+A kapott választ \verb+json+ formátumban érkezik, így később mi is így kezeljük. \\
 
 
 \lstset{caption=\textit{Prometheus} rendszer használata Python kódból, label=prometheus_query}
 \lstinputlisting{figures/prometheus.py}
 
-A korábban látott megoldással egyéb adatokat is metrikákat is lekérdezhetünk. Jelenleg négy értéket gyűjtünk:
+A korábban látott megoldással egyéb adatokat és metrikákat is lekérdezhetünk. 
+Jelenleg négy értéket gyűjtünk:
 \begin{itemize}
   \item Konténerek processzor felhasználásait külön-külön.
   \item Konténerek memória felhasználásait külön-külön.
@@ -212,15 +240,17 @@ A korábban látott megoldással egyéb adatokat is metrikákat is lekérdezhet�
   \item A futó konténerek száma típus szerint. (például: külön amik a front-end szolgáltatást valósítják meg és külön amik a back-end szolgáltatást)
 \end{itemize}
 
-A \verb+Prometheus+ egészen kiterjeszthető rendszer így közel tetszőleges metrikákat lehet gyűjteni. 
+A \verb+Prometheus+ könnyen kiterjeszthető rendszer így közel tetszőleges metrikákat lehet általa gyűjteni. 
 
 
-A mérés végén miután összegyűjtöttük az összes keletkező adatokat, beleértve a \verb+Prometheus+ és \verb+Vegeta+ rendszereket is és az eredeti konfigurációt is azokat perzisztálni kell. Erre a legkézenfekvőbb módszer az adatok kiírása \verb+json+ fájlba. Ez azért is előnyös, mert könnyen olvasható és feldolgozható a formátum. 
+A mérés végén miután összegyűjtöttük az összes keletkező adatot, beleértve a \verb+Prometheus+ és \verb+Vegeta+ rendszereket is illetve az eredeti konfigurációt, azokat perzisztálni kell.
+Erre a legkézenfekvőbb módszer az adatok kiírása \verb+json+ fájlba.
+Ez azért is előnyös, mert szkriptek segítségével könnyen olvasható és feldolgozható formátumot biztosít az eredmények kiértékeléséhez. 
 
 %----------------------------------------------------------------------------
 \section{Eredmények ábrázolása}
 %----------------------------------------------------------------------------
-Az egyes mérések kimenetei \textit{json} fájlok, melyek értelmezése és ezáltal a következtetések levonása számunkra nehéz feladat lenne ebben a formában. 
+Az egyes mérések kimenetei \textit{json} fájlok, melyek ember általi értelmezése és ezáltal a következtetések levonása nehéz feladat lenne ebben a formában. 
 Szükségessé vált tehát egy külön alkalmazás implementálása, ami az általunk kapott eredményeket könnyen átlátható formában ábrázolja. 
 
 A feladat megoldására szintén a Python nyelvet választottam, mert könnyen lehet benne fájlokat kezelni, egyes objektumokat módosítani és rendelkezik grafikus megjelenítő modullal.
@@ -245,8 +275,7 @@ Az ilyen eseteket észlelni kell és kiszűrni az értékeit, hogy ne okozzanak 
 \label{sec:measure_steps}
 %----------------------------------------------------------------------------
 
-A következő alfejezetben szeretném a korábban bemutatott alkotóelemeket egymás utáni sorba tenni és az általuk végrehajtott egy-egy lépést részletesebben bemutatni.
-A fő célja, hogy egy szimulációt teljes egészében bemutasson a mérés indításától kezdődően a kapott eredmények feldolgozásáig.
+Ebben az alfejezetben szeretném a korábban bemutatott alkotóelemeket egymás utáni sorba tenni és az általuk végrehajtott egy-egy lépést részletesebben bemutatni, egy szimuláció indításától kezdődően a kapott eredmények feldolgozásáig.
 
 A bemutatott lépések az elkészült rendszer működésének használatára koncentrálnak, emiatt a Kubernetes operátor működése nem szerepel fajsúlyos mértékben a leírtak között.
 Az operátor működését ebben az esetben tekintsük egy beépített szolgáltatásnak.
@@ -257,12 +286,12 @@ Ebben a konfigurációs fájlban kell megadni azt vagy azokat a szolgáltatásh�
 Több ilyen szolgáltatás háló is megadható, ebben az esetben többször fog lefutni a szimulációnk azonos paraméterekkel.
 
 Az elindított Python alkalmazás először ellenőrzi, hogy létezik-e parancssorban megadott konfigurációs állomány.
-Amennyiben nem volt megadva, a program futása közben is lehetőségünk van azt behivatkozni, ráadásul ebben egy automatikus kiegészítő funkciói is segítségünkre van.
-Ha ez megtörtént, akkor egy segédmodul segítségével beolvassuk a paramétereket és eltároljuk egy Python szótárba, hogy később könnyebb legyen az adott értéket felhasználni.
+Amennyiben nem volt megadva, a program futása közben is lehetőségünk van azt behivatkozni, ráadásul ebben egy automatikus kiegészítő funkció is segítségünkre van.
+Ha ez megtörtént, akkor egy segédmodul segítségével beolvassuk a paramétereket és eltároljuk egy Python szótárban, hogy később könnyebb legyen az adott értéket felhasználni.
 
-Ezután minden, megadott szolgáltatásháló esetén el kell végezni a következő terheléseket.
-Először ki kell számolni, hogy milyen QPS értékű terheléseket fog generálni.
-Ha van még ilyen ilyen QPS érték, amire nem lett elvégezve a terhelés, akkor megigényli az éppen aktuálisan vizsgált szolgáltatáshálót a Kubernetes klaszterben.
+Ezután minden, megadott szolgáltatásháló esetén el kell végezni a következő lépéseket.
+Először ki kell számolni, hogy milyen QPS értékű terhelések generálása lesz szükséges.
+Ha van még ilyen QPS érték, amire nem lett elvégezve a szimuláció, akkor megigényli az éppen aktuálisan vizsgált szolgáltatáshálót a Kubernetes klaszterben.
 Ez alapján az operátor elkezdi létrehozni a szükséges erőforrásokat. 
 Eközben az alkalmazásunk folyamatosan figyelemmel követi, hogy az igényelt kapszulák állapota futó legyen, hiszen csak a rendszer teljes elindulása után lehet a méréseket elkezdeni.
 
@@ -297,8 +326,8 @@ A beolvasott fájl igazán nagyméretű és rendezetlen adathalmazt tartalmaz.
 Emiatt szükséges a nyers adatokat tisztítani és csak a számunkra értelmezhető információkat megtartani.
 Az így kapott adatokat transzformálni kell, hogy a későbbiekben az alkalmazás könnyebben tudja ábrázolni.
 
-Az kinyert és előkészített adatokat el kell tárolni, amíg minden mérési eredményt tartalmazó fájlon megtörténik ez a lépés. 
-Ennek a folyamatnak a végére előállnak az ábrázolható adatok együttese.
+A kinyert és előkészített adatokat el kell tárolni, amíg minden mérési eredményt tartalmazó fájlon megtörténik ez a lépés. 
+Ennek a folyamatnak a végére előáll az ábrázolható adatok együttese.
 Ezeket különböző módon tudjuk ábrázolni és megjeleníteni.
 A kész grafikonokat lehetőségünk van lementeni, de ez csak egy opcionális lépés, emiatt szerepel az ábrán szaggatott vonalas nyíllal.
 A megjelenített ablak bezárása után végére is értünk a folyamatnak.

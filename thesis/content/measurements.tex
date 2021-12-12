@@ -3,8 +3,8 @@
 \label{sec:results}
 %----------------------------------------------------------------------------
 Ebben a fejezetben szeretném bemutatni a diplomamunka keretein belül elvégzett méréseket és a hozzájuk szükséges egyéb ismereteket.
-Először bemutatom milyen lehetőségek voltak a környezet kialakítására és a mérések közben használt eszközöket, szoftverek verzióit.
-Ezután következnek a mérések bemutatása és a kapott eredmények értékelése.
+Először bemutatom milyen lehetőségek voltak a környezet kialakítására és a mérések közben használt eszközök, szoftverek verzióit.
+Ezután következik a mérések bemutatása és a kapott eredmények értékelése.
 Az eredmények kiértékelése során kiderül, hogyan viselkedik forgalomszabályozás nélkül egy szolgáltatásháló és ezen mennyire segít a beépített horizontális skálázó.
 
 %----------------------------------------------------------------------------
@@ -15,10 +15,24 @@ A feladat elején főként implementációval kellett foglalkozni így nem kapot
 Amikor a fejlesztési rész kezdett véglegesedni kellett egy rendes környezet, a rendes mérésekhez. Ehhez több lehetőséget is számításba vettem.	
 
 \begin{itemize}
-  \item \textbf{BME Cloud}: Egyik lehetőség az egyetemi felhő volt. Itt létre lehet hozni virtuális gépeket, amiket aztán klaszterbe lehet szervezni. Hátránya viszont, hogy hosszabb távra nehezen lehet gépet igényelni, rendszeresen le is állítják ami könnyen okozhatja egy-egy mérés elvesztését, hiszen több órán keresztül is futhat.
-  \item \textbf{Klaszter a felhőben}: Kézenfekvő megoldás lehet igényelni egy teljes, egész klasztert. Erre több opció is van, csak hogy a legnagyobbakat említsem: Google, Amazon, Microsoft. Ezek a minőségi szolgáltatások azonban havidíjasok lennének, és bizonyos tekintetben kevésbé rugalmasak. %TODO: készültek becslések a havidíjra.
-    \item \textbf{Tanszéki infrastruktúra}: A tanszéken létezik egy előretelepített klaszter, amin lehetne méréseket készíteni, de általában foglalt.
-      \item \textbf{VM igénylés a Schönherz kollégiumtól}: A Villamosmérnöki és Informatikai Karhoz tartozó Schönherz kollégiumban lévő Kollégiumi Számítástechnikai Körtől lehet tanulmányokhoz és egyéb projekthez kapcsolódóan virtuális gépeket igényelni. Az igénylés leadása után lehetőséget kaptam három virtuális gép használatára egészen a projektfeladat végéig. Bizonyos hátulütőkkel ezen lehetőségnél is számításba kellett venni. Ilyen például, hogy öntevékeny körként hiba esetén a többinél lassabb válaszidőkre lehet számítani.
+ 	\item \textbf{BME Cloud} - Egyik lehetőség az egyetemi felhő volt. 
+ 	Itt létre lehet hozni virtuális gépeket, amiket aztán klaszterbe lehet szervezni.
+ 	Hátránya viszont, hogy hosszabb távra nehezen lehet gépet igényelni, rendszeresen le is állítják ami könnyen okozhatja egy-egy mérés elvesztését, hiszen több órán keresztül is futhat
+ 	.
+	\item \textbf{Klaszter a felhőben} - Kézenfekvő megoldás lehet igényelni egy teljes, egész klasztert. 
+	Erre több opció is van, csak hogy a legnagyobbakat említsem: Google, Amazon, Microsoft.
+	Ezek a minőségi szolgáltatások azonban havidíjasok lennének, és bizonyos tekintetben kevésbé rugalmasak. 
+	 %TODO: készültek becslések a havidíjra.
+	 
+    \item \textbf{Tanszéki infrastruktúra} - A BME TMIT tanszék is rendelkezik egy telepített Kubernetes klaszterrel, így ez is felmerült opcióként.
+    Előnye a megoldásnak, hogy a telepítést nem kell elvégezni, ezzel gyorsítva a munka haladását.
+    Hátrányként viszont felmerült, hogy többen használják a rendszert és előre le kell foglalni.
+
+      \item \textbf{VM igénylés a Schönherz kollégiumtól} - A Villamosmérnöki és Informatikai Karhoz tartozó Schönherz kollégiumban lévő Kollégiumi Számítástechnikai Körtől lehet tanulmányokhoz és egyéb projekthez kapcsolódóan virtuális gépeket igényelni. 
+      Az igénylés leadása után lehetőséget kaptam három virtuális gép használatára egészen a projektfeladat végéig.
+      %Bizonyos megfontolásokat ezen lehetőségnél is számításba kellett venni.
+      %Ilyen például, hogy öntevékeny körként hiba esetén a többinél lassabb válaszidőkre lehet számítani, valamint kevésbé stabil az infrastruktúra így véletlenszerű kihagyások lehetnek.
+      
 \end{itemize}		
 
 A fenti opciók közül számomra a negyedik volt a legszimpatikusabb így kaptam is három teljesen új virtuális gépet. Telepítéshez a Debian (v10 - Buster) operációs rendszert választottam, mert stabil, megbízható és széles körben támogatott. A virtuális gépek tulajdonságai az \ref{tab:nodes} ábrán láthatóak. Hasonló erőforrásértékekkel rendelkeznek, annyi különbséggel, hogy csak az egyik gépnek van publikus címe. Továbbá a táblázat tartalmazza az egyes csomópontok nevét és a klaszteren belüli szerepét is.
@@ -31,7 +45,7 @@ A fenti opciók közül számomra a negyedik volt a legszimpatikusabb így kapta
 	CPU (mag) & 4 & 4 & 4 \\ 
 	Memória (GB) & 4 & 4 & 4 \\
 	Tárhely (GB) & 10 & 10 & 10 \\  
-	Node neve & dipterv1 & dipterv2 & dipterv3 \\ 
+	Csomópont neve & dipterv1 & dipterv2 & dipterv3 \\ 
 	Külső IP & 152.66.211.2 & $\varnothing$ & $\varnothing$ \\ 
 	Belső IP & 10.151.103.1 & 10.151.103.2 & 10.151.103.3 \\
 	K8s szerep& control-plane,master & worker & worker \\
@@ -43,19 +57,43 @@ A fenti opciók közül számomra a negyedik volt a legszimpatikusabb így kapta
 
 \subsection{Klaszter előkészítése}
 %----------------------------------------------------------------------------
-A virtuális gépekből klasztert kellett szervezni, amire különböző megoldások léteznek.\citep{kubernetesInstall} Két különbözőt szeretnék kiemelni:
+A virtuális gépekből klasztert kellett szervezni, amire különböző megoldások léteznek.\citep{kubernetesInstall} 
+Ezek közül két különbözőt szeretnék kiemelni:
+
 \begin{enumerate}
-  \item \textbf{Kubespray}: \textit{Ansible} felhasználásával előre definiált lépéseket hajt végre. Mindössze egy pár soros konfigurációt kell írni hozzá és ígérete szerint minden mást elintéz.
-  \item \textbf{Kubeadm}: Az előzőhöz képest a \textit{kubeadm} jóval manuálisabb módszer. Segítségével le tudunk generálni mindenféle kulcsot a klaszterhez, csomópontokat bekötni a rendszerbe.
+
+  \item \textbf{Kubespray} - \textit{Ansible} felhasználásával előre definiált lépéseket hajt végre. Pár soros konfigurációt kell megadni számára, ami a nélkülözhetetlen paramétereket tartalmazza és ígérete szerint minden mást megold.
+  
+  \item \textbf{Kubeadm} - Az előzőhöz képest a \textit{kubeadm} sokkal manuálisabb lehetőséget biztosít a telepítéshez. 
+  Segítségével le tudjuk generálni s szükséges kulcsokat a klaszterhez, és képes új csomópontokat a klaszterhez kötni.
+  
 \end{enumerate}
 
-Nem szándékosan de kipróbáltam mindkét megoldást. Vonzó volt ugyanis a Kubespray, hogy könnyen és automatikusan telepít minden függőséget. Sajnos pont amiatt mert ilyen magas szinten vezeti a telepítést hiba esetén nem sok információ derült ki. Miután eredménytelenül zárult minden próbálkozás, újratelepítettem a virtuális gépeket és áttértem a Kubeadm használatára. 
+Nem szándékosan de kipróbáltam mindkét megoldást.
+Vonzó volt ugyanis a Kubespray, hogy könnyen és automatikusan telepít minden függőséget. 
+Sajnos amiatt mert ilyen magas szinten vezeti a telepítést, hiba esetén nem sok hasznos információ áll rendelkezésre.
+Miután eredménytelenül zárult minden próbálkozás, újratelepítettem a virtuális gépeket és áttértem a Kubeadm használatára. 
 
-A telepítés menetét nem részletezném, mert a hivatalos weboldalon látható lépéseken kellett végigmenni. Az elkészült klaszter egy mester csomópontot és kettő kiszolgáló csomóponttal rendelkezik. A fő csomópont rendelkezik egyedül külső hálózatról elérhető, publikus IP címmel, a többinek csak belső címen érhetőek el. Ez némiképpen nehezítette a telepítés folyamatát, részben emiatt sem működött a Kubespray megoldása. 
+A telepítés menetét nem részletezném, mert a hivatalos weboldalon látható lépéseken kellett végigmenni. 
+Az elkészült klaszter egy mester csomóponttal és kettő kiszolgáló csomóponttal rendelkezik.
+A fő csomópont rendelkezik egyedül külső hálózatról elérhető, publikus IP címmel, a többit csak belső címen lehet elérni.
+Ez némiképpen nehezítette a telepítés folyamatát, részben emiatt sem működött a Kubespray megoldása. 
 
-A klaszter elkészülte után még pár függőséget ki kellett elégíteni, hogy a lokálisan összeállított mérő keretrendszer működni tudjon. Külön telepíteni kellett egy konténer hálózati interfészt (CNI). Ez alapból nem jön a Kubernetessel így külön kell installálni, hogy a különböző csomóponton futtatott konténerek tudjanak egymással kommunikálni. A választás a \textit{Cilium} szoftverre esett, mert szerettem volna jobban megismerni, széleskörűen használható és jól dokumentált. Telepítése után lehetőségünk van teszteseteket futtatni, ami igazolja a klaszterben a csomópontok és kapszulák kommunikációját. 
+A klaszter elkészülte után még pár függőséget ki kellett elégíteni, hogy a lokálisan összeállított mérő keretrendszer működni tudjon.
+Külön telepíteni kellett egy konténer hálózati interfész (\textit{CNI}) bővítményt.
+Ez alapból nem része a Kubernetesnek így külön kell telepíteni, hogy a különböző csomóponton futtatott konténerek tudjanak egymással kommunikálni.
+A választás a \textit{Cilium} szoftverre esett, mert szerettem volna jobban megismerni, széleskörűen használható és jól dokumentált.
+Telepítése után lehetőségünk van teszteseteket futtatni, ami igazolja a klaszterben a csomópontok és kapszulák kommunikációját. 
 
-A \ref{sec:measure_orchestrate} szakaszban leírt módon a mérések során gyűjtött adatok jelentős részét a Prometheus rendszere gyűjti össze és tőle kérdezzük le. Emiatt az éles méréseket végző klaszterben is telepíteni kellett. Ebben a Helm, Kuberneteshez készített csomagkezelő megoldása segített. A \verb+prometheus-stack+ csomagot kellett telepíteni annyi kiegészítéssel, hogy kintről is elérhetővé tegyük a felületet és szolgáltatásait. Azt úgy érhetjük el, hogy a létrehozandó \verb+Service+  típusát \verb+NodePort+-ra állítjuk és a következetesség miatt adunk neki egy portszámot. Az így létrehozott környezet rendelkezik egy webes felhasználói felülettel is, ahol tetszőleges lekérdezéseket indíthatunk. Egy ilyen lekérdezés látszik az \ref{fig:prometheus_example} ábrán is. A példán az látszik, hogy milyen eredményt kapunk, ha lekérdezzük az aktuálisan futó kapszulákat a \verb+Default+ és \verb+Metrics+ névtérben. Az eredményből leolvasható, hogy jelenleg 3 darab \textit{back-end}, 2 darab \textit{front-end} és 1 darab \textit{db} névvel ellátott konténer fut. \\
+A \ref{sec:measure_orchestrate} szakaszban leírt módon a mérések során gyűjtött adatok jelentős részét a Prometheus rendszere gyűjti össze és tőle kérdezzük le. 
+Emiatt az éles méréseket végző klaszterben is telepíteni kellett. 
+Ebben a Helm, Kuberneteshez készített csomagkezelő megoldása segített. 
+A \verb+prometheus-stack+ csomagot kellett telepíteni annyi kiegészítéssel, hogy kintről is elérhetővé tegyük a felületet és szolgáltatásait. 
+Ezt úgy érhetjük el, hogy a létrehozandó \verb+Service+  típusát \verb+NodePort+-ra állítjuk és a következetesség miatt adunk neki egy portszámot. 
+Az így létrehozott környezet rendelkezik egy webes felhasználói felülettel is, ahol tetszőleges lekérdezéseket indíthatunk. 
+Egy ilyen lekérdezés látszik az \ref{fig:prometheus_example} ábrán is. 
+A példán az látszik, hogy milyen eredményt kapunk, ha lekérdezzük az aktuálisan futó kapszulákat a \verb+Default+ és \verb+Metrics+ névtérben. 
+Az eredményből leolvasható, hogy jelenleg 3 darab \textit{back-end}, 2 darab \textit{front-end} és 1 darab \textit{db} névvel ellátott konténer fut. \\
 
 % Prometheus példa -------------------------------------------------------
 \begin{figure}[!ht]
@@ -65,13 +103,14 @@ A \ref{sec:measure_orchestrate} szakaszban leírt módon a mérések során gyű
 \label{fig:prometheus_example}
 \end{figure}
 
-Az aktuális rendszerben az operátor még nem külön konténerként fut egy kapszulában, hanem a klaszteren kívül, lokálisan a szerveren, mint egy Go alkalmazás. Emiatt külön telepíteni kellett a Go nyelvet is, hogy el tudjon indulni a rendszer.
+Jelenleg az operátor még nem külön konténerként fut egy kapszulában, hanem a klaszteren kívül, lokálisan a szerveren, mint egy Go alkalmazás.
+Emiatt külön telepíteni kellett a Go nyelvet is, hogy el tudjon indulni a rendszer.
 
 \subsection{Verziók}
 %----------------------------------------------------------------------------
 A rendszer és mérések összeállításához több különböző komponenst kellett integrálni.
 Az \ref{tab:versions} táblázat összefoglalóan tartalmazza az egyes környezetek és használt eszközök verzióit. 
-Mindig törekedtem a legfrissebb verzió használatára, hiszen ezek tartalmazzák a legtöbb funkciót és a legtöbb hibajavítást, azonban a környezet összeállítása után már végeztem verziófrissítést, nehogy eltérést okozzon a mérési eredményekben.
+Mindig törekedtem a legfrissebb verzió használatára, hiszen ezek tartalmazzák a legtöbb funkciót és a legtöbb hibajavítást, azonban a környezet összeállítása után már nem végeztem verziófrissítést, nehogy eltérést okozzon a mérési eredményekben.
 
 \begin{table}[ht]
 \centering
@@ -86,7 +125,7 @@ Mindig törekedtem a legfrissebb verzió használatára, hiszen ezek tartalmazz�
       Prometheus 	& 2.24.0 \\ 
       Grafana 		& 7.5.3 \\ 
       Operator-SDK 	& 1.4.0-32 \\ 
-      Debian 		& 10 (buster)  \\ 
+      Debian 		& 10 (Buster)  \\ 
       Istio			& 1.11.4 \\
   \end{tabular}
   

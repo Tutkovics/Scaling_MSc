@@ -24,7 +24,7 @@ spec:                               # A szolgáltatásháló konfigurációja
           cpuLoad: 20                      
           delay: 2   
           callouts:                 # Meg lehet adni, hova kérdezzen tovább
-            - url: back-end:80/profile   # Hívja meg a back-end /profile útvonalat
+            - url: back-end:80/profile   # Meghívja a back-end /profile végpontot
             - url: db:36/get        # Utána meg a db /get-től kérjen adatokat 
 
     - name: back-end                # Újabb csomópont definíciója
