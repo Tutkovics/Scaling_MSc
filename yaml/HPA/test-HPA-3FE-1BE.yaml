@@ -1,0 +1,39 @@
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+  name: servicegraph-hpa
+  namespace: default
+spec:
+  nodes:
+    - name: front-end
+      replicas: 3
+      port: 80
+      nodePort: 30000
+      resources:
+        memory: 1000
+        cpu: 1000
+      hpa:
+        utilization: 70
+        min_replicas: 1
+        max_replicas: 5
+      endpoints:
+        - path: /forward
+          cpuLoad: 25
+          delay: 0
+          callouts:
+            - url: back-end:80/heavy
+
+    - name: back-end
+      replicas: 1
+      port: 80
+      resources:
+        memory: 1000
+        cpu: 1000
+      hpa:
+        utilization: 70
+        min_replicas: 1
+        max_replicas: 5
+      endpoints:
+        - path: /heavy
+          cpuLoad: 100
+          delay: 0

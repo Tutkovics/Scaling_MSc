@@ -205,37 +205,42 @@ def draw(datas, args):
     # Left upper
     axs[0, 0].plot(x, cpu_sum)
     min_x, max_x = axs[0, 0].get_xlim()
-    axs[0, 0].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    axs[0, 0].set_xticks(np.arange(0, max_x+1, 5), minor=False)
     # axs[0, 0].set_xticks(np.arange(min(x), max(x)), minor=False)
+    axs[0, 0].set_xlim(xmin=0) 
     axs[0, 0].set_title("Sum CPU (x1000mCPU) / requested QPS")
     
 
     # Right upper
     axs[0, 1].plot(x, memory_sum)
     min_x, max_x = axs[0, 1].get_xlim()
-    axs[0, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    axs[0, 1].set_xticks(np.arange(0, max_x+1, 5), minor=False)
     axs[0, 1].set_title("Sum Memory / requested QPS")
+    axs[0, 1].set_xlim(xmin=0) 
 
     # CPU usage per container
     for container in y:
         axs[1, 0].plot(x, y[container], label=str(container) + " - CPU usage")
     axs[1, 0].set_title("Container CPU usage (x1000mCPU) / requested QPS")
     min_x, max_x = axs[1, 0].get_xlim()
-    axs[1, 0].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    axs[1, 0].set_xticks(np.arange(0, max_x+1, 5), minor=False)
+    axs[1, 0].set_xlim(xmin=0) 
     #axs[1, 0].set_xticks(np.arange(0, end, 5), minor=False)
 
     for container in memory:
         axs[1, 1].plot(x, memory[container], label=str(container))
     axs[1, 1].set_title("Container Memory usage (Mi) / requested QPS")
     min_x, max_x = axs[1, 1].get_xlim()
-    axs[1, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    axs[1, 1].set_xticks(np.arange(0, max_x+1, 5), minor=False)
     axs[1, 1].legend(loc=0)
+    axs[1, 1].set_xlim(xmin=0) 
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # CPU usage per container / X axis: actual QPS
     for container in y:
         axs[2, 0].scatter(x_act, y[container], label=str(container))
     axs[2, 0].set_title("Container CPU usage (x1000mCPU) / actual QPS")
+    axs[2, 0].set_xlim(xmin=0) 
     # axs[2, 0].legend(loc=0)
     #axs[1, 0].set_xticks(np.arange(0, end, 5), minor=False)
 
@@ -243,18 +248,21 @@ def draw(datas, args):
         axs[2, 1].scatter(x_act, memory[container], label=str(container))
     axs[2, 1].set_title("Container Memory usage (Mi) / actual QPS")
     axs[2, 1].legend(loc=0)
+    axs[2, 1].set_xlim(xmin=0) 
     
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # Bottom left
     axs[3, 0].scatter(x, y2)
     axs[3, 0].set_title("Response time (ms) / Requested QPS")
+    axs[3, 0].set_xlim(xmin=0) 
     
     # Bottom right
     axs[3, 1].plot(x, x_act)
     axs[3, 1].set_title("Actual QPS / Requested QPS")
     min_x, max_x = axs[3, 1].get_xlim()
-    axs[3, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
+    axs[3, 1].set_xticks(np.arange(0, max_x+1, 5), minor=False)
+    axs[3, 1].set_xlim(xmin=0) 
 
     # response time
     # axs[1, 0].plot(x, y2)

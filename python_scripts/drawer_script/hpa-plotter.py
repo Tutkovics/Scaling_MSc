@@ -231,7 +231,7 @@ def draw(datas, args):
 
     
     # subplot(nrows, ncols, index, **kwargs)
-    fig, axs = plt.subplots(2, 2)
+    fig, axs = plt.subplots(3, 2)
     plt.title("asd") #args.title)  # Set title
     
     # # Left upper
@@ -268,6 +268,7 @@ def draw(datas, args):
     min_x, max_x = axs[1, 1].get_xlim()
     # axs[1, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     axs[1, 1].legend(loc=0)
+    axs[1, 1].set_xlim(xmin=0)  
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # CPU usage per container

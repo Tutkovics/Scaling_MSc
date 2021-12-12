@@ -258,7 +258,7 @@ def write_results_file(location, results):
 
 
 def get_json_from_file(result_file):
-    # Read fortio measurement file (json)
+    # Read fortio/vegeta measurement file (json)
     # And return as Json
     with open(result_file, 'r') as results:
         data=results.read()
