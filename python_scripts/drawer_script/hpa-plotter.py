@@ -264,11 +264,13 @@ def draw(datas, args):
 
     for container in runningPodsClearData:
         axs[1, 1].plot(time, runningPodsClearData[container], label=str(container))
-    axs[1, 1].set_title("Number of Running Pods During the Measurement")
+    #axs[1, 1].set_title("Number of Running Pods During the Measurement")
     min_x, max_x = axs[1, 1].get_xlim()
     # axs[1, 1].set_xticks(np.arange(min_x, max_x+1, 5), minor=False)
     axs[1, 1].legend(loc=0)
-    axs[1, 1].set_xlim(xmin=0)  
+    axs[1, 1].set_xlim(xmin=0) 
+    axs[1, 1].set_xlabel("Time (s)")
+    axs[1, 1].set_ylabel("Pod number")
     #axs[1, 1].set_xticks(np.arange(0, end, 5), minor=False)
 
     # CPU usage per container

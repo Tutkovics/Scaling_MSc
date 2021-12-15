@@ -172,7 +172,7 @@ def fetch_data(start_time, end_time, config):
                     "start": str(start_time),
                     "end": str(end_time),
                     "step": "2",
-                    "timeout": "1000ms"
+                    "timeout": "5000ms"
     }
 
     # Old: sum(rate(container_memory_usage_bytes{image!='',namespace=~'default|metrics',container!='POD'}[3m])) by (container)
@@ -180,7 +180,7 @@ def fetch_data(start_time, end_time, config):
                     "start": str(start_time),
                     "end": str(end_time),
                     "step": "2",
-                    "timeout": "1000ms"
+                    "timeout": "5000ms"
     }
 
     # Old: sum(kube_pod_container_status_running{namespace=~'default|metrics',container!='POD'}) by (container)
@@ -188,14 +188,14 @@ def fetch_data(start_time, end_time, config):
                     "start": str(start_time),
                     "end": str(end_time),
                     "step": "2",
-                    "timeout": "1000ms"
+                    "timeout": "5000ms"
     }
 
     number_pods_query = {"query": "sum(kube_pod_container_status_running{namespace=~'default|metrics',container!='POD'}) by (container)",
                     "start": str(start_time),
                     "end": str(end_time),
                     "step": "2",
-                    "timeout": "1000ms"
+                    "timeout": "5000ms"
     }
 
 
