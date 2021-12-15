@@ -70,11 +70,11 @@ Ezek közül két különbözőt szeretnék kiemelni:
 \end{enumerate}
 
 Nem szándékosan de kipróbáltam mindkét megoldást.
-Vonzó volt ugyanis a Kubespray, hogy könnyen és automatikusan telepít minden függőséget. 
-Sajnos amiatt mert ilyen magas szinten vezeti a telepítést, hiba esetén nem sok hasznos információ áll rendelkezésre.
+Vonzó volt ugyanis a Kubespray, hogy könnyen és automatikusan telepít minden szükséges függőséget. 
+Sajnos a magas szintű telepítése miatt hiba esetén nem sok hasznos információ áll rendelkezésre annak javítására.
 Miután eredménytelenül zárult minden próbálkozás, újratelepítettem a virtuális gépeket és áttértem a Kubeadm használatára. 
 
-A telepítés menetét nem részletezném, mert a hivatalos weboldalon látható lépéseken kellett végigmenni. 
+A telepítés menetét nem részletezném, mert a hivatalos weboldalon\citep{kubeadmInstallCluster} látható lépéseken kellett végigmenni. 
 Az elkészült klaszter egy mester csomóponttal és kettő kiszolgáló csomóponttal rendelkezik.
 A fő csomópont rendelkezik egyedül külső hálózatról elérhető, publikus IP címmel, a többit csak belső címen lehet elérni.
 Ez némiképpen nehezítette a telepítés folyamatát, részben emiatt sem működött a Kubespray megoldása. 
@@ -135,10 +135,10 @@ Mindig törekedtem a legfrissebb verzió használatára, hiszen ezek tartalmazz�
 
 
 %----------------------------------------------------------------------------
-\section{Példa mérés}
+\section{Tesztmérés}
 %----------------------------------------------------------------------------
 A rendszer összeállítása után lehetővé vált konkrét mérések elvégzése.
-A rendszer működését bizonyítandó és az egyes elemek további finomhangolása miatt kezdetben egy példa mérésen kísérleteztem.
+A rendszer működését bizonyítandó és az egyes elemek további finomhangolása miatt kezdetben egy tesztmérésen kísérleteztem.
 A mérésnek nem volt célja a hasznos eredmények gyűjtése, csak az elvárt működés bizonyítása. 
 Főleg ezen mérés alatt derült ki, hogy a korábban használt forgalomgenerátor alkalmazást is le kell cserélni, ezzel is közelebb kerülve a valósághű eredményekhez.
 
@@ -147,7 +147,7 @@ Volt egy nodeport segítségével kintről elérhető \textit{front-end} szolgá
 Azt a szituációt vizsgáltuk, amikor a \textit{front-end} nem használ sok erőforrást, és két pod fut belőle.
 Ezzel szemben a \textit{back-end} egy jóval erőforrás igényesebb szolgáltatás, viszont három egység fut belőle.
 A \textit{front-end} minden felé érkező, \verb+/to-backend+ végpontra érkező kérést továbbított a \textit{back-end} \verb+heavy+ végpontjára.
-A hálózattal elértük, hogy a második szolgáltatásunk a számára beállított, sok processzort igénylő műveletet hajtsa végre.
+A szolgáltatáshálóval elértük, hogy a második szolgáltatásunk a számára beállított, sok processzort igénylő műveletet hajtsa végre.
 
 % Példa szolgáltatás háló----------------------------------------------------
 \begin{figure}[!ht]
@@ -157,34 +157,37 @@ A hálózattal elértük, hogy a második szolgáltatásunk a számára beállí
 \label{fig:sample_sg}
 \end{figure}
 
-A kapott eredményekből készült grafikon látható az \ref{fig:example_plot} és \ref{fig:example_responsetime} ábrákon. 
+A tesztmérés során kapott eredmények feldolgozása során kiderült, hogy a szimulációhoz felhasznált forgalomgenerátor alkalmazás nem az elvárt módon működik.
+Emiatt kellett az eredetileg használt \textit{Fortio} alkalmazást cserélni az új alkalmazásra, ami a \textit{Vegeta} lett.
+A \textit{Fortio} minden egyes kérésre megvárja a visszaérkező választ és csak ezután tud újabb lekérdezést indítani egy-egy szimulált felhasználó számára.
+Ez a működés viszont nem fedi a valóságos terhelést, amikor az egyes lekérdezések a tetszőleges számban érkezhetnek, nem kell megvárni a korábbi felhasználó kérésének kiszolgálását.
+%A kapott eredményekből készült grafikonok \ref{afig:example_plot} és \aref{fig:example_responsetime} ábrákon láthatóak. 
 
-A kapott \ref{fig:example_responsetime} ábráról leolvasható, hogy az átlagos válaszidő a mérés során nem változott érdemben, végig kellően alacsony maradt.
-Fontos megjegyezni, hogy a mérés során nem vittünk a rendszerbe mesterséges késleltetést, csak a kötelező műveletek elvégzését vártuk meg, így jött ki az állandó válaszidő.
+%A kapott \ref{fig:example_responsetime} ábráról leolvasható, hogy az átlagos válaszidő a mérés során nem változott érdemben, végig kellően alacsony maradt.
+%Fontos megjegyezni, hogy a mérés során nem vittünk a rendszerbe mesterséges késleltetést, csak a kötelező műveletek elvégzését vártuk meg, így jött ki az állandó válaszidő.
 
-A másik, \ref{fig:example_plot} grafikonon látható, hogy a kevésbé erőforrás-igényes \textit{front-end} processzor felhasználása lassan de folyamatosan nő egészen addig, amíg a \textit{back-end} is tudja növelni a processzor felhasználását. Ez körülbelül 125 QPS-ig tart. Ilyenkor a \textit{back-end} eléri az indításkor beállított erőforrás limitációt és emiatt nem tud több beérkező igényt kiszolgálni.  Emiatt a felhasználói forgalmat generáló alkalmazás sem fog tudni több kérést a rendszer felé küldeni, mert meg kell várja, mire a \textit{front-end} válaszol, de a front-end csak azután válaszol, hogy meghívta a végletekig megterhelt \textit{back-end} szolgáltatást.
-A szimulációhoz még a korábbi verziókban használt \textit{Fortio} generálta a klaszter számára a forgalmat, azonban a működése nem egyezett a valóságban feltételezhető viselkedéssel.
-Valóságban a klaszter terheltségétől függetlenül fognak az új kérések érkezni és nem a sikeresen kiszolgált kérések számától.
-Ez is egy kiváltó oka volt a \textit{Vegetára} történő váltásnak.
+%A másik, \ref{fig:example_plot} grafikonon látható, hogy a kevésbé erőforrás-igényes \textit{front-end} processzor felhasználása lassan de folyamatosan nő egészen addig, amíg a \textit{back-end} is tudja növelni a processzor felhasználását. Ez körülbelül 125 QPS-ig tart. Ilyenkor a \textit{back-end} eléri az indításkor beállított erőforrás limitációt és emiatt nem tud több beérkező igényt kiszolgálni.  Emiatt a felhasználói forgalmat generáló alkalmazás sem fog tudni több kérést a rendszer felé küldeni, mert meg kell várja, mire a \textit{front-end} válaszol, de a front-end csak azután válaszol, hogy meghívta a végletekig megterhelt \textit{back-end} szolgáltatást.
+%A szimulációhoz még a korábbi verziókban használt \textit{Fortio} generálta a klaszter számára a forgalmat, azonban a működése nem egyezett a valóságban feltételezhető viselkedéssel.
+%Valóságban a klaszter terheltségétől függetlenül fognak az új kérések érkezni és nem a sikeresen kiszolgált kérések számától.
+%Ez is egy kiváltó oka volt a \textit{Vegetára} történő váltásnak.
 
-Érdemes figyelembe venni, hogy az $X$ tengely az igényelt lekérdezések darabszámát mutatja, nem a rendszer által valóságban kiszolgált kérések mennyiségét.
- \\
+%Érdemes figyelembe venni, hogy az $X$ tengely az igényelt lekérdezések darabszámát mutatja, nem a rendszer által valóságban kiszolgált kérések mennyiségét. \\
 
 
 % Generált példa ábrák -------------------------------------------------------
-\begin{figure}[!ht]
-\centering
-\includegraphics[width=150mm, keepaspectratio]{figures/sample_plot_cpu.jpg}
-\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer CPU felhasználása}
-\label{fig:example_plot}
-\end{figure}
+%\begin{figure}[!ht]
+%\centering
+%\includegraphics[width=150mm, keepaspectratio]{figures/sample_plot_cpu.jpg}
+%\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer CPU felhasználása}
+%\label{fig:example_plot}
+%\end{figure}
 
-\begin{figure}[!ht]
-\centering
-\includegraphics[width=150mm, keepaspectratio]{figures/sample_plot_responsetime.jpg}
-\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer átlagos válaszideje}
-\label{fig:example_responsetime}
-\end{figure}
+%\begin{figure}[!ht]
+%\centering
+%\includegraphics[width=150mm, keepaspectratio]{figures/sample_plot_responsetime.jpg}
+%\caption{\textit{Front-end} és \textit{back-end} egységből álló rendszer átlagos válaszideje}
+%\label{fig:example_responsetime}
+%\end{figure}
 
 %----------------------------------------------------------------------------
 \section{Tervezett mérések}
@@ -195,7 +198,7 @@ Ezután meg kellett tervezni a diplomamunkához szükséges méréseket, amik a 
 \begin{itemize}
 	\item \textbf{Szolgáltatásháló HPA nélkül} - Szükséges méréseket végezni, hogy megértsük a szolgáltatáshálók alapvető kiszolgálási működését. Az itt elvégzett méréseket lehet később referenciának használni.
 	\begin{itemize}
-		\item[$\circ$] \textbf{3 frontend egymás után, 1 backend} - A beérkező kérés kiszolgálása  egy szolgáltatásokból álló láncon halad végig. A lánc eleje tartalmazza a gyors, nem erőforrás műveleteket és a lánc végén kerül sor a költséges műveletre. 
+		\item[$\circ$] \textbf{3 frontend egymás után, 1 backend} - A beérkező kérés kiszolgálása  egy szolgáltatásokból álló láncon halad végig. A lánc eleje tartalmazza a gyors, nem erőforrás-igényes műveleteket és a lánc végén kerül sor a költséges műveletre. 
 		
 		\item[$\circ$] \textbf{3 frontend egymás mellett, 1 backend} - Az előzővel hasonló architektúra, azonban a frontend szolgáltatást megvalósító alkalmazások egymás mellett helyezkednek el, így a láncolat hossza lecsökken és az általuk kiszolgált kérések száma növekedhet.
 	\end{itemize}
@@ -203,9 +206,9 @@ Ezután meg kellett tervezni a diplomamunkához szükséges méréseket, amik a 
 	\item \textbf{Szolgáltatásháló HPA segítségével} - A referencia mérések után meg kell nézni, milyen változásokat érhetünk el a beépített automatikus skálázóval.
 	
 	\begin{itemize}
-		\item[$\circ$] \textbf{1 frontend, 1 backend egymás után} - A mérés során megfigyeljük, hogy a kezdeti konfigurációval hogyan változnak a kezelt alkalmazáskomponensek száma. Ki fog derülni, maximálisan mennyi pod futhat egyszerre. 
+		\item[$\circ$] \textbf{1 frontend, 1 backend egymás után} - A mérés során megfigyeljük, hogy a kezdeti konfigurációval hogyan változik a kezelt alkalmazáskomponensek száma. Ki fog derülni, maximálisan mennyi pod futhat egyszerre. 
 		
-		\item[$\circ$] \textbf{Korábbi mérés több konfiguráció mellett} - Az előző pontban kapott eredmények alapján a szükséges konfigurációk módosítása mellett figyeljük a szimuláció során kinyert eredményeket. Módosítjuk a kezdeti replikaszámot és a cél processzorhasználati értéket is.
+		\item[$\circ$] \textbf{Korábbi mérések eltérő konfiguráció mellett} - Az előző pontban kapott eredmények alapján a szükséges konfigurációk módosítása mellett figyeljük a szimuláció során kinyert eredményeket. Módosítjuk a kezdeti replikaszámot és a cél processzorhasználati értéket is.
 		
 	\end{itemize}
 	
@@ -216,20 +219,21 @@ Ezután meg kellett tervezni a diplomamunkához szükséges méréseket, amik a 
 \section{Elvégzett mérések statikus konfigurációkkal}
 %----------------------------------------------------------------------------
 A projektmunka jelentős részét tette ki, hogy méréseket kellett végezni a korábban bemutatott rendszerelemekkel rendelkező környezetben.
-A mérések darabszámát szemlélteti \aref{number_of_measurements} kódrészlet. Beépített Linux parancsok segítségével könnyen megkaphatjuk a projekt során készített és a kiértékeléshez használt \textit{json} dokumentumok darabszáma. Ahogy a kódrészlet is mutatja először rekurzívan lekérdezzük az adott mappán és almappákon belül található adott kiterjesztéssel rendelkező fájlokat \textit{(find)}. 
+A mérések darabszámát szemlélteti \aref{number_of_measurements} kódrészlet. Beépített Linux parancsok segítségével könnyen megkaphatjuk a projekt során készített és a kiértékeléshez használt \textit{json} dokumentumok darabszámát. Ahogy a kódrészlet is mutatja először rekurzívan lekérdezzük az adott mappán és almappákon belül található adott kiterjesztéssel rendelkező fájlokat \textit{(find)}. 
 Majd az így kapott eredményt csővezeték segítségével hozzákötjük egy szintén beépített parancs \textit{(wc)} bemenetére, ami megszámolja a kiírt sorok számát. 
-Ahogy az a kódrészleten is látszik, hogy ennek a kimenete $1445$, ami azt jelenti, hogy a projekt jelenlegi állapotához kapcsolódóan ennyi mérés született. %TODO konkrét mérési számot frissíteni
-Az egyes mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb Prometheus-ból kapott eredményeket jelenti.
+Ahogy az a kódrészleten is látszik, ennek a kimenete $1445$, ami azt jelenti, hogy a projekt jelenlegi állapotához kapcsolódóan ennyi mérés született. %TODO konkrét mérési számot frissíteni
+Az egyes mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb Prometheus-ból kapott eredményeket jelentik.
 
 % Mérések számának meghatározása --------------------------------------------
 \lstset{caption=Elvégzett mérések száma, label=number_of_measurements}
 \lstinputlisting{figures/get_number_of_measuremnts.sh}
 
-A következő alfejezetekben szeretném bemutatni azon méréseket, amelyek nem tartalmaztak semmilyen automatikus mechanizmust, ezáltal a nem tudták a terheléstől függően módosítani a konfigurációikat.
+A következő alfejezetekben szeretném bemutatni azon méréseket, amelyek nem tartalmaztak semmilyen automatikus mechanizmust, ezáltal nem tudták a terheléstől függően módosítani a konfigurációikat.
 A fő kérdés az volt, hogyan viselkedik a rendszer külső forgalomszabályozás (\textit{flow control}) nélkül.
 Alapértelmezetten nincsen limitáció a klaszterbe érkező kérések számára illetve az egyes szolgáltatásokhoz érkező kérésekre sem, ezért lehetőségünk van elárasztani azokat.
 A szimulációk során folyamatosan növelve a beküldött kéréseket figyeljük a rendszer kiszolgálási paramétereit és stabilitását.
 
+%TODO - Dávid: fura nekem ez a "költséghatékony" és "költséges" jelző pár. Pontosabban? Vagy korábban leírtad, csak nem vettem észre? Esetleg "alacsony" és "magas erőforrás igényű"? Mindenesetre nem tragédia, ha így marad.
 \subsection{Költséghatékony frontendek és költséges backend láncban}
 \label{subsec:3FE_1BE_chain}
 %----------------------------------------------------------------------------
@@ -238,14 +242,14 @@ A szimulált szolgáltatáshálót alkotó elemek \aref{tab:3FE_1BE_chain} tábl
 Látható, hogy a három költséghatékony frontend egymásnak továbbítják a beérkező kéréseket, majd ezután jut el a backendhez.
 A könnyebb értelmezés miatt mindegyikből egy darab replika került elindításra. 
 A frontend egységek egy-egy kérés kiszolgálásához nagyjából 10mCPU processzort igényelnek, és 1000mCPU volt a lefoglalt és a maximálisan felhasználható erőforrás mennyiség számukra.
-Ezek alapján $\frac{1000 mCPU}{10 mCPU/kérés} = 100 kérés$ kiszolgálására elegendő erőforrás van számukra allokálva.
+Ezek alapján $\frac{1000 mCPU}{10 mCPU/kérés} = 100$ kérés kiszolgálására elegendő erőforrás van számukra allokálva.
 Ezzel szemben, a sor végén álló, költséges backend maximum 2vCPU-t használhat, és az egyes beérkező lekérdezések kiszolgálására 100 mCPU processzorra van szüksége.
-Ebből kifolyólag maximum $\frac{2000 mCPU}{20 mCPU/kérés} = 20 kérés$ kiszolgálására van lehetőség másodpercenként. 
+Ebből kifolyólag maximum $\frac{2000 mCPU}{20 mCPU/kérés} = 20$ kérés kiszolgálására van lehetőség másodpercenként. 
 
 Minden kérés a \textit{front-end-1}-hez érkezik be és innen kerül továbbításra. 
 Mivel a sor elején lévő egységek ötször több kérést tudnak kiszolgálni, ezért a szűk keresztmetszet a sor hátulján lévő \textit{back-end-1} lesz.
 Emiatt minden beérkező kérésnek el kell jutnia a sor végére, miközben a sor elején lévő egységeken erőforrás-használatot indukál.
-Mire eljut a sor végére és feldolgozásra kerül, addig a beérkező \textit{http} kapcsolat eldobásra is kerülhet a beállított öt másodperces időkorlát miatt.
+Mire eljut a sor végére és feldolgozásra kerül, addig a beérkező \textit{http} kapcsolat eldobásra is kerülhet a beállított két másodperces időkorlát miatt.
 
 \begin{table}[ht]
 \centering
@@ -274,13 +278,60 @@ Ez azzal magyarázható, hogy a rendszerben lévő várakozási sorok, pufferek 
 
 Az alsó sorban látható grafikonok segítségével leolvasható, hogy az átlagos válaszidők 20 QPS környékén elérik az 5 másodperces felső korlátot, amivel szinkronban az időben kiszolgálásra kerülő kérések száma is drasztikusan elkezd visszaesni, majd utána a beérkező kérések elhanyagolható részét tudjuk csak időn belül kiszolgálni. 
 Összességében megállapítható, hogy létezik egy olyan pont a szimulációban, aminél több beérkező kérés esetén csak az erőforrásokat használjuk és az érdemi kiszolgálás is hirtelen és drasztikus mértékben visszaesik.
-Ilyenkor elszállnak a késleltetések és memória használat, valamint folyamatosan nő a processzor használata is.
+Ilyenkor elszállnak a késleltetések és a memória használat, valamint folyamatosan nő a processzor használata is.
 
-\begin{figure}[!ht]
-	\centering
-	\includegraphics[width=150mm, keepaspectratio]{figures/taildrop-chain-3FE-1BE_requestedQPS.png}
-	\caption{Három költséghatékony frontend után egy költséges backend mérés ábrázolása}
-	\label{fig:3FE_1BE_chain}
+%\begin{figure}[!ht]
+%	\centering
+%	\includegraphics[width=150mm, keepaspectratio]{figures/taildrop-chain-3FE-1BE_requestedQPS.png}
+%	\caption{Három költséghatékony frontend után egy költséges backend mérés ábrázolása}
+%	\label{fig:3FE_1BE_chain}
+%\end{figure}
+
+\begin{figure}
+\centering
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-chain/sum-cpu.png}
+    \caption{Összes CPU felhasználás}
+    \label{subfig:sum-cpu}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-chain/sum-mem.png}
+    \caption{Összes memória felhasználás}
+    \label{subfig:sum-mem}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-chain/container-cpu.png}
+    \caption{CPU felhasználás konténerenként}
+    \label{subfig:container-cpu}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-chain/container-mem.png}
+    \caption{Memória felhasználás konténerenként}
+    \label{subfig:container-mem}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-chain/resp-time.png}
+    \caption{Átlagos válaszidő}
+    \label{subfig:resp-time}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-chain/actual-qps.png}
+    \caption{Igényelt és sikeres kérések száma másodpercenként}
+    \label{subfig:actual-qps}
+\end{subfigure}
+        
+\caption{Három költséghatékony frontend után egy költséges backend}
+\label{fig:3FE_1BE_chain}
 \end{figure}
 
 \subsection{Költséghatékony frontendek egymás mellett és költséges backend mögöttük}
@@ -322,20 +373,67 @@ HPA                                                            & -             &
 \end{table}
 
 Jelen mérésben nincsen megadva semmilyen automatikus skálázó, ezért amikor az operátor az indításkor létrehozza adott replikaszámmal az egyes Kubernetes Deploymenteket, azok nem is fognak változni, függetlenül a beérkező kérések mennyiségétől.
-A korábban bemutatott környezeten is elvégeztem a szimulált terheléssel történő mérést.
-Ezen eredményeket mutatja be \aref{fig:3FE_stack_1BE} ábra.
+A bemutatott környezeten elvégezve a szimulációt a kapott eredmények láthatóak \aref{fig:3FE_stack_1BE} ábrán.
 A korábbi méréssel szinkronban, hasonló megállapításokat tudunk leolvasni.
 Látható, hogy a \textit{back-end-1} telítése az elvárt 20 QPS körül megtörténik (illetve kicsit még előtte). 
-Azonban ettől függetlenül a \textit{front-end-1} által elhasznált processzor mennyisége folyamatosan nőtt. A legmagasabb terhelésnél már olyan szintre emelkedett a három példány által összesen használt processzor erőforrása, mint a backend maximuma, tehát mintha 2 teljes virtuális CPU magot is lefoglaltunk volna számukra.
+Azonban ettől függetlenül a \textit{front-end-1} által elhasznált processzor mennyisége folyamatosan növekedett. A legmagasabb terhelésnél már olyan szintre emelkedett a három példány által összesen használt processzor erőforrása, mint a backend maximuma, tehát mintha 2 teljes virtuális CPU magot is lefoglaltunk volna számukra.
 
-A költséges backend telítése után jelentősen megugrik a beérkező kérések kiszolgálásához szükséges késleltetések és az egyes egységek által használt memória mennyiségek is.
+A költséges backend telítése után jelentősen megugranak a beérkező kérések kiszolgálásához szükséges késleltetések és az egyes egységek által használt memória mennyiségek is.
 A jobb alsó grafikonon látszik, hogy 20 QPS-nél már vissza is zuhant a sikeres kiszolgálások száma, amivel szinkronban a kiszolgálások átlagos válaszideje is megugrik a maximumra, ami jelenleg 5 másodperc, mert a beállítások szerint ennyi idő után bontjuk a \textit{http} kapcsolatokat.
 
-\begin{figure}[!ht]
-	\centering
-	\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE.png}
-	\caption{Költséghatékony frontend három példányban és utána egy költséges backend mérés ábrázolása}
-	\label{fig:3FE_stack_1BE}
+
+%\begin{figure}[!ht]
+%	\centering
+%	\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE.png}
+%	\caption{Költséghatékony frontend három példányban és utána egy költséges backend mérés ábrázolása}
+%	\label{fig:3FE_stack_1BE}
+%\end{figure}
+
+\begin{figure}
+\centering
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-stack/sum-cpu.png}
+    \caption{Összes CPU felhasználás}
+    \label{subfig:sum-cpu}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-stack/sum-mem.png}
+    \caption{Összes memória felhasználás}
+    \label{subfig:sum-mem}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-stack/container-cpu.png}
+    \caption{CPU felhasználás konténerenként}
+    \label{subfig:container-cpu}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-stack/container-mem.png}
+    \caption{Memória felhasználás konténerenként}
+    \label{subfig:container-mem}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-stack/resp-time.png}
+    \caption{Átlagos válaszidő}
+    \label{subfig:resp-time}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/3FE-1BE-stack/actual-qps.png}
+    \caption{Igényelt és sikeres kérések száma másodpercenként}
+    \label{subfig:actual-qps}
+\end{subfigure}
+        
+\caption{Költséghatékony frontend három példányban és utána egy költséges backend}
+\label{fig:3FE_stack_1BE}
 \end{figure}
 
 Röviden elmondható, hogy a beérkező kérések növelésével együtt fokozatosan nő az elhasznált processzor mennyisége és a sikeres kiszolgálások száma is.
@@ -360,22 +458,23 @@ Belátható, hogy egy valóságban előforduló problémáról van szó, amelyne
 %----------------------------------------------------------------------------
 
 A korábban végzett mérések alapján ki lehet jelenteni, hogy a podok statikus konfigurálásával nem mindig találjuk meg a rendszer ideális állapotát,  sőt a jövőbeli terhelés pontos információja nélkül nagyon valószínű, hogy szuboptimális állapotban maradunk.
-A Kubernetes beépítetten támogatja a podok automatikus horizontális skálázását, mint ahogy azt \aref{subsec:hpa} alfejezetben bemutatásra került.
-A további haladás részeként szerettem volna megnézni, hogy milyen megoldást kínál beépített skálázó és milyen limitációkkal rendelkezik.
-Következőkben bemutatásra kerül az új mérésekre történő átállás kihívásai, az elvégzett mérések és a tapasztalatok kiértékelése.
+A Kubernetes beépítetten támogatja a podok automatikus horizontális skálázását, mint ahogy az \aref{subsec:hpa} alfejezetben bemutatásra került.
+A továbbhaladás részeként szerettem volna megnézni, hogy milyen megoldást kínál a beépített skálázó és milyen limitációkkal rendelkezik.
+Következőkben bemutatásra kerülnek az új mérésekre történő átállás kihívásai, az elvégzett mérések és az általuk szerzett tapasztalatok.
 
 \subsection{Áttérés nehézségei}
 %----------------------------------------------------------------------------
-Az új fajta mérés több gondot is okozott, tekintve hogy az eddigre bejáratott ábrázoló alkalmazás teljes módosítást igényelt, ugyanis ezen mérések jelentősen eltérnek a korábbiaktól.
-
+Az újfajta mérés több gondot is okozott. 
+Egyik, hogy az eddigre bejáratott ábrázoló alkalmazás teljes módosítást igényelt, ugyanis ezen mérések jelentősen eltérnek a korábbiaktól.
 HPA esetében az egyes értékek az idő függvényében változnak, ellentétben a statikus méréseknél, amikor minden a beérkező terhelés változásával volt összefüggésben.
 További fejlesztést igényelt az operátor logikai oldala is, mert a kezdeti méréseknél kiderült, hogy instabil állapotot okoz, ha automatikus skálázó is szerepel a rendszerben. 
-A jelenség onnan fakadt, hogy minden egyes alkalommal, amikor az operátor változást észlelt és futásra került, ellenőrizte a ServiceGraph konfigurációban megadott replikaszámot és ha nem egyezett a valóságban futtatott számmal, akkor módosította azt.
+A jelenség onnan eredt, hogy minden egyes alkalommal, amikor az operátor változást észlelt és logikája futtatásra került, ellenőrizte a ServiceGraph konfigurációban megadott replikaszámot. 
+Amennyiben az igényelt replikaszám nem egyezett a valóságban futtatott számmal, akkor módosította azt a konfigurációban megadott értékre.
 Ezen logika miatt, amikor a skálázó szeretett volna több azonos podot elindítani egy adott alkalmazásból, akkor ezt észrevette az operátor és visszaállította a kezdeti értéket.
-A következmény pedig az lett, hogy a rendszer sosem került stabil állapotba és skálázó döntései nem tudtak érvényre jutni.
+A következmény pedig az lett, hogy a rendszer sosem került stabil állapotba és a skálázó döntései nem tudtak érvényre jutni.
 
-%TODO - nagyobb hangsúlyt lehet rá helyezni
-A fenti probléma ideálisan példaként tud szolgálni az operátorok egy kevésbé kutatott és ritkán tárgyalt kihívására.
+%TODO - nagyobb hangsúlyt lehet ráhelyezni
+A fenti probléma ideális példaként tud szolgálni az operátorok egy kevésbé kutatott és ritkán tárgyalt kihívására.
 Amennyiben több kezelő alá esik egy-egy Kubernetes erőforrás, akkor nagyon körültekintően kell eljárni az egyes feladatkörök elosztásában.
 Nem triviális észrevenni, ha direkt vagy indirekt módon, egymás döntéseire reagáltan futnak le az operátorok algoritmusai.
 Ezzel a rendszer egésze könnyen instabil vagy holtponti (\textit{deadlock}) állapotba tud kerülni.
@@ -385,8 +484,8 @@ Emiatt ezen esetek detektálása, újabb operátor bevonása nélkül nem lehets
 Azonban újabb logika bevonása, ami azonos erőforrások kezelését teszi lehetővé, tovább növelheti az indirekt egymásra hatások valószínűségét.
 
 %Természetesen a fenti probléma könnyen javíthatónak bizonyult és csak egy kisebb módosításra volt szükség.
-Az ismertetett hibákat fejlesztésekkel kellett megoldani, ami magába foglalja az ábrázoló alkalmazást és az operátor logikájának újragondolását is.
-Végleges implementációban a megadott replikaszám ellenőrzése az egyes deploymentekben csak akkor kerül ellenőrzésre, ha automatikus skálázó nem került definiálásra a megadott konfiguráció alapján.
+Az ismertetett hibákat fejlesztésekkel kellett megoldani, ami magába foglalta az ábrázoló alkalmazást és az operátor logikájának újragondolását is.
+A végleges implementációban a megadott replikaszám csak akkor kerül ellenőrzésre, ha automatikus skálázó nem kerül definiálásra az átadott konfigurációs fájl alapján.
 
 \subsection{Lokálisan mohó, globálisan szuboptimális}
 \label{subsec:first-HPA-measure}
@@ -426,7 +525,7 @@ Ebben az esetben a HPA törekedni fog a 70 százalékos foglaltságra, ami azt j
                                                 & Maximum replika                             & 5             & 5          \\
                                                 & Cél CPU használat                           & 70\%          & 70\%      
 \end{tabular}
-\caption{Három költséghatékony frontend után egy költséges backend}
+\caption{Költséghatékony frontend és költséges backend - HPA skálázóval}
 \label{tab:1FE_1BE_chain_with_HPA}
 \end{table}
 
@@ -438,7 +537,7 @@ Mérés során parancssorból is jól látható a skálázó működése.
 Ezt mutatja be \aref{hpa_measurement_pending} kódrészlet, amin belül két parancs kimenetét is láthatjuk a mérés kezdetét követő öt és feledik percben.
 Első sorban lekérdezzük az éppen működésben lévő horizontális skálázókat. 
 A parancs kimenetének második oszlopából kiderül, hogy az egyes skálázók az azonos névvel rendelkező deployment erőforráshoz vannak kapcsolva.
-Leolvasható, hogy skálázó döntései alapján öt és négy replikának kellene futni ebben az időpillanatban illetve, hogy mind a frontend mind pedig a backend túl lépte a számára előirányzott processzor fogyasztást.
+Leolvasható, hogy skálázó döntései alapján öt és négy replikának kellene futni ebben az időpillanatban illetve, hogy mind a frontend mind pedig a backend túl lépte a számára előirányzott $70\%$-os processzor fogyasztást.
 
 A kódrészlet második parancsán láthatjuk, hogy milyen podok és milyen állapotban léteztek ilyenkor.
 Megfigyelhető, hogy valóban szerepel a korábban a skálázó által meghatározásra kerülő négy darab frontend és az öt darab backend kapszula.
@@ -470,14 +569,16 @@ Ebből adódik, hogy egy frontend kapszula $40$ kérés kiszolgálását tudja t
 Egy backend pod ezzel analóg módon $1000mCPU / 100mCPU = 10$ kérés áteresztésére képes másodpercenként.
 Az elvégzett szimuláció esetén, mivel egy láncot alkotnak az alkalmazások, a leglassabb alkalmazás komponens fogja jelenteni a felső határt.
 Jelen példánál azt kapjuk, hogy 1:5 vagy 2:4 arányban elindítva a kapszulákat a kiszolgálás felső határa mindkét esetben $40$ másodpercenkénti kérés lesz.
-Egyedül az a különbség, hogy ez a plafonérték a frontend vagy backend oldalán jelenik meg.\\
+Egyedül az a különbség, hogy ez a plafonérték a frontend vagy backend oldalán jelenik meg.
+Továbbá 1:4 arányban elindítva a szolgáltatásokat, szintén megkapjuk a 40 másodpercenkénti kérést, mert ez lesz mindkét egység felső határa. 
+Ebben az esetben még a lefoglalásra kerülő erőforrásokon is sikerül spórolni, amit esetlegesen a rendszer másik pontjára lehet allokálni szükség szerint. \\
 
 Tehát skálázó által alkotott megosztással a jelenlegi mérésben nem tudjuk maximálisan kihasználni a rendszerben lévő erőforrásokat.
 Pontosabban mondva kihasználjuk, mert a lefoglalt processzor mennyiségét jelentősen használjuk, azonban a kiszolgálás minőségén és mennyiségén ez nem látszódik.
 
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-in-the-same-time.png}
+	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-in-the-same-time_label.png}
 	\caption{HPA skálázóval történő mérés - 70\% cél CPU használat mellett}
 	\label{fig:HPA-scaling-same-time}
 \end{figure}
@@ -504,7 +605,7 @@ Annyi különbség észrevehető, hogy ez a folyamat valamivel gyorsabban végig
 
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-from-3FE-1BE.png}
+	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-from-3FE-1BE_label.png}
 	\caption{HPA skálázóval történő mérés - 3 frontend és 1 backend kezdetben}
 	\label{fig:HPA-scaling-from-3FE-1BE}
 \end{figure}
@@ -516,7 +617,7 @@ Ezáltal el is érték az aktuális klaszterben szereplő ideális eloszlást.
 
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-from-1FE-3BE.png}
+	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-from-1FE-3BE_label.png}
 	\caption{HPA skálázóval történő mérés - 1 frontend és 3 backend kezdetben}
 	\label{fig:HPA-scaling-from-1FE-3BE}
 \end{figure}
@@ -545,7 +646,7 @@ Ezzel a beállítással sikerült elérnie az elméleti optimumot a rendszerünk
 
 \begin{figure}[!ht]
 	\centering
-	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-in-the-same-time_90_percent_2.png}
+	\includegraphics[width=150mm, keepaspectratio]{figures/HPA-scaling-in-the-same-time_90_percent_2_label.png}
 	\caption{HPA skálázóval történő mérés - 90\%-os cél CPU érték}
 	\label{fig:HPA-scaling-in-the-same-time_90_percent}
 \end{figure}

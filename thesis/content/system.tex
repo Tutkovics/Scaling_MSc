@@ -194,8 +194,15 @@ A következő megoldandó kihívás a mérések kezelése volt, mivel törekedte
 Fontos szempont volt, hogy a mérések elvégzése a lehető legegyszerűbben és rugalmas módon tudjon megtörténni. 
 A feladat megvalósításához a Python nyelvet választottam, hiszen könnyen lehet benne szkripteket fejleszteni illetve komoly számítást nem fog végezni így nem számottevő a plusz erőforrás-felhasználása, más alacsonyabb szintű nyelvekhez képest sem. 
 
-A érés megkezdése előtt készíteni kell egy konfigurációs fájlt. Erre egy példa látható a \ref{measurement_config} kódrészleten. A mérést vezénylő alkalmazás az itt megadott paraméterek alapján fogja végezni a mérést. Többek között meg kell adni, hogy a mérések milyen szolgáltatáshálózatokon kerüljenek elvégzésre. Lehetőség van többet is megadni, így egy indítással akár az összes számunkra érdekes esetet le tudjuk szimulálni egyszerre. Továbbá meg kell adni, hogy milyen kérés per másodperc (\textit{QPS}) értékekre vagyunk kíváncsiak. Fontos megadni, hogy milyen forgalmat és hova szeretnénk generálni. Ez látható a \verb+Load+ részen belül. Megadjuk a mérés idejét, IP címet és portot, ahol a szolgáltatásunk fogja fogadni a kéréseket.\\
-
+A mérés megkezdése előtt készíteni kell egy konfigurációs fájlt. 
+Erre egy példa látható a \ref{measurement_config} kódrészleten. 
+A mérést vezénylő alkalmazás az itt megadott paraméterek alapján fogja végezni a mérést. 
+Többek között meg kell adni, hogy a mérések milyen szolgáltatáshálózatokon kerüljenek elvégzésre. 
+Lehetőség van többet is megadni, így egy indítással akár az összes számunkra érdekes esetet le tudjuk szimulálni egyszerre.
+Továbbá meg kell adni, hogy milyen kérés per másodperc (\textit{QPS}) értékekre vagyunk kíváncsiak. 
+Fontos megadni, hogy milyen forgalmat és hova szeretnénk generálni. 
+Ez látható a \verb+Load+ részen belül. 
+Megadjuk a mérés idejét, IP címet és portot, ahol a szolgáltatásunk fogja fogadni a kéréseket.\\
 
 \lstset{caption=Mérés konfigurációja, label=measurement_config}
 \lstinputlisting{figures/measurement_config.yaml}
@@ -241,7 +248,6 @@ Jelenleg négy értéket gyűjtünk:
 \end{itemize}
 
 A \verb+Prometheus+ könnyen kiterjeszthető rendszer így közel tetszőleges metrikákat lehet általa gyűjteni. 
-
 
 A mérés végén miután összegyűjtöttük az összes keletkező adatot, beleértve a \verb+Prometheus+ és \verb+Vegeta+ rendszereket is illetve az eredeti konfigurációt, azokat perzisztálni kell.
 Erre a legkézenfekvőbb módszer az adatok kiírása \verb+json+ fájlba.

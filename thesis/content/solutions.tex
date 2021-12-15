@@ -10,19 +10,24 @@ Természetesen minden bemutatott megoldásnak megvan a saját erőssége és gye
 \section{Feltárt probléma rövid összefoglalása}
 %----------------------------------------------------------------------------
 
-A megoldási lehetőségek bemutatása előtt szeretném röviden  a problémát és felvetést, amire keressük a megoldást.
-A mérési eredmények alapján arra jutottam, hogy léteznek olyan skálázási helyzetek, melyeket a Kubernetes jelenlegi skálázója nem tud ideálisan kezelni.
-Ez a működés onnan fakad, hogy a futó alkalmazásról nem rendelkezik globális ismerettel, csak az egyes független szolgáltatásokat kezeli a többitől függetlenül.
-
-A látott mérésekből kiderült, hogy a jelenlegi rendszerben létezik egy átbukási pont, amikor a beérkező kéréseket az össz alkalmazás már nem képes időben kiszolgálni, mert az egyik szolgáltatási komponens túlterhelt állapotba kerül.
+A megoldási lehetőségek bemutatása előtt szeretném röviden bemutatni a problémát és a felvetést, amire keressük a megoldást.
+A mérési eredmények alapján arra jutottam, hogy a mikroszolgáltatások közötti szabályozatlan kommunikáció miatt egy túlterhelt rendszer nem képes optimális működést biztosítani.
+Létezik egy átbukási pont, amikor a beérkező kéréseket az alkalmazás már nem képes időben kiszolgálni, mert az egyik komponense túlterhelt állapotba kerül.
 Ilyenkor a beérkező kérések továbbra is fogadásra kerülnek és elkezdődik a rendszerben lévő pufferek megtöltése.
-Ez egy öngerjesztő folyamatot indít meg, ahol a hosszabb sorbaállás, a folyamatos túlterheltség miatt aránylag egyre kisebb lesz a sikeres kiszolgálások száma. 
-
+Ez egy öngerjesztő folyamatot indít meg, ahol a hosszabb sorbaállás, a folyamatos túlterheltség miatt aránylag egyre kisebb lesz a sikeres kiszolgálások száma.
 A hatékonytalan működést tovább rontja, hogy az előre beállított idő túllépése után bontjuk a kapcsolatot, azonban ezt az alkalmazás nem tudja lekezelni.
 Nem létezik implementált megoldás arra az esetre, hogy az ilyen kérések által keltett az egyéb alkalmazás egységek terhelését megszüntesse.
-Értelemszerűen ebben az esetben felesleges még a back-end oldalán elvégezni az erőforrás intenzív feladatot, amikor az azt kiváltó eredeti kérés eldobásra került.
+Értelemszerűen ebben az esetben felesleges még a backend oldalán elvégezni az erőforrás intenzív feladatot, amikor az azt kiváltó eredeti kérés már eldobásra került.
 
-A feltárt problémát két részre lehet osztani, amik egymás hatását tudják erősíteni vagy gyengíteni.
+A tapasztalt működés több irányból is megközelíthető.
+Egyik ilyen irány, hogy az egyes komponensek darabszámát automatikus skálázó segítségével határozzuk meg.
+Ezzel lehetőséget kapunk, hogy előre meghatározott cél processzorhasználati értékhez rendeljük a skálázási döntéseket. 
+A megoldás észleli az esetlegesen terhelt komponenseket és megpróbálja azokat horizontálisan skálázni.
+Amennyiben limitált erőforrással rendelkezünk a klaszteren belül, akkor elmondható, hogy léteznek olyan skálázási helyzetek, melyeket a Kubernetes jelenlegi skálázója nem tud ideálisan kezelni.
+Ez a működés onnan fakad, hogy a futó alkalmazásról nem rendelkezik globális ismerettel, csak az egyes független szolgáltatásokat kezeli a többitől függetlenül.
+Nem tudja megítélni, hogy a rendszer kiszolgálási paraméterek növeléséhez hova 
+
+Másik megközelítés, hogy a rendszerbe beérkező kéréseket szabályozzuk vagy pedig észleljük a túlterhelt állapotban lévő komponenseket és valamilyen logikával próbáljuk csökkenteni azok terheltségi szintét.
 
 %----------------------------------------------------------------------------
 \section{Lehetséges eszközök}
@@ -52,18 +57,18 @@ Az alapvető felvetés onnan fakad, hogy különböző, gyakran előforduló hel
 Az egyes állapotjelzők ideális használati módját az alábbi szituációkkal szeretném szemléltetni.
 
 \begin{enumerate}
-    \item \textbf{(Liveness probe - életteli próba)} Előfordulhat, hogy az alkalmazásunk valamilyen bemenetek következtében holtponti állapotba kerül, amit nehéz lenne kívülről észrevenni, viszont külső behatás nélkül nem tudna továbblépni belőle. 
+    \item \textbf{Életteli próba (liveness probe)} - Előfordulhat, hogy az alkalmazásunk valamilyen bemenetek következtében holtponti állapotba kerül, amit nehéz lenne kívülről észrevenni, viszont külső behatás nélkül nem tudna továbblépni belőle. 
     Illetve egyéb okok miatt is kerülhet olyan állapotba, amikor a vizsgált alkalmazás nem képes ellátni a működését, mindezt különösebb hiba és kilépés nélkül.
     Szerencsére az ilyen esetek nem számítanak különösnek és hamar fel is lehet oldani az egység újraindításával, amit az életteli próbával tudunk kezelni.
     Ez egy teljesen ideális implementáció esetén nem fog gondot okozni, hiszen a kapszulák nem tartalmaznak, tárolnak fontos adatokat és állapotokat.
     Egy újraindítás sokkal idő- és költséghatékonyabb megoldás, mintha az egész rendszer funkcionális működését veszélyeztetnénk.
 
-    \item \textbf{(Startup probe - indítási próba)} Eshetőség, hogy az alkalmazás elindítása után még el kell végezni pár inicializációt, mielőtt a külső kérések kiszolgálását elkezdhetné.
+    \item \textbf{Indítási próba (startup probe)} - Eshetőség, hogy az alkalmazás elindítása után még el kell végezni pár inicializációt, mielőtt a külső kérések kiszolgálását elkezdhetné.
     Ebben az esetben is tudatni kell az infrastruktúra részére, hogy a jelenlegi állapotában még nem áll készen a működésre.
     Nagy hibázási lehetőséget rejtene magába, ha erre a korábban látott  életteli próbát használjuk, mert nehéz kiszámítani mennyi időt fog igénybe venni a komponens elindulása.
     Külön emiatt létezik az indítási próba, ami csak akkor fogja az adott kapszula állapotát készenléti státuszba sorolni, ha sikeresen lefutott a próba.
 
-    \item \textbf{(Readiness probe - készenléti próba)} Tegyük fel, hogy van egy szolgáltatásunk, ahol nagy fájlok feltöltésére van lehetőségünk.
+    \item \textbf{Készenléti próba (readiness probe)} - Tegyük fel, hogy van egy szolgáltatásunk, ahol nagy fájlok feltöltésére van lehetőségünk.
     Ez egy időigényesebb feladat lesz, miközben az alkalmazásunkat nem szeretnénk további kérésekkel terhelni.
     Ebben az esetben meg kell várni a korábban érkező kérés kiszolgálását és csak utána van lehetőségünk fogadni a többit.
     Ilyen helyzetben tudjuk használni a készenléti próba jelzést. 
@@ -72,9 +77,9 @@ Az egyes állapotjelzők ideális használati módját az alábbi szituációkka
 \end{enumerate}
 
 A fentebb bemutatott eszközök megkönnyítik a robusztus rendszerek építését.
-Segítségükkel kihasználhatjuk, hogy inkább az előforduló hiba gyors észrevételét és nem annak az elkerülését részesíti előnyben.
-Erre lehetőség is van, mert az új konténerek elindítása általában pár másodperc alatt megtörténik és ezáltal egy öngyógyító tulajdonsággal is fog bírni a kész rendszer.
-Így pedig a rendszer megbízhatósága is javulni fog. 
+Segítségükkel az előforduló hibák gyors javítására tudunk fókuszálni, és nem cél azok mindenáron történő megakadályozása.
+A szemléletmód kihasználja, hogy az új konténerek elindítása általában pár másodperc alatt megtörténik.
+Továbbá ezen folyamat által egy öngyógyító tulajdonságot is kap a rendszer, amivel a megbízhatósága is javulni fog. 
 
 Ennek ellenére körültekintően kell ezeket az eszközöket is használni, hiszen rossz konfiguráció esetén mi magunk tehetjük működésképtelenné a rendszert.
 Például, hibás beállítás esetén az életteli próba hajlamos állandóan újraindítani az alkalmazást. Vagy a készenléti próba miatt egyes komponens egységek nem fognak annyi kérést kapni, amit azok valóban képesek lennének kiszolgálni.
@@ -90,7 +95,7 @@ Amennyiben a próba sikertelen, tehát a rendszer túlterhelt állapotban van, a
 % MultiFE & SingleBE with Readiness probe -------------------------------------------------------
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE-readinessprobe-sum.png}
+\includegraphics[width=150mm, keepaspectratio]{figures/multiFE-singleBE-readinessprobe-sum-regenerate.png}
 \caption{Korábbi szimuláció megismétlése készenléti próbával}
 \label{fig:readiness-probe-measurement}
 \end{figure}
@@ -128,8 +133,8 @@ Következőnek ismertetett megoldási javaslat szintén a beépített Kubernetes
 Ezen megoldásoknak előnye, hogy a klaszter oldaláról nem igényelnek nagy mértékű többlet fejlesztést és támogatást, hiszen ezek a funkciók valószínűleg rendelkezésre állnak már a rendszerben vagy pedig könnyen telepíthetőek.
 A mérleg másik oldalán ezen megoldások az alkalmazás oldalán igényelnek fejlesztéseket vagy pedig a helyes konfiguráció okozhat kihívást.
 
-Még korábban, \aref{subsec:hpa} alfejezetben bemutatott HPA skálázás esetén említésre került, hogy tetszőleges metrikák alapján is lehetőségünk van skálázni.
-Alapértelmezetten és leginkább a mérések által általunk is használt processzor erőforrás igény alapján történő skálázás a legelterjedtebb forgatókönyv.
+Még korábban, \aref{subsec:hpa} alfejezetben bemutatott HPA skálázás esetén említésre került, hogy tetszőleges metrikák alapján is van lehetőségünk skálázni.
+Alapértelmezetten és leginkább a mérések alatt általunk is használt processzor erőforrás igény alapján történő skálázás a legelterjedtebb megoldás.
 Ezen metrikákat a klaszter automatikusan tudja gyűjteni, így a skálázók konfigurációja és elindítása egyszerű folyamattá tud válni.
 Illetve a legtöbb esetben, ha a klaszterünkben nincsenek szűkös erőforráshatárok aránylag jó működést eredményez.
 
@@ -152,11 +157,19 @@ Emiatt szeretném tisztázni, hogy a következőkben használt szolgáltatás h�
 
 A szolgáltatás háló egy lehetséges módja, hogy szabályozzuk az alkalmazásrészek közti kommunikációt. 
 Külön infrastruktúra réteget tudunk létrehozni, amin keresztül láthatjuk és szabályozhatjuk a komponensek közti kommunikációt.
-Ezzel ígéretet kapunk a kommunikáció optimalizációjára, amivel együtt az esetleges kieséseket is csökkenthetjük\citep{serviceMeshDefinition}.
+Ezzel lehetőséget kapunk a kommunikáció optimalizációjára, amivel együtt az esetleges kieséseket is csökkenthetjük\citep{serviceMeshDefinition}.
 
 Az egyes alkalmazás komponenseket nevezzük egy-egy szolgáltatásnak, és a kommunikációjuk által alkothatunk belőlük hálózatot.
 Több megvalósítás is létezik, azonban a felépítésük nagyon hasonlít.
 Egy ilyen architektúra bemutatása látható \aref{fig:serviceMesh-topology} ábrán.
+
+% Service Mesh Topology -------------------------------------------------------
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=150mm, keepaspectratio]{figures/service-mesh-generic-topology.png}
+\caption{Szolgáltatás hálót alkotó komponensek és működésük\citep{serviceMeshTopology}}
+\label{fig:serviceMesh-topology}
+\end{figure}
 
 Az ábrán \textit{Instance A/B/C} névvel ellátott alkalmazás egységek valósítanak meg egy-egy szolgáltatást az elképzelt mikroszolgáltatás architektúrában. 
 Jól látható, hogy köztük nem történik semmilyen közvetlen kommunikáció, csak a mellettük lévő oldalkocsival (\textit{sidecar}) vannak kapcsolatban.
@@ -166,15 +179,6 @@ Minden, a szolgáltatások által küldött és fogadott kérésnek keresztül k
 Ezáltal nyomon követhető és megfigyelhető lesz a komponensek közti kommunikáció.
 Ez önmagában is előnyös, hiszen könnyebben meg lehet tudni, hogy az egyes szolgáltatáshálók milyen kiszolgálást tudnak nyújtani, könnyebb kideríteni az aktuálisan legszűkebb keresztmetszetet.
 Természetesen a rendszerbe kötött proxykat kezelni is kell, amire egy külön réteg van, azonban ez már nagyobb mértékben specifikus az egyes megvalósításokra.
-
-
-% Service Mesh Topology -------------------------------------------------------
-\begin{figure}[!ht]
-\centering
-\includegraphics[width=150mm, keepaspectratio]{figures/service-mesh-generic-topology.png}
-\caption{Szolgáltatás hálót alkotó komponensek és működésük\citep{serviceMeshTopology}}
-\label{fig:serviceMesh-topology}
-\end{figure}
 
 Az új architektúra is rendelkezik bizonyos megkötésekkel, amit az alkalmazása előtt figyelembe kell venni.
 Mivel új komponenseket hozunk be a kommunikációba, ezért a késleltetések is meg fognak nőni.
@@ -194,7 +198,7 @@ Ezért az architekturális döntés meghozatalában körültekintően kell eljá
 
 A korábban bemutatott megoldási lehetőségeknél, \ref{subsec:container_metric_scaling} alfejezetben látottat leszámítva, a fő motiváció a beérkező terhelés szabályozása volt.
 Az eredeti problémánkat viszont több irányból is meg lehet fogni.
-Másik megközelítésben az erőforrások globálisan optimális elosztása a fő szempont a megoldandó kihívás.
+Másik megközelítésben az erőforrások globálisan optimális elosztása a fő szempont, a megoldandó kihívás.
 
 A következő megoldási javaslat ezt a megközelítést veszi alapul és bővíti ki a korábban látott javaslatokkal.
 A javaslat egy központi skálázó alkalmazás, ami folyamatosan monitorozza a klaszter teljes állapotát és az éppen futtatott alkalmazásokat is.
