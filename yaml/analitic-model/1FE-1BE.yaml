@@ -1,0 +1,31 @@
+apiVersion: dipterv.my.domain/v1beta1
+kind: Servicegraph
+metadata:
+  name: servicegraph-model
+  namespace: default
+spec:
+  nodes:
+    - name: frontend
+      replicas: 1
+      port: 80
+      nodePort: 30000
+      resources:
+        memory: 1000
+        cpu: 1000
+      endpoints:
+        - path: /forward
+          cpuLoad: 5
+          delay: 0
+          callouts:
+            - url: backend:80/response
+       
+    - name: backend
+      replicas: 1
+      port: 80
+      resources:
+        memory: 1000
+        cpu: 1000
+      endpoints:
+        - path: /response
+          cpuLoad: 25
+          delay: 0
