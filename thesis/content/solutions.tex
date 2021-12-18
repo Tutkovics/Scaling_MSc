@@ -189,6 +189,8 @@ Ezért az architekturális döntés meghozatalában körültekintően kell eljá
 
 
 %\subsubsection{Gloo Edge}
+% Other ingress controller
+%TODO
 %----------------------------------------------------------------------------
 %- Ingress controller - hivetkozás
 %- Mivel tud kevesebbet, mint a service mesh
@@ -214,6 +216,67 @@ Egy ilyen projekt jelentős szakmai erőforrás ráfordításával járna, hisze
 
 Nem elhanyagolható felvetés, hogy a skálázási algoritmus logikájának bonyolítása jelentős kockázatokkal járhat, ha annak paraméterezését a felhasználóra bízzuk.
 
+\paragraph{Analitikus modell}
+Az okos skálázó optimális működéséhez szükséges jobban megvizsgálni a horizontális skálázás hatását.
+A vizsgálandó kérdés, hogy egy szolgáltatáshálóban elvégzett skálázás milyen kihatással van a többi komponensre, és a teljes rendszer kiszolgálási értékei hogyan alakulnak.
+Meg kellett vizsgálni, hogy milyen összefüggés figyelhető meg a futtatott podok száma és az általuk kiszolgált másodpercenkénti kérések száma között.
+
+Az alap feltevés látható \aref{eq:maxQPS} egyenleten, ahol $f()$ függvény adja meg, hogy mennyi kiszolgálást tud teljesíteni az adott komponens az $n$-nel jelzett podok függvényében.
+Az $f()$ függvényt nem ismerjük, teljesen alkalmazásspecifikus, azonban a maximálisan elviselt terhelést a mérések alapján és $n$-et igen.
+
+A feltevés az, hogy ezen ismeretekkel becsülhető a skálázás utáni kiszolgált másodpercenkénti maximális kérések száma, melyet $Q'$ jelöl. 
+Ezt úgy kaphatjuk, meg, hogy az ismert $Q$ értékét elosztjuk az azt kiszolgáló kapszulák számával ($n$), amivel megkapjuk, hogy hozzávetőlegesen egy pod mennyi kérést tud kiszolgálni azonos konfigurációk mellett.
+Majd az így kapott eredményt felszorozzuk a skálázás utáni podok számával, ami $n'$. 
+
+\begin{align*}
+f(n) &= Q \nonumber \\
+f(n') &= \frac{Q}{n} * n' = Q' \label{eq:maxQPS}
+\end{align*}
+
+A tézis ellenőrzése szimuláción keresztül történt.
+A szolgáltatáshálóban egy gyors és erőforrás hatékony frontend szerepelt és utána pedig egy erőforrás-igényes backend. 
+A backend számának növelésével szimuláltam a horizontális skálázás működését.
+A kapott eredmények láthatóak \aref{analitic-model} ábrán.
+
+A legfelső[\aref{subfig:model-1FE-1BE}] grafikon mutatja azt az esetet, amikor egy darab backend konténer szolgálta ki az összes frontend felől érkező kérést.
+Leolvasható, hogy ebben az esetben körülbelül 35 QPS terhelés mellett sikerült időben kiszolgálni az össze beérkező kérést.
+
+Amikor két példányban indult el a backend komponens, akkor az elvárt módon meg is ugrik az időben kiszolgálható lekérdezések száma.
+A grafikonról[\aref{subfig:model-1FE-2BE}] leolvasva az így kapott QPS érték 66 körül alakul, de nem éri el a 70-et.
+
+Végül pedig az látható az alsó grafikonon, amikor három példány fogadta a backend felé érkező kéréseket. 108
+Ebben az esetben nagyjából 108 kérés kiszolgálása vált lehetővé.
+
+A kapott eredményekből látható, hogy egy visszaosztva az egyes méréseknél kapott maximális QPS értéket a futtatott backend podok számával, azt kapjuk, hogy egy kapszula 33-36 kérés kiszolgálását tudja elvégezni.
+Ez az érték kismértékben eltér az egyes szimulációkban, azonban kellően statikus marad végig, hogy modellként alkalmazzuk.
+
+
+\begin{figure}
+\centering
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/analitic-model/1FE-1BE.png}
+    \caption{Válaszidők egy frontend és egy backend egység esetén}
+    \label{subfig:model-1FE-1BE}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/analitic-model/1FE-2BE.png}
+    \caption{Válaszidők egy frontend és két backend egység esetén}
+    \label{subfig:model-1FE-2BE}
+\end{subfigure}
+
+\hfill
+\begin{subfigure}{\textwidth}
+    \includegraphics[width=\textwidth]{figures/analitic-model/1FE-3BE.png}
+    \caption{Válaszidők egy frontend és három backend egység esetén}
+    \label{subfig:model-1FE-3BE}
+\end{subfigure}
+
+        
+\caption{Túlterhelt elem skálázása utáni kiszolgálási válaszidők}
+\label{fig:analitic-model}
+\end{figure}
 
 %\subsection{HPA és VPA skálázó}
 %----------------------------------------------------------------------------

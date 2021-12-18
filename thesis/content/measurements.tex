@@ -266,17 +266,17 @@ Továbbhívás                                                    & front-end-2:
 \end{table}
 
 Az ismertetett környezetben elvégzett mérésről készített grafikon látható \aref{fig:3FE_1BE_chain} ábrán.
-Megfigyelhető, hogy az egyre nagyobb beérkezett terhelés hatására folyamatosan növekszik a rendszer által felhasznált erőforrások mennyisége.
-Különösen érdekes, hogy a \textit{back-end-1} által használt processzor mennyisége, a várt módon, 20 lekérdezés / másodperc érték környékén eléri a maximumot, onnan már nem emelkedik tovább, csak stagnál. 
+Megfigyelhető, hogy az egyre nagyobb beérkezett terhelés hatására folyamatosan növekszik a rendszer által felhasznált erőforrások mennyisége[\ref{subfig:sum-cpu} és \ref{subfig:sum-mem}].
+Különösen érdekes, hogy a \textit{back-end-1} által használt processzor mennyisége, a várt módon, 20 lekérdezés / másodperc érték környékén eléri a maximumot, onnan már nem emelkedik tovább, csak stagnál[\ref{subfig:container-cpu}]. 
 Ezzel ellentétben az egyes frontend alkalmazások erőforrásigénye folyamatosan növekszik a mérés végéig.
 
 Ezzel párhuzamosan a memória használata is érdekesen alakul.
 18 QPS értékig látszólag nem változik érdemben, alacsonyan marad.
-Azonban a backend telítése után, minden egységnél elkezd növekedni.
+Azonban a backend telítése után, minden egységnél elkezd növekedni[\ref{subfig:sum-mem} és \ref{subfig:container-mem}].
 Ez azzal magyarázható, hogy a rendszerben lévő várakozási sorok, pufferek folyamatosan telnek meg, mivel a láncolat végén lévő költséges backend nem képes a beérkezések számával tartani a kiszolgálási számot. 
 %TODO - Markow láncok / tömegkiszolgálással magyarázni.  http://www.szit.bme.hu/~gyorfi/tomkisz.pdf
 
-Az alsó sorban látható grafikonok segítségével leolvasható, hogy az átlagos válaszidők 20 QPS környékén elérik az 5 másodperces felső korlátot, amivel szinkronban az időben kiszolgálásra kerülő kérések száma is drasztikusan elkezd visszaesni, majd utána a beérkező kérések elhanyagolható részét tudjuk csak időn belül kiszolgálni. 
+Az alsó sorokban látható grafikonok segítségével leolvasható, hogy az átlagos válaszidők 20 QPS környékén elérik a két másodperces felső korlátot[\ref{subfig:resp-time}], amivel szinkronban az időben kiszolgálásra kerülő kérések száma is drasztikusan elkezd visszaesni[\ref{subfig:actual-qps}], majd utána a beérkező kérések elhanyagolható részét tudjuk csak időn belül kiszolgálni. 
 Összességében megállapítható, hogy létezik egy olyan pont a szimulációban, aminél több beérkező kérés esetén csak az erőforrásokat használjuk és az érdemi kiszolgálás is hirtelen és drasztikus mértékben visszaesik.
 Ilyenkor elszállnak a késleltetések és a memória használat, valamint folyamatosan nő a processzor használata is.
 
@@ -376,10 +376,10 @@ Jelen mérésben nincsen megadva semmilyen automatikus skálázó, ezért amikor
 A bemutatott környezeten elvégezve a szimulációt a kapott eredmények láthatóak \aref{fig:3FE_stack_1BE} ábrán.
 A korábbi méréssel szinkronban, hasonló megállapításokat tudunk leolvasni.
 Látható, hogy a \textit{back-end-1} telítése az elvárt 20 QPS körül megtörténik (illetve kicsit még előtte). 
-Azonban ettől függetlenül a \textit{front-end-1} által elhasznált processzor mennyisége folyamatosan növekedett. A legmagasabb terhelésnél már olyan szintre emelkedett a három példány által összesen használt processzor erőforrása, mint a backend maximuma, tehát mintha 2 teljes virtuális CPU magot is lefoglaltunk volna számukra.
+Azonban ettől függetlenül a \textit{front-end-1} által elhasznált processzor mennyisége folyamatosan növekedett[\ref{subfig:stack-container-cpu}]. A legmagasabb terhelésnél már olyan szintre emelkedett a három példány által összesen használt processzor erőforrása, mint a backend maximuma, tehát mintha 2 teljes virtuális CPU magot is lefoglaltunk volna számukra.
 
-A költséges backend telítése után jelentősen megugranak a beérkező kérések kiszolgálásához szükséges késleltetések és az egyes egységek által használt memória mennyiségek is.
-A jobb alsó grafikonon látszik, hogy 20 QPS-nél már vissza is zuhant a sikeres kiszolgálások száma, amivel szinkronban a kiszolgálások átlagos válaszideje is megugrik a maximumra, ami jelenleg 5 másodperc, mert a beállítások szerint ennyi idő után bontjuk a \textit{http} kapcsolatokat.
+A költséges backend telítése után jelentősen megugranak a beérkező kérések kiszolgálásához szükséges késleltetések[\ref{subfig:stack-resp-time}] és az egyes egységek által használt memória mennyiségek[\ref{subfig:stack-sum-mem} és \ref{subfig:stack-container-mem}] is.
+A legalsó grafikonon látszik, hogy 20 QPS-nél már vissza is zuhant a sikeres kiszolgálások száma[\ref{subfig:stack-actual-qps}], amivel szinkronban a kiszolgálások átlagos válaszideje is megugrik a maximumra, ami jelenleg 5 másodperc, mert a beállítások szerint ennyi idő után bontjuk a \textit{http} kapcsolatokat.
 
 
 %\begin{figure}[!ht]
