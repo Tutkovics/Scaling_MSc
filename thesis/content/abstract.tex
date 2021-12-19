@@ -8,36 +8,62 @@
 %----------------------------------------------------------------------------
 \chapter*{Kivonat}\addcontentsline{toc}{chapter}{Kivonat}
 
-Az elmúlt években megfigyelhető egy jelentős szemléletmódváltás a fejlesztett és használt alkalmazások körében, illetve ezzel összefüggően a futtató környezetben is.
-Egyre több informatikai szereplő ismeri fel, hogy milyen előnyöket tud nyújtani a monolitikus alkalmazások cseréje mikroszolgáltatások architektúrára.
-Az új trenddel párhuzamosan, illetve egymást erősítve folyamatosan kezd csökkenni az alkalmazásfejlesztő és üzemeltető feladatkörök távolsága.
+Az elmúlt években megfigyelhető egy jelentős szemléletmódváltás a fejlesztett és használt alkalmazások körében.%, illetve ezzel összefüggően a futtató környezetben is.
+Egyre több informatikai szereplő ismeri fel, hogy milyen előnyöket tud nyújtani a monolitikus alkalmazás cseréje mikroszolgáltatások architektúrára.
+%Az új trenddel párhuzamosan, illetve egymást erősítve folyamatosan kezd csökkenni az alkalmazásfejlesztő és üzemeltető feladatkörök távolsága.
 
 A frissen készülő alkalmazások egyre nagyobb része direkt konténerizálva, a felhőre optimalizáltan készül.
 Sokak számára vonzó alternatívát kínál a könnyű és költséghatékony belépésének és a skálázhatóságának köszönhetően.
-Az így elkészített alkalmazások üzemeltetése is új kihívásokkal szembesül és erre az igényre jelent meg az azóta folyamatosan fejlődő és növekvő Kubernetes konténer orkesztrációs platform.
+Az így elkészített alkalmazások üzemeltetése  is új kihívásokat tartogat.
+Ezen igényekre jelent meg az azóta folyamatosan fejlődő és növekvő Kubernetes konténer orkesztrációs platform.
 
-A Kubernetes platform lehetőséget kínál számunkra több metódus alapján skálázni az adott alkalmazásunkat a beérkező terheléstől függően.
-A diplomamunkában azzal a kérdéskörrel foglalkoztam, hogyan viselkedik a rendszer, ha a rendelkezésre álló erőforrások limitáltak illetve minél költséghatékonyabban szeretnénk üzemeltetni az alkalmazást. 
+A dolgozatomban a mikroszolgáltatások skálázásának kérdéskörét mutatom be Kubernetes platform segítségével.
+A szükséges alapinformációk miatt ismertetem a Kubernetes felépítését, külön kitérve az általa biztosított automatikus skálázási megoldásokra.
 
-Keressük a jelenlegi implementációban létező limitációkat, hogy milyen helyeztek adódhatnak, amikor ideálistól eltérő erőforrás elosztás és használat figyelhető meg.
+Ezután megvizsgálom az új architektúrán megvalósított alkalmazások kiszolgálási mutatóinak alakulását, egyre növekvő terhelés mellett.
+A kapott eredmények rámutatnak, hogy automatikus skálázó nélkül ez a konstrukció egy bizonyos terhelés után drasztikus mértékben veszít a kiszolgálási teljesítményéből.
 
-Ehhez a feladathoz készítettem egy mikroszolgáltatás architektúrájú alkalmazás szimulációjához szükséges környezetet. Ezzel lehetőségünk van tetszőleges konfigurációval Kubernetes felett elindítani egy szimulált környezetet, ahol személyre szabhatjuk a válaszidőket és processzor használatot.
-A környezeten előállított alkalmazásokat pedig meg kellett figyelni, hogyan viselkednek a nagy számú külső terhelés hatására.
+Mérésekkel ellenőrzöm, milyen megoldást biztosít a Kubernetes automatikus horizontális skálázója (HPA) illetve azt, hogy milyen helyzetekben nem tud optimális eredményt adni.
+Ezen limitációk csökkentésére teszek javaslatot, hogy az új architektúra védettebbé váljon a szűkös erőforrások mellett bekövetkező terhelés növekedésével szemben.
 
-A mérések során felderített, előnytelen működési esetekre megoldást javaslok, amivel kiegészítve az alap infrastruktúrát csökkenthető az erőforrások pazarlása, így környezet- és pénztárcabarát megoldás is egyben.
-%TODO - finomhangolni
+A dolgozatban szereplő állítások alátámasztásához készítettem egy környezetet, amivel tetszőleges szolgáltatásháló definiálása után, terhelés hatására adatokat tudunk gyűjteni és azokat ábrázolni.
+
+ 
+%A Kubernetes platform lehetőséget kínál számunkra több metódus alapján skálázni az adott alkalmazásunkat a beérkező terheléstől függően.
+%A diplomamunkában azzal a kérdéskörrel foglalkoztam, hogyan viselkedik a rendszer, ha a rendelkezésre álló erőforrások limitáltak illetve minél költséghatékonyabban szeretnénk üzemeltetni az alkalmazást. 
+
+%Keressük a jelenlegi implementációban létező limitációkat, hogy milyen helyeztek adódhatnak, amikor ideálistól eltérő erőforrás elosztás és használat figyelhető meg.
+
+%Ehhez a feladathoz készítettem egy mikroszolgáltatás architektúrájú alkalmazás szimulációjához szükséges környezetet. Ezzel lehetőségünk van tetszőleges konfigurációval Kubernetes felett elindítani egy szimulált környezetet, ahol személyre szabhatjuk a válaszidőket és processzor használatot.
+%A környezeten előállított alkalmazásokat pedig meg kellett figyelni, hogyan viselkednek a nagy számú külső terhelés hatására.
+
+%A mérések során felderített, előnytelen működési esetekre megoldást javaslok, amivel kiegészítve az alap infrastruktúrát csökkenthető az erőforrások pazarlása, így környezet- és pénztárcabarát megoldás is egyben.
 
 \vfill
 \selectenglish
-
 
 %----------------------------------------------------------------------------
 % Abstract in English
 %----------------------------------------------------------------------------
 \chapter*{Abstract}\addcontentsline{toc}{chapter}{Abstract}
 
-%TODO
+In recent years, a significant change of attitude has been observed in the development of applications and their usage. More and more IT professionals are recognizing the benefits of changing monolithic applications to a microservice based architecture.
 
+An increasing number of newly created applications are directly containerized, and optimized for the cloud.
+For many, it offers an attractive alternative due to its cost-effective entry and scalability.
+The operation of applications created in this way also faces new challenges.
+The ever-evolving and growing Kubernetes container orchestration platform has emerged to meet these needs.
+
+In my dissertation, I present the issue of scaling microservices using the Kubernetes platform. 
+I will explain the basic information required for Kubernetes, with special reference to the automatic scaling it provides.
+
+I will then examine the evolution of service metrics for applications implemented on the new architecture under increasing load. 
+Based on the results we got without automatic scaling after a certain load this design drastically loses its service performance.
+
+I use measurements to check the solution provided by Kubernetes automatic horizontal scaler (HPA) and the situations in which it cannot give optimal results.
+I propose a few alternatives to reduce these limits and the new architecture to be more protected by the growing load in and environment with scarce resources.
+
+In support of the statements in the dissertation, I prepared a framework that, after defining any service mesh, generates traffic load, collects data, and displays a representation of the results.
 
 \vfill
 \selectthesislanguage
