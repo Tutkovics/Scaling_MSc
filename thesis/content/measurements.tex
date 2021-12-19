@@ -90,20 +90,20 @@ Ebben a Helm, Kuberneteshez készített csomagkezelő megoldása segített.
 A \verb+prometheus-stack+ csomagot kellett telepíteni annyi kiegészítéssel, hogy kintről is elérhetővé tegyük a felületet és szolgáltatásait. 
 Ezt úgy érhetjük el, hogy a létrehozandó \verb+Service+  típusát \verb+NodePort+-ra állítjuk és a következetesség miatt adunk neki egy portszámot. 
 Az így létrehozott környezet rendelkezik egy webes felhasználói felülettel is, ahol tetszőleges lekérdezéseket indíthatunk. 
-Egy ilyen lekérdezés látszik az \ref{fig:prometheus_example} ábrán is. 
-A példán az látszik, hogy milyen eredményt kapunk, ha lekérdezzük az aktuálisan futó kapszulákat a \verb+Default+ és \verb+Metrics+ névtérben. 
-Az eredményből leolvasható, hogy jelenleg 3 darab \textit{back-end}, 2 darab \textit{front-end} és 1 darab \textit{db} névvel ellátott konténer fut. \\
+%Egy ilyen lekérdezés látszik az \ref{fig:prometheus_example} ábrán is. 
+%A példán az látszik, hogy milyen eredményt kapunk, ha lekérdezzük az aktuálisan futó kapszulákat a \verb+Default+ és \verb+Metrics+ névtérben. 
+%Az eredményből leolvasható, hogy jelenleg 3 darab \textit{back-end}, 2 darab \textit{front-end} és 1 darab \textit{db} névvel ellátott konténer fut. \\
 
 % Prometheus példa -------------------------------------------------------
-\begin{figure}[!ht]
-\centering
-\includegraphics[width=150mm, keepaspectratio]{figures/prometheus_example.png}
-\caption{Telepített \textit{Prometheus} rendszere}
-\label{fig:prometheus_example}
-\end{figure}
+%\begin{figure}[!ht]
+%\centering
+%\includegraphics[width=150mm, keepaspectratio]{figures/prometheus_example.png}
+%\caption{Telepített \textit{Prometheus} rendszere}
+%\label{fig:prometheus_example}
+%\end{figure}
 
-Jelenleg az operátor még nem külön konténerként fut egy kapszulában, hanem a klaszteren kívül, lokálisan a szerveren, mint egy Go alkalmazás.
-Emiatt külön telepíteni kellett a Go nyelvet is, hogy el tudjon indulni a rendszer.
+%Jelenleg az operátor még nem külön konténerként fut egy kapszulában, hanem a klaszteren kívül, lokálisan a szerveren, mint egy Go alkalmazás.
+%Emiatt külön telepíteni kellett a Go nyelvet is, hogy el tudjon indulni a rendszer.
 
 \subsection{Verziók}
 %----------------------------------------------------------------------------
@@ -116,20 +116,20 @@ Mindig törekedtem a legfrissebb verzió használatára, hiszen ezek tartalmazz�
   \begin{tabular}{l l}
 	  Szoftver 		& Verzió \\
     \hline
-      Go 			& 1.16.3 \\ 
-      Kubernetes 	& 1.21.0 \\ 
-      Kubectl 		& 1.21.0 \\
-      Cilium 		& 1.9.5 \\
-      Python 		& 3.7.3 \\ 
-      Prometheus 	& 2.24.0 \\ 
-      Grafana 		& 7.5.3 \\ 
-      Operator-SDK 	& 1.4.0-32 \\ 
+	  Cilium 		& 1.9.5 \\
       Debian 		& 10 (Buster)  \\ 
-      Istio			& 1.11.4 \\
+      Go 			& 1.16.3 \\ 
+      Grafana 		& 7.5.3 \\ 
+      Kubectl 		& 1.21.0 \\
+      Kubernetes 	& 1.21.0 \\ 
       Minikube		& 1.17.1 \\
+      Operator-SDK 	& 1.4.0-32 \\ 
+      Prometheus 	& 2.24.0 \\ 
+      Python 		& 3.7.3 \\ 
+%      Istio			& 1.11.4 \\
   \end{tabular}
   
-  \caption{Használt verziók}
+  \caption{Használt eszközök és szoftverek verziói}
 \label{tab:versions}
 \end{table}
 
@@ -222,7 +222,7 @@ A projektmunka jelentős részét tette ki, hogy méréseket kellett végezni a 
 A mérések darabszámát szemlélteti \aref{number_of_measurements} kódrészlet. Beépített Linux parancsok segítségével könnyen megkaphatjuk a projekt során készített és a kiértékeléshez használt \textit{json} dokumentumok darabszámát. Ahogy a kódrészlet is mutatja először rekurzívan lekérdezzük az adott mappán és almappákon belül található adott kiterjesztéssel rendelkező fájlokat \textit{(find)}. 
 Majd az így kapott eredményt csővezeték segítségével hozzákötjük egy szintén beépített parancs \textit{(wc)} bemenetére, ami megszámolja a kiírt sorok számát. 
 Ahogy az a kódrészleten is látszik, ennek a kimenete $1872$, ami azt jelenti, hogy a projekt jelenlegi állapotához kapcsolódóan ennyi különböző mérés született. 
-Az egyes mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb Prometheus-ból kapott eredményeket jelentik.
+Az egyes mérések itt egy-egy Vegeta terheléshez kapcsolódó konfigurációk, válaszidők és egyéb Prometheus-ból kapott eredményeket jelentik. \\
 
 % Mérések számának meghatározása --------------------------------------------
 \lstset{caption=Elvégzett mérések száma, label=number_of_measurements}

@@ -228,17 +228,16 @@ Ezeket a paramétereket a korábban ismertetett konfigurációs fájl alapján �
 
 Miután megterheltük a rendszert és megkaptuk a kérések kiszolgálásával kapcsolatos statisztikákat a \textit{Vegetából}, szükséges még a rendszer erőforrás-felhasználását célzó metrikákat is begyűjteni. 
 Erre a \verb+Prometheus+ rendszerén keresztül van lehetőségünk.
-A szoftver támogatja az API hívásokat, így lehetőségünk nyílik könnyen lekérdezni az általa gyűjtött statisztikákat. 
+A szoftver támogatja az API hívásokat, így lehetőségünk nyílik könnyen lekérdezni az általa gyűjtött statisztikákat.  \\
+
+\lstset{caption=\textit{Prometheus} rendszer használata Python kódból, label=prometheus_query}
+\lstinputlisting{figures/prometheus.py}
 
 A metrikák lekérdezésére a \ref{prometheus_query} kódrészlet ad egy példát. Meg kell adnunk, hogy milyen értékekre vagyunk kíváncsiak. 
 A látható példában ez a konténerek által felhasznált CPU mennyisége, továbbá kikötéseket teszünk, hogy csak a \textit{Default} vagy \textit{Metrics} névtérben futó konténerek érdekelnek.
 Meg kell adni a lekérdezés kezdeti és vég idejét, amíg a generált kéréseket kiszolgálta.
 Össze kell állítani a \verb+Prometheus+ elérhetőségét, amihez a mérés elején megadott konfigurációt vesszük alapul. Ha megvan az előkészített API hívás, akkor a kódrészletben látott módon meg kell hívni azt.
-A kapott válasz \verb+json+ formátumban érkezik, így később mi is így kezeljük. \\
-
-
-\lstset{caption=\textit{Prometheus} rendszer használata Python kódból, label=prometheus_query}
-\lstinputlisting{figures/prometheus.py}
+A kapott válasz \verb+json+ formátumban érkezik, így később mi is így kezeljük. 
 
 A korábban látott megoldással egyéb adatokat és metrikákat is lekérdezhetünk. 
 Jelenleg négy értéket gyűjtünk:

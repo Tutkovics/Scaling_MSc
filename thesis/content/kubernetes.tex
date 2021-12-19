@@ -199,16 +199,16 @@ Ennek a forráskódja látható a \ref{hpa_example} kódrészlet tetején.
 Be lehet állítani, hogy mi legyen a minimális és maximális replika, ami között lehetősége van skálázni. 
 Továbbá definiálni kell egy célértéket is, ami alapján a skálázási döntéseket meg tudja hozni.
 A példában látható, hogy $50\%$-os CPU felhasználást szeretnénk elérni.
-Fontos, hogy alapvetően a metrikákat a skálázó egy úgynevezett metrika szervertől gyűjti be, amit külön el kell indítani, mert alapértelmezettként nem fut a Kubernetesben.
+Fontos, hogy alapvetően a metrikákat a skálázó egy úgynevezett metrika szervertől gyűjti be, amit külön el kell indítani, mert alapértelmezettként nem fut a Kubernetesben. \\
+
+\lstset{caption=Automatikus horizontális skálázás folyamata, label=hpa_example}
+\lstinputlisting{figures/hpa_example.sh}
 
 A skálázó létrehozását megtehetjük a kódrészleten látható második parancs kiadásával.
 Az erőforrás létrejötte után ki is lehet próbálni.
 Ehhez egy \verb+bash+ szkript segítségével állandó forgalmat generálunk és figyeljük, hogyan változik a kapszulák száma és ezzel összefüggően az egyes egységek CPU felhasználása.
 Kezdetben $1$ darab pod végezte az összes beérkező kérés kiszolgálását, ami így a célértéknél 3-4-szer több processzort használt.
-A korábban mutatott képlet alapján, a felső egész részt vesszük és a jelenlegi replikaszám 4-szeresére skálázunk. \\
- 
-\lstset{caption=Automatikus horizontális skálázás folyamata, label=hpa_example}
-\lstinputlisting{figures/hpa_example.sh}
+A korábban mutatott képlet alapján, a felső egész részt vesszük és a jelenlegi replikaszám 4-szeresére skálázunk.
 
 
 \subsection{Vertikális skálázás}
