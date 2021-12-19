@@ -20,18 +20,18 @@
 % !! don't remove double-accent in T1 encoding: \'{\`a}}
 % !! sort year
 % !! make sure about Hungarian typography of {proceedings} and {inproceedings}
-%    it is better now to have talked=1, (Elhangzott a ... címû konferencián)
+%    it is better now to have talked=1, (Elhangzott a ... cï¿½mï¿½ konferenciï¿½n)
 % !! also remove space after \ae before calling purify$
 % !! crossrefs
 % !! ` type '
 % !! hu ordering: author, year, title  if author is present
 %                 title, year  if author is missing!
 % !! use and document ``address''
-% !! MSZ 3401--81. A bibliográfiai tételek betûrendbe sorolásának szabályai.
-% !! MSZ 3402--80. Könyvek bibliográfiai adatközlése és belsõ elrendezése.
-% !! MSZ 3424/*-*. Bibliográfiai leírás. *.
-% !! MSZ 3432-85. Szavak és szókapcsolatok rövidítése a bibliográfiai leírásban.
-% !! MSZ 3440/*-*. A bibiliográfiai leírás besorolási adatai. *.
+% !! MSZ 3401--81. A bibliogrï¿½fiai tï¿½telek betï¿½rendbe sorolï¿½sï¿½nak szabï¿½lyai.
+% !! MSZ 3402--80. Kï¿½nyvek bibliogrï¿½fiai adatkï¿½zlï¿½se ï¿½s belsï¿½ elrendezï¿½se.
+% !! MSZ 3424/*-*. Bibliogrï¿½fiai leï¿½rï¿½s. *.
+% !! MSZ 3432-85. Szavak ï¿½s szï¿½kapcsolatok rï¿½vidï¿½tï¿½se a bibliogrï¿½fiai leï¿½rï¿½sban.
+% !! MSZ 3440/*-*. A bibiliogrï¿½fiai leï¿½rï¿½s besorolï¿½si adatai. *.
 % !! abbrv style for J.-P. Sartre
 % !! test all entry types
 % !! optional \uppercase or \textsc
@@ -42,16 +42,16 @@
 % !! \include...
 % !! bibgerman.sty, gerplain.bst, language = "german" | "USenglish" | "english" etc.
 %    \selectlanguage{...} \bibitem...
-% !! doc: parametric volume: `kötet' (volumeisyearly={1}) instead of `évf.'
+% !! doc: parametric volume: `kï¿½tet' (volumeisyearly={1}) instead of `ï¿½vf.'
 % OK: smaller space for \newblock
 % OK: huname: name in hungarian order
 % SUXX: cannot read current (overridden) MACRO values from .bst
 % SUXX: #161 int.to.chr$ doesn't work (out of bounds), stupid BibTeX...
 % Dat: @preamble { "..." # "..." }
 % Dat: bibtex removes spaces from end of field contents
-% Dat: `volume=' is `évfolyam' 
+% Dat: `volume=' is `ï¿½vfolyam' 
 % Dat: Doc: key={{ }.}
-% Dat: Doc: write non-decaptilized titles: title = {Fejtõ {Ferenc} és a szociáldemokrácia},
+% Dat: Doc: write non-decaptilized titles: title = {Fejtï¿½ {Ferenc} ï¿½s a szociï¿½ldemokrï¿½cia},
 % Dat: print debug messages with "foo" warning$
 %
 
@@ -208,7 +208,7 @@ FUNCTION {rmacc4.latinx} { % ****pts****
   ss
 }
 
-%** Changes "á" to "{\'a}" etc.
+%** Changes "ï¿½" to "{\'a}" etc.
 %** @param #1 a string
 %** @return a string
 FUNCTION {rmacc4} { % **** pts ****
@@ -690,7 +690,7 @@ FUNCTION {n.dashify}
 % Dat: possible months formats in .bib:
 %   month = jun # "-" # aug,   --> "j\'unius--\allowbreak augusztus" !!
 %   month = jun,               --> "j\'unius"
-%   month = "8~" # feb,        --> "február 8."
+%   month = "8~" # feb,        --> "februï¿½r 8."
 %   month = nov # ", " # dec,  --> "november\nobreak\hskip--\allowbreak december"
 
 FUNCTION {format.date}
@@ -758,7 +758,7 @@ FUNCTION {format.series} { % ****pts****
 FUNCTION {format.bvolume} { % ****pts****
   volume empty$  number empty$ and {
     series empty$ 'skip$ { format.series output new.block } if$
-    % ^^^ Dat: don't emphasize {Osiris kézikönyvek sorozat}, because it's after the book title.
+    % ^^^ Dat: don't emphasize {Osiris kï¿½zikï¿½nyvek sorozat}, because it's after the book title.
     numvolumes empty$ { "" }
     { "\bibNumVolumes {" numvolumes "}." * * } if$ % ****pts****
   } {
@@ -781,7 +781,7 @@ FUNCTION {format.edition}
 	{ edition rmacc4 "t" change.case$ }
       if$
       add.period$
-      " kiad." * % Dat: " kiad.": Gyurgyák János: Szerkesztõk és szerzõk kézikönyve, 533. oldal, 2. sor.
+      " kiad." * % Dat: " kiad.": Gyurgyï¿½k Jï¿½nos: Szerkesztï¿½k ï¿½s szerzï¿½k kï¿½zikï¿½nyve, 533. oldal, 2. sor.
     }
   if$
 }
@@ -858,7 +858,7 @@ FUNCTION {format.in.ed.booktitle} {
   booktitle empty$
   { "" }
   { editor empty$
-    % vvv "In ": Gyurgyák János: Szerkesztõk és szerzõk kézikönyve, 130. oldal, 12. sor.
+    % vvv "In ": Gyurgyï¿½k Jï¿½nos: Szerkesztï¿½k ï¿½s szerzï¿½k kï¿½zikï¿½nyve, 130. oldal, 12. sor.
     { "In " booktitle rmbrace.accs emphasize * }
     'format.in.edited if$
   } if$
@@ -941,8 +941,8 @@ FUNCTION {format.in.talked.booktitle} {
       swap$ * " c{\'i}m{\H u} konferenci{\'a}n" *
       } if$ } if$ } if$ } if$
       %% duplicate$ warning$
-      % Dat: now "a~{\em Foo Konferencián}"
-      %       or "a~{\em Foo} címû konferencián"
+      % Dat: now "a~{\em Foo Konferenciï¿½n}"
+      %       or "a~{\em Foo} cï¿½mï¿½ konferenciï¿½n"
       %% "alma" string.length warning$
       "Elhangzott " swap$ *
    } 'format.in.edited if$
@@ -1156,7 +1156,7 @@ FUNCTION {addresss} { %*type*
 FUNCTION {books.tail} { % ****pts****
   crossref missing$ {
     format.bvolume output % includes functionality of format.number.series
-    new.block % no comma in `1--4. köt., 7. kiad.'
+    new.block % no comma in `1--4. kï¿½t., 7. kiad.'
   } 'skip$ if$
   type$ "book" = {
     chapter empty$  'skip$
@@ -1542,7 +1542,7 @@ FUNCTION {sortify}
   duplicate$ % ****pts****
   rmbrace.extrat1 % ****pts****
   purify$
-  % Dat: purify$ removes á from "várom", keeps `varom' in "v\'arom","v{\'a}rom"
+  % Dat: purify$ removes ï¿½ from "vï¿½rom", keeps `varom' in "v\'arom","v{\'a}rom"
   % Dat: purify$ changes {\ss} to ss, but {\dj} to empty
   "l" change.case$
   "  " *
@@ -1854,15 +1854,15 @@ FUNCTION {begin.bib}
   % "\def\bibAnd#1{\ifcase#1 , \else\space\'es \fi}" write$ newline$
   % "\def\bibEtAl#1{ et~al.}" write$ newline$ % Dat: or `et al.' (meaning: et alii)
   "\def\bibEtAl#1{ \'es m\'asok}" write$ newline$
-  % ^^^ Dat: botht \bibEtAl confirmed by Gyurgyák (p. 137)
+  % ^^^ Dat: botht \bibEtAl confirmed by Gyurgyï¿½k (p. 137)
   "\def\bibEd#1{ (szerk.)}" write$ newline$
-  % "\def\bibEd#1{ (szerk\ifcase#1 .\else eszt\H{o}k\fi)}" write$ newline$ % (szerk.) or (szerkesztõk)
+  % "\def\bibEd#1{ (szerk\ifcase#1 .\else eszt\H{o}k\fi)}" write$ newline$ % (szerk.) or (szerkesztï¿½k)
   % "\let\bibNewBlock\newblock" write$ newline$
   "\def\bibNewBlock{\unskip\space}" write$ newline$
   % "\def\bibVolume#1{k\" quote$ "otet}" * * write$ newline$
   "\def\bibVolume#1#2{#1 k\" quote$ "ot.} \let\bibNumVolumes\bibVolume" * * write$ newline$
   % "\def\bibTechRep#1{Technical Report}" write$ newline$
-  "\def\bibTechRep#1{Jelent\'{e}s}" write$ newline$ % Dat: `.' után van => nagybetû
+  "\def\bibTechRep#1{Jelent\'{e}s}" write$ newline$ % Dat: `.' utï¿½n van => nagybetï¿½
   "\def\bibInSelf#1{In u\H{o}: }" write$ newline$
   "\csname bibOverride\endcsname" write$ newline$
 }
@@ -1883,7 +1883,7 @@ EXECUTE {end.bib}
 
 % #****pts**** !!
 FUNCTION {what} {
-  % "dr. Köpeczi, Béla and Jules Verne and Kossuth, Lajos and gróf Széchenyi, István and John von Neumann and Donald E. Knuth and Strunk, Jr., William and Knézy, ifj., Jenõ and L. R. McColvin and Tinódi Lantos, Sebestyén and Molnár-Sáska, Balázs and Claude Lévi-Strauss and Kis, Péter Pál and Mary-Claire van Leunen and Paul Gerhard Hoel and G. Bernard Godfrey and II., János-Pál and {Szerencsejáték Rt.} and {\empty Earl of} Traquair and Horace [pseud.] Hunt and Verne, {\empty Gy}ula" 's :=
+  % "dr. Kï¿½peczi, Bï¿½la and Jules Verne and Kossuth, Lajos and grï¿½f Szï¿½chenyi, Istvï¿½n and John von Neumann and Donald E. Knuth and Strunk, Jr., William and Knï¿½zy, ifj., Jenï¿½ and L. R. McColvin and Tinï¿½di Lantos, Sebestyï¿½n and Molnï¿½r-Sï¿½ska, Balï¿½zs and Claude Lï¿½vi-Strauss and Kis, Pï¿½ter Pï¿½l and Mary-Claire van Leunen and Paul Gerhard Hoel and G. Bernard Godfrey and II., Jï¿½nos-Pï¿½l and {Szerencsejï¿½tï¿½k Rt.} and {\empty Earl of} Traquair and Horace [pseud.] Hunt and Verne, {\empty Gy}ula" 's :=
   % init.nfmts  s #1 nfmt0 format.name$ warning$
   % ss #385 #1 substring$ warning$
   % "fo{\'o}\oe{\H u}s{\HON}{\HANT}" rmbrace.accs warning$ % to "fo\'o\oe\H us{\HON}{\HANT}"
@@ -1891,17 +1891,17 @@ FUNCTION {what} {
   % "bar" #-1 #1 substring$ warning$
   % "5~janu\'ar" #1 "{ll~~}{ff{}}" format.name$ warning$
   % "janu\'ar" #1 "{ll}{~ff.}" format.name$ warning$
-  % "{\null Gy}urgyák" #1 "{l}/" format.name$ warning$
-  % "AzBÁrvíztûrõ~tükörfúrógép" rmacc.latin2 warning$
+  % "{\null Gy}urgyï¿½k" #1 "{l}/" format.name$ warning$
+  % "AzBï¿½rvï¿½ztï¿½rï¿½~tï¿½kï¿½rfï¿½rï¿½gï¿½p" rmacc.latin2 warning$
   % "fogbar" #3 #1 substring$ warning$
-  % "Az Árvíztûrõõ tükörfúrógépí" sortify warning$
-  % "Marjai, Imre and Pataky, Dénes" rmacc.latin2 warning$
+  % "Az ï¿½rvï¿½ztï¿½rï¿½ï¿½ tï¿½kï¿½rfï¿½rï¿½gï¿½pï¿½" sortify warning$
+  % "Marjai, Imre and Pataky, Dï¿½nes" rmacc.latin2 warning$
   % "{\empty\'\i}purify" purify$ warning$
   % "grof Szechenyi, Istvan" #1 "{ll}/{ff}/{jj}/{vv}" format.name$ warning$
   % "John von Neumann" #1 "{ll}/{ff}/{jj}/{vv}" format.name$ warning$
-  % "Tinódi Lantos, Sebestyén" #1 "{ll}/{ff}/{jj}/{vv}" format.name$ warning$
+  % "Tinï¿½di Lantos, Sebestyï¿½n" #1 "{ll}/{ff}/{jj}/{vv}" format.name$ warning$
   % "II., Janos., Pal" #1 "{ll}/{ff}/{jj}/{vv}" format.name$ warning$
-  % "álom" "u" change.case$ warning$ % "áLOM"
+  % "ï¿½lom" "u" change.case$ warning$ % "ï¿½LOM"
   % "{\'a}lom" "u" change.case$ warning$ % "{\'A}LOM"
   %"alma{\ss}t" purify$ warning$ % alma{\ss}t
   %"alma{\dj}t" purify$ warning$ % almat (!)
