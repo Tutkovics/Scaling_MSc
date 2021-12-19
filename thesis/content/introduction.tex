@@ -17,18 +17,18 @@ A megoldásnak köszönhetően lehetőség nyílt előre definiált lépésekkel
 Természetesen mindezt úgy, hogy a fizikailag rendelkezésre álló erőforrások kihasználtsága is javult.
 
 A korábban vázolt monolitikus architektúrát a mai napig sokan alkalmazzák, azonban folyamatos tolódás figyelhető meg a mikro-szolgáltatások irányába, melynek üzleti okai vannak. 
-Aki nem tud lépést tartani a gyors fejlődéssel az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. 
+Aki nem tud lépést tartani a gyors fejlődéssel, az rövid időn belül lemarad és hátrányba kerül a versenytársaihoz képest. 
 Az érem másik oldala viszont az, hogy aki időben észreveszi a lehetőséget, az hirtelen nagy előnyt tud szerezni. 
 Erre jó példa az Amazon\citep{amazon} és a Netflix\citep{netflix} története is.  
 
 Egyre szélesebb körben terjednek el a konténerizációs technológiák és velük együtt az úgynevezett mikro-szolgáltatások\citep{monoliticAndMicroserviceArchitecture}.
-A paradigma értelmében a korábbi nagyobb kódegységeket szét lehet bontani több kisebb kódbázisra, ami számtalan előnyt jelent az alkalmazás fejlesztéséhez.
+A paradigma értelmében a korábbi nagyobb kódegységet szét lehet bontani több kisebb kódbázisra, ami számtalan előnyt jelent az alkalmazás fejlesztésekor.
 Mivel a kisebb egységeket könnyebb megérteni mint a teljes kódbázist, az új fejlesztők számára könnyebb becsatlakozni a fejlesztési folyamatokba.
 A kisebb elemekre bontott kód lehetőséget biztosít arra is, hogy az egyes komponenseket több nyelven és többfajta keretrendszerben fejlesszük, minden komponens számára az optimális fejlesztési környezetet kiválasztva. 
 Végül, ha egy komponens teljes körű felülvizsgálatára van szükség, az nem érinti a rendszer többi részét, amíg a publikus interfészek változatlanok maradnak. 
 Ezek által lehetőség nyílik egy kellően agilis rendszer kialakítására, ami könnyebben és gyorsabban tudja kiszolgálni az ügyfelek igényeit, ami üzleti előnyt jelent.
 
-Ez a modern paradigma tartalmaz néhány kihívást is, ami a monolitikus alkalmazások esetében nem merül fel.
+Ez a modern paradigma tartalmaz néhány kihívást is, ami a monolitikus alkalmazások esetében nem merültek fel.
 Egy ilyen kihívás kerül tárgyalásra a dolgozatban is.
 A tendenciaváltás legnagyobb szereplője a Kubernetes\citep{kubernetesBaseDocumentation}, ami lehetőséget biztosít a konténerizációs technológiák egyszerű és széles körű használatára.
 
@@ -38,14 +38,14 @@ A tendenciaváltás legnagyobb szereplője a Kubernetes\citep{kubernetesBaseDocu
 A korábban említett paradigmaváltással lépést kell tartani az alkalmazás üzemeltetésekor is. 
 Fontos szempont az elkészült, mikro-szolgáltatásokból felépülő hálózat skálázásának kérdése. 
 Sokan választották ezt a modern megközelítést, mert ígérete szerint könnyen képes a beérkező kérések okozta terheléssel arányosan skálázódni.
-Ez egy triviális feladat egészen addig amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük.
+Ez egy triviális feladat egészen addig, amíg az egyes egységeket különálló, másokkal nem összefüggő részként kezeljük.
 Ezt megtehetjük és látszólag legtöbben meg is teszik komolyabb fennakadások nélkül, azonban a valóság ennél jóval komplexebb.
 Figyelembe kell venni, hogyan kapcsolódnak egymáshoz a mikro-szolgáltatások, azok milyen és mennyi erőforrást használnak, mi történik a beérkező kérésekkel.
 A sok szolgáltatás közül melyiket érdemes először skálázni, melyik okozza a kiszolgálások lassulását, milyen módosítással lehet a legtöbb felhasználót kiszolgálni.
 Látható, hogy pár paramétert bevéve az egyenletbe a komplexitás meredeken emelkedik. 
 Különösen megnehezíti a feladatot, ha a rendelkezésre álló erőforrásokat (például: processzor, memória, hálózat, I/O) globálisan optimálisan szeretnénk elosztani, hogy a lehető legjobb kiszolgálást tudja biztosítani a rendszer. 
 
-A diplomamunka során ezt a kérdéskört kell megismernem és a felmerülő kérdésekre választ keresni. 
+A diplomamunka során ezt a kérdéskört kellett megismernem és a felmerülő kérdésekre választ keresni. 
 Első lépésben szeretném bemutatni a használt környezetet, a Kubernetes felépítését illetve, hogy milyen skálázási megoldások léteznek és melyiket hogyan támogatja.
 Konkrét példán keresztül bemutatom az automatikus pod horizontális skálázó megoldását. 
 
@@ -64,7 +64,7 @@ Ilyen helyzetekre megoldási javaslatokat kell keresni és bemutatni azok műkö
 %----------------------------------------------------------------------------
 \section{A dolgozat felépítése}
 %----------------------------------------------------------------------------
-A dolgozat fejezetei úgy lettek sorba állítva, hogy azok a lehető legkövethetőbb módon mutassák be a kapott eredményeket. Ehhez viszont az általános részektől kell indulni és így mutatva be az egyre konkrétabb részeket.
+A dolgozat fejezetei úgy lettek sorba állítva, hogy azok a lehető legkövethetőbb módon mutassák be a kapott eredményeket. Ehhez viszont az általános részektől kell indulni és így mutatva be az egyre konkrétabb részleteket.
 Először szeretném ismertetni a Kubernetes platform architektúráját és az általa támogatott automatikus skálázást \aref{sec:Kubernetes}. fejezetben.
 %A \ref{sec:Kubernetes}. fejezetben szó lesz a Kubernetes architektúrájáról, illetve hogyan támogatja beépített módon az automatikus skálázást.
 A munka kezdetén el kellett olvasni a témában készült korábbi kutatásokat, amelyeket \aref{sec:Publications}. fejezetben ismertetek.

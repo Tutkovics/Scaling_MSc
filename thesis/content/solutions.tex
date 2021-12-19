@@ -4,7 +4,7 @@
 %----------------------------------------------------------------------------
 
 Ebben a fejezetben szeretném bemutatni, hogy a korábban \aref{sec:results} fejezetben látott mérések alapján milyen megoldási lehetőségek jöhetnek számításba.
-Természetesen minden bemutatott megoldásnak megvan a saját erőssége és gyengesége, amiket a következő alfejezetben részletesen is ismertetek.
+Természetesen minden bemutatott megoldásnak megvan a saját erőssége és gyengesége, amiket a következő alfejezetekben részletesen is ismertetek.
 
 %----------------------------------------------------------------------------
 \section{Feltárt probléma rövid összefoglalása}
@@ -33,8 +33,8 @@ Másik megközelítés, hogy a rendszerbe beérkező kéréseket szabályozzuk v
 \section{Lehetséges eszközök}
 %----------------------------------------------------------------------------
 
-A kiírásban megfogalmazott feladatom volt, hogy keressek olyan kiegészítést vagy javaslatot, ami a jelenlegi HPA működését javítani tudná.
-A feladatom elvégzése és források keresése közben számos megoldási lehetőség felmerült.
+További feladatom volt, hogy keressek olyan kiegészítést vagy javaslatot, ami feltárt hiányosságokat javítani tudná.
+A szimulációk futtatása alatt és források keresése közben számos megoldási lehetőség felmerült.
 A bemutatott eszközök elemzése során látni fogjuk, hogy kicsit más megközelítésből és a probléma más aspektusát célozva próbálja a feltárt hatásokat csökkenteni.
 
 Az egyes eszközök értékelésénél az is fontos szempont volt, hogy a lehető legkevesebb módosítást kelljen végrehajtani az alkalmazás oldalán.
@@ -61,7 +61,7 @@ Az egyes állapotjelzők ideális használati módját az alábbi szituációkka
     Illetve egyéb okok miatt is kerülhet olyan állapotba, amikor a vizsgált alkalmazás nem képes ellátni a működését, mindezt különösebb hiba és kilépés nélkül.
     Szerencsére az ilyen esetek nem számítanak különösnek és hamar fel is lehet oldani az egység újraindításával, amit az életteli próbával tudunk kezelni.
     Ez egy teljesen ideális implementáció esetén nem fog gondot okozni, hiszen a kapszulák nem tartalmaznak, tárolnak fontos adatokat és állapotokat.
-    Egy újraindítás sokkal idő- és költséghatékonyabb megoldás, mintha az egész rendszer funkcionális működését veszélyeztetnénk.
+    Egy újraindítás idő- és költséghatékonyabb megoldás, mintha az egész rendszer funkcionális működését veszélyeztetnénk.
 
     \item \textbf{Indítási próba (startup probe)} - Eshetőség, hogy az alkalmazás elindítása után még el kell végezni pár inicializációt, mielőtt a külső kérések kiszolgálását elkezdhetné.
     Ebben az esetben is tudatni kell az infrastruktúra részére, hogy a jelenlegi állapotában még nem áll készen a működésre.
@@ -84,7 +84,7 @@ Továbbá ezen folyamat által egy öngyógyító tulajdonságot is kap a rendsz
 Ennek ellenére körültekintően kell ezeket az eszközöket is használni, hiszen rossz konfiguráció esetén mi magunk tehetjük működésképtelenné a rendszert.
 Például, hibás beállítás esetén az életteli próba hajlamos állandóan újraindítani az alkalmazást. Vagy a készenléti próba miatt egyes komponens egységek nem fognak annyi kérést kapni, amit azok valóban képesek lennének kiszolgálni.
 
-\subsubsection{Módszer tesztelése}
+\paragraph{Módszer tesztelése}
 A következő feladat az volt, hogy a bemutatott állapotjelzők használatával ismét el kellett végezni a korábbi mérést és megnézni az elért hatását.
 Számomra a készenléti probléma volt a legérdekesebb, hiszen ez a megoldás ad lehetőséget arra, hogy addig ne érkezzen kiszolgálandó kérés az adott alkalmazás egységhez, amíg egy bizonyos állapot teljesül.
 
@@ -218,7 +218,7 @@ Nem elhanyagolható felvetés, hogy a skálázási algoritmus logikájának bony
 
 \paragraph{Analitikus modell}
 Az okos skálázó optimális működéséhez szükséges jobban megvizsgálni a horizontális skálázás hatását.
-A vizsgálandó kérdés, hogy egy szolgáltatáshálóban elvégzett skálázás milyen kihatással van a többi komponensre, és a teljes rendszer kiszolgálási értékei hogyan alakulnak.
+A vizsgálandó kérdés, hogy egy szolgáltatáshálóban elvégzett skálázás milyen kihatással bír a többi komponensre, és a teljes rendszer kiszolgálási értékei hogyan alakulnak.
 Meg kellett vizsgálni, hogy milyen összefüggés figyelhető meg a futtatott podok száma és az általuk kiszolgált másodpercenkénti kérések száma között.
 
 Az alap feltevés látható \aref{eq:maxQPS} egyenleten, ahol $f()$ függvény adja meg, hogy mennyi kiszolgálást tud teljesíteni az adott komponens az $n$-nel jelzett podok függvényében.
@@ -228,26 +228,28 @@ A feltevés az, hogy ezen ismeretekkel becsülhető a skálázás utáni kiszolg
 Ezt úgy kaphatjuk, meg, hogy az ismert $Q$ értékét elosztjuk az azt kiszolgáló kapszulák számával ($n$), amivel megkapjuk, hogy hozzávetőlegesen egy pod mennyi kérést tud kiszolgálni azonos konfigurációk mellett.
 Majd az így kapott eredményt felszorozzuk a skálázás utáni podok számával, ami $n'$. 
 
-\begin{align*}
-f(n) &= Q \nonumber \\
-f(n') &= \frac{Q}{n} * n' = Q' \label{eq:maxQPS}
-\end{align*}
+\begin{equation} \label{eq:maxQPS}
+\begin{split}
+f(n) & = Q \\
+f(n') & = \frac{Q}{n} * n' = Q' 
+\end{split}
+\end{equation}
 
 A tézis ellenőrzése szimuláción keresztül történt.
 A szolgáltatáshálóban egy gyors és erőforrás hatékony frontend szerepelt és utána pedig egy erőforrás-igényes backend. 
 A backend számának növelésével szimuláltam a horizontális skálázás működését.
-A kapott eredmények láthatóak \aref{analitic-model} ábrán.
+A kapott eredmények láthatóak \aref{fig:analitic-model} ábrán.
 
-A legfelső[\aref{subfig:model-1FE-1BE}] grafikon mutatja azt az esetet, amikor egy darab backend konténer szolgálta ki az összes frontend felől érkező kérést.
+A legfelső[\ref{subfig:model-1FE-1BE}] grafikon mutatja azt az esetet, amikor egy darab backend konténer szolgálta ki az összes frontend felől érkező kérést.
 Leolvasható, hogy ebben az esetben körülbelül 35 QPS terhelés mellett sikerült időben kiszolgálni az össze beérkező kérést.
 
 Amikor két példányban indult el a backend komponens, akkor az elvárt módon meg is ugrik az időben kiszolgálható lekérdezések száma.
-A grafikonról[\aref{subfig:model-1FE-2BE}] leolvasva az így kapott QPS érték 66 körül alakul, de nem éri el a 70-et.
+A grafikonról[\ref{subfig:model-1FE-2BE}] leolvasva az így kapott QPS érték 66 körül alakul, de nem éri el a 70-et.
 
-Végül pedig az látható az alsó grafikonon, amikor három példány fogadta a backend felé érkező kéréseket. 108
+Végül pedig az látható az alsó grafikonon[\ref{subfig:model-1FE-3BE}], amikor három példány fogadta a backend felé érkező kéréseket.
 Ebben az esetben nagyjából 108 kérés kiszolgálása vált lehetővé.
 
-A kapott eredményekből látható, hogy egy visszaosztva az egyes méréseknél kapott maximális QPS értéket a futtatott backend podok számával, azt kapjuk, hogy egy kapszula 33-36 kérés kiszolgálását tudja elvégezni.
+A kapott eredményekből látható, hogy visszaosztva az egyes méréseknél kapott maximális QPS értéket a futtatott backend podok számával megkapjuk, hogy egy kapszula 33-36 kérés kiszolgálását tudja elvégezni.
 Ez az érték kismértékben eltér az egyes szimulációkban, azonban kellően statikus marad végig, hogy modellként alkalmazzuk.
 
 

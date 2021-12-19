@@ -30,27 +30,26 @@ Gyakran elfelejtődik, de a cikkben hangsúlyozva van, hogy a rendszer monitoroz
 \label{fig:applicationprofiling}
 \end{figure}
 
-Korábban már a BME TMIT tanszékén is foglalkoztak Kubernetesben történő skálázással. 
+Korábban már a Budapesti Műszaki és Gazdaságtudományi Egyetem Távközlési és Médiainformatikai Tanszékén (BME TMIT) is foglalkoztak Kubernetesben történő skálázással. 
 Az \emph{Adaptive scaling of Kubernetes pods}\cite{AdaptiveScalingOfPods} címen megjelent kutatás keretén belül sikeresen implementáltak egy automatikus skálázót, ami képes kihasználni a vertikális és horizontális skálázásban rejlő előnyöket. 
 Az algoritmus első részében megkeresi az egy pod számára ideális erőforrás-használatot, ami tekinthető a vertikális skálázásnak. 
 Később pedig az így megtalált konfigurációval történik az alkalmazás horizontális skálázása. 
 Ez a megvalósítás egybeesik a korábbi kutatás következtetésével\citep{bscThesis}, mely szerint általában jobb kezdeti eredményt kapunk VPA segítségével, azonban feltehetően minden esetben létezik egy felső határ, ami után már nem kapunk jobb kiszolgálási eredményeket. 
 
-A diplomaterv későbbi részében érdekes eredményeket kaphatunk, ha összehasonlítjuk ezt a megoldást a Kubernetes alapértelmezett skálázásával egy komplexebb szolgáltatásháló esetén.
+%A diplomaterv későbbi részében érdekes eredményeket kaphatunk, ha összehasonlítjuk ezt a megoldást a Kubernetes alapértelmezett skálázásával egy komplexebb szolgáltatásháló esetén.
 
-Több cikk\cite{AdaptiveScalingOfPods}\citep{PredictingUsageAndProactiveScaling} is említést tesz
-arról, hogy a jelenlegi módszertan alapján nehéz eltalálni az optimális erőforrás értékeket és ezzel
-együtt a skálázást. Ez főként onnan jön, hogy jelenleg a skálázók kevés logikával és metrikával
-működnek, ezért indításukkor, kézzel kell megadni a szükséges értékeket. Ez igaz az erőforrás
-felhasználásra is. Ebben az esetben is az alkalmazás üzemeltetője adja meg indítás idejében a
-paramétereket, amik befolyásolják a kiszolgálás minőségét is. 
+Több cikk\cite{AdaptiveScalingOfPods}\citep{PredictingUsageAndProactiveScaling} is említést tesz arról, hogy a jelenlegi módszertan alapján nehéz eltalálni az optimális erőforrás értékeket és ezzel együtt a skálázást.
+Ez főként amiatt van, mert jelenleg a skálázók kevés logikával és metrikával
+működnek, ezért indításukkor, kézzel kell megadni a szükséges értékeket.
+Ez igaz az erőforrás felhasználásra is.
+Ebben az esetben is az alkalmazás üzemeltetője adja meg indítás idejében a paramétereket, amik befolyásolják a kiszolgálás minőségét is. 
+% (Ezzel a kihívással a dolgozatban is találkoztunk)
 
-Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó minél ideálisabb döntéséhez a lehető legtöbb adatra van szükség.
-Ez bizonyos alkalmazási területek körében problémás lehet.
-Hogyha az alkalmazás tulajdonosa nem szeretné, hogy megfigyeljék, hogy milyen egyéb szolgáltatásokkal van kapcsolatban, mennyi lekérdezés, felhasználó használja, milyen arányban oszlik meg a terhelés a rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete alapján lesz meghozva.
+Érdekes kérdés, ami irodalomkutatás során fogalmazódott meg, hogy a skálázó optimális döntéséhez a lehető legtöbb adatra van szükség, ami bizonyos alkalmazási területek körében problémás lehet.
+Ha az alkalmazás tulajdonosa nem szeretné, hogy megfigyeljék milyen egyéb szolgáltatásokkal van kapcsolatban, mennyi lekérdezést szolgál ki, kik használják, milyen arányban oszlik meg a terhelés a rendszere egységei között, akkor a végső döntés is kevesebb információ ismerete alapján kerül meghozásra.
 Érdekes kérdéskör az is, hogy hol van a határa a személyes adatoknak és mennyire lehet ezeket figyelembe venni az erőforrások elosztási döntésekben.
 
-Több megoldás bontakozott ki a tanulmányozott cikkek alapján. Léteznek olyan megoldások, amik a rendszert fehér dobozként (\textit{white box}) kezelik, amiben minden paraméter kiolvasható és befolyásolható, míg vannak olyanok, amik fekete dobozként (\textit{black box}) modellezik és az alkalmazás belső működése számunkra ismeretlen marad\citep{TowardsAnAdaptive}. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni, javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számon tarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve javítható a modell bizonyossága\citep{TowardsAnAdaptive}.
+Több megoldás bontakozott ki a tanulmányozott cikkek alapján. Léteznek olyan megoldások, amik a rendszert fehér dobozként (\textit{white box}) kezelik, amiben minden paraméter olvasható és befolyásolható, míg vannak olyanok, amik fekete dobozként (\textit{black box}) modellezik és az alkalmazás belső működése számunkra ismeretlen marad\citep{TowardsAnAdaptive}. Az első esetben van lehetőségünk analitikus modelleket gyártani és ezeket alapul véve jósolni, javaslatokat tenni. Utóbbi esetben, jó kiindulási alap lehetnek a gépi tanulásos modellek. Itt megjegyezhető, hogy számon tarthatjuk a modellünk bizonyos paraméterek melletti bizonytalanságát mint tényezőt és ezeken helyeken több mérést végezve javítható a modell bizonyossága\citep{TowardsAnAdaptive}.
 
 Elterjedt kutatási terület, hogyan lehet ilyen jellegű feladatok megoldásában segítségül hívni a neurális-hálózatokat, illetve egyéb gépi-tanulásos modelleket. Ilyen modell lehet például a Markov-láncok, ami képesek a valós rendszerekben megfigyelhető periodicitásokat figyelembe venni\citep{CloudScale}. Ilyen ismétlődés több nagyságrendben is elképzelhető, például egy napon belül is létezik, de létezhet nagyobb távlatban, például az évszakkal összefüggően is\citep{PredictingUsageAndProactiveScaling}.
 
